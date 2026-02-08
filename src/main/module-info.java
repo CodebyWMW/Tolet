@@ -1,4 +1,4 @@
-module com.example.tolet {
+module com.tolet {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
@@ -11,6 +11,15 @@ module com.example.tolet {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
 
-    opens com.example.tolet to javafx.fxml;
-    exports com.example.tolet;
+    opens com.tolet to javafx.fxml;
+    exports com.tolet;
 }
+
+// module com.tolet {
+//     requires javafx.controls;
+//     requires javafx.fxml;
+    
+//     // Exports required for FXML to see your controllers
+//     opens com.tolet to javafx.fxml;
+//     exports com.tolet;
+// }

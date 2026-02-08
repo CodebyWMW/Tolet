@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="15"
+    xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.HelloController">
+    <Label text="Project To-Let" textFill="#e63946">
+        <font>
+            <Font name="System Bold" size="28"/>
+        </font>
+    </Label>
+    <ComboBox fx:id="roleSelector" prefWidth="200" promptText="Select Role"/>
+    <TextField fx:id="usernameField" promptText="Username" maxWidth="200"/>
+    <PasswordField fx:id="passwordField" promptText="Password" maxWidth="200"/>
+    <Button text="Login" onAction="#onLoginClick" prefWidth="200" style="-fx-background-color: #e63946; -fx-text-fill: white;"/>
+    <Button text="Sign Up" onAction="#onSignUpClick" prefWidth="200"/>
+    <Label fx:id="errorLabel" textFill="red"/>
+</VBox>

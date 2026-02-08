@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.OwnerController">
+    <top>
+        <Label text="Owner Dashboard" style="-fx-font-size: 20px; -fx-padding: 10;"/>
+    </top>
+    <left>
+        <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f1f1f1;">
+            <Label text="Add New Listing" style="-fx-font-weight: bold;"/>
+            <TextField fx:id="locField" promptText="Location"/>
+            <ComboBox fx:id="typeBox" promptText="Type" prefWidth="150"/>
+            <TextField fx:id="rentField" promptText="Rent Amount"/>
+            <Button text="Post Ad" onAction="#onAddListing" style="-fx-background-color: green; -fx-text-fill: white;"/>
+        </VBox>
+    </left>
+    <center>
+        <TableView fx:id="houseTable">
+            <columns>
+                <TableColumn fx:id="colLoc" text="Location" prefWidth="200"/>
+                <TableColumn fx:id="colType" text="Type" prefWidth="100"/>
+                <TableColumn fx:id="colRent" text="Rent" prefWidth="100"/>
+            </columns>
+        </TableView>
+    </center>
+</BorderPane>

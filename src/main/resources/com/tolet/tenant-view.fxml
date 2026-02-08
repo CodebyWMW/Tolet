@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.TenantController">
+    <top>
+        <HBox spacing="10" style="-fx-padding: 10; -fx-background-color: #ddd;">
+            <Label text="Search House:" style="-fx-padding: 5 0 0 0;"/>
+            <TextField fx:id="searchField" promptText="Type location (e.g. Dhanmondi)"/>
+            <Button text="Book Selected" onAction="#onBookRequest"/>
+        </HBox>
+    </top>
+    <center>
+        <TableView fx:id="searchTable">
+            <columns>
+                <TableColumn fx:id="tLoc" text="Location" prefWidth="300"/>
+                <TableColumn fx:id="tType" text="Category" prefWidth="150"/>
+                <TableColumn fx:id="tRent" text="Rent (BDT)" prefWidth="150"/>
+            </columns>
+        </TableView>
+    </center>
+</BorderPane>
