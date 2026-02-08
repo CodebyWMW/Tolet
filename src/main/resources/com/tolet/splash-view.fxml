@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.SplashController" onMouseClicked="#onContinue">
+    <ImageView fx:id="splashImage" preserveRatio="true" fitWidth="900" fitHeight="600" />
+    <VBox alignment="TOP_CENTER" spacing="10" StackPane.alignment="TOP_CENTER">
+        <padding>
+            <Insets top="30" />
+        </padding>
+        <Label fx:id="titleLabel" text="Project To-•Let">
+            <font>
+                <Font name="System Bold" size="28" />
+            </font>
+        </Label>
+        <Label text="Click anywhere to continue" />
+    </VBox>
+</StackPane>

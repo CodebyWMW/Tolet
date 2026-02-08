@@ -4,10 +4,14 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.TenantController">
     <top>
-        <HBox spacing="10" style="-fx-padding: 10; -fx-background-color: #ddd;">
+        <HBox spacing="10" style="-fx-padding: 10; -fx-background-color: #818181;">
             <Label text="Search House:" style="-fx-padding: 5 0 0 0;"/>
-            <TextField fx:id="searchField" promptText="Type location (e.g. Dhanmondi)"/>
+            <TextField fx:id="searchField" promptText="Type location (e.g. Dhanmondi)" HBox.hgrow="ALWAYS"/>
             <Button text="Book Selected" onAction="#onBookRequest"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <ToggleButton fx:id="themeToggle" text="Dark Mode" onAction="#onThemeToggle" />
+            <Button text="Back" onAction="#onBack" />
+            <Button text="Logout" onAction="#onLogout" />
         </HBox>
     </top>
     <center>

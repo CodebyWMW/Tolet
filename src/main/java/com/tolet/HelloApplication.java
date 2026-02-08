@@ -12,8 +12,9 @@ public class HelloApplication extends Application {
         // Initialize some dummy data so the app isn't empty
         DataStore.initData();
 
-        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("login-view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("splash-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 900, 600);
+        DataStore.applyTheme(scene);
         stage.setTitle("Project To-Let");
         stage.setScene(scene);
         stage.show();

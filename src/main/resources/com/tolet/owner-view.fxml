@@ -5,10 +5,16 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.OwnerController">
     <top>
-        <Label text="Owner Dashboard" style="-fx-font-size: 20px; -fx-padding: 10;"/>
+        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
+            <Label text="Owner Dashboard" style="-fx-font-size: 20px;"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <ToggleButton fx:id="themeToggle" text="Dark Mode" onAction="#onThemeToggle" />
+            <Button text="Back" onAction="#onBack" />
+            <Button text="Logout" onAction="#onLogout" />
+        </HBox>
     </top>
     <left>
-        <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f1f1f1;">
+        <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #9f9c9c;">
             <Label text="Add New Listing" style="-fx-font-weight: bold;"/>
             <TextField fx:id="locField" promptText="Location"/>
             <ComboBox fx:id="typeBox" promptText="Type" prefWidth="150"/>

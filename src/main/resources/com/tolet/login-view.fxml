@@ -5,11 +5,12 @@
 
 <VBox alignment="CENTER" spacing="15"
     xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.HelloController">
-    <Label text="Project To-Let" textFill="#e63946">
+    <Label text="Project To-Let" textFill="#19a3a3">
         <font>
             <Font name="System Bold" size="28"/>
         </font>
     </Label>
+    <ToggleButton fx:id="themeToggle" text="Dark Mode" onAction="#onThemeToggle" />
     <ComboBox fx:id="roleSelector" prefWidth="200" promptText="Select Role"/>
     <TextField fx:id="usernameField" promptText="Username" maxWidth="200"/>
     <PasswordField fx:id="passwordField" promptText="Password" maxWidth="200"/>
