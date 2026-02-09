@@ -14,18 +14,11 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class TenantController {
-    @FXML
-    private TextField searchField;
-    @FXML
-    private CheckBox familyCheck, bachelorCheck;
-    @FXML
-    private TableView<House> searchTable;
-    @FXML
-    private TableColumn<House, String> tLoc, tType;
-    @FXML
-    private TableColumn<House, Double> tRent;
-    @FXML
-    private ToggleButton themeToggle;
+    @FXML private TextField searchField;
+    @FXML private TableView<House> searchTable;
+    @FXML private TableColumn<House, String> tLoc, tType;
+    @FXML private TableColumn<House, Double> tRent;
+    @FXML private ToggleButton themeToggle;
 
     @FXML
     public void initialize() {
@@ -33,23 +26,19 @@ public class TenantController {
         tType.setCellValueFactory(new PropertyValueFactory<>("type"));
         tRent.setCellValueFactory(new PropertyValueFactory<>("rent"));
 
-        // Wrap listing in a FilteredList
-        FilteredList<House> filteredData = new FilteredList<>(DataStore.houses, p -> true);
+        // FIXED: Fetch from DB
+        FilteredList<House> filteredData = new FilteredList<>(DataStore.getHouses(), p -> true);
         searchTable.setItems(filteredData);
 
-        // Add Listener to Search Box
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             filteredData.setPredicate(house -> {
-                if (newValue == null || newValue.isEmpty())
-                    return true;
+                if (newValue == null || newValue.isEmpty()) return true;
                 String lowerCaseFilter = newValue.toLowerCase();
                 return house.getLocation().toLowerCase().contains(lowerCaseFilter);
             });
         });
 
-        if (themeToggle != null) {
-            themeToggle.setSelected(DataStore.darkMode);
-        }
+        if (themeToggle != null) themeToggle.setSelected(DataStore.darkMode);
         Platform.runLater(() -> DataStore.applyTheme(searchTable.getScene()));
     }
 
@@ -65,16 +54,8 @@ public class TenantController {
         }
     }
 
-    @FXML
-    private void onBack(ActionEvent event) throws IOException {
-        switchToLogin(event);
-    }
-
-    @FXML
-    private void onLogout(ActionEvent event) throws IOException {
-        DataStore.currentUser = null;
-        switchToLogin(event);
-    }
+    @FXML private void onBack(ActionEvent event) throws IOException { switchToLogin(event); }
+    @FXML private void onLogout(ActionEvent event) throws IOException { DataStore.currentUser = null; switchToLogin(event); }
 
     private void switchToLogin(ActionEvent event) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource("login-view.fxml"));
@@ -85,8 +66,7 @@ public class TenantController {
         stage.show();
     }
 
-    @FXML
-    private void onThemeToggle() {
+    @FXML private void onThemeToggle() {
         DataStore.darkMode = themeToggle.isSelected();
         DataStore.applyTheme(themeToggle.getScene());
     }

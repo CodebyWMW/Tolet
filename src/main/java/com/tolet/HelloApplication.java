@@ -14,8 +14,9 @@ public class HelloApplication extends Application {
 
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("splash-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 900, 600);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         DataStore.applyTheme(scene);
-        stage.setTitle("Project To-Let");
+        stage.setTitle("Project To-•Let");
         stage.setScene(scene);
         stage.show();
     }

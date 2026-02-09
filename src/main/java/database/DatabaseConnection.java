@@ -5,9 +5,8 @@ import java.sql.DriverManager;
 
 public class DatabaseConnection {
 
-//    private static final String URL = "jdbc:sqlite:Data/rental.db";
-private static final String URL =
-        "jdbc:sqlite:C:/Users/User/OneDrive/Desktop/HOmerental/Tolet/Data/rental.db";
+    // private static final String URL = "jdbc:sqlite:Data/rental.db";
+    private static final String URL = "jdbc:sqlite:Data/rental.db";
 
     public static Connection connect() {
         try {
