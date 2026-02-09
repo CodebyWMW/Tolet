@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.*?>
 
-<VBox alignment="CENTER" spacing="15"
-    xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.HelloController">
+<VBox alignment="CENTER" prefHeight="348.0" prefWidth="377.0" spacing="15" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.12" fx:controller="com.tolet.HelloController">
     <Label text="Project To-Let" textFill="#19a3a3">
         <font>
-            <Font name="System Bold" size="28"/>
+            <Font name="System Bold" size="28" />
         </font>
     </Label>
-    <ToggleButton fx:id="themeToggle" text="Dark Mode" onAction="#onThemeToggle" />
-    <ComboBox fx:id="roleSelector" prefWidth="200" promptText="Select Role"/>
-    <TextField fx:id="usernameField" promptText="Username" maxWidth="200"/>
-    <PasswordField fx:id="passwordField" promptText="Password" maxWidth="200"/>
-    <Button text="Login" onAction="#onLoginClick" prefWidth="200" style="-fx-background-color: #e63946; -fx-text-fill: white;"/>
-    <Button text="Sign Up" onAction="#onSignUpClick" prefWidth="200"/>
-    <Label fx:id="errorLabel" textFill="red"/>
+    <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" text="Dark Mode" />
+    <ComboBox fx:id="roleSelector" prefWidth="200" promptText="Select Role" />
+    <TextField fx:id="usernameField" maxWidth="200" promptText="Username" />
+    <PasswordField fx:id="passwordField" maxWidth="200" promptText="Password" />
+    <Button onAction="#onLoginClick" prefWidth="200" style="-fx-background-color: #e63946; -fx-text-fill: white;" text="Login" />
+    <Button onAction="#onSignUpClick" prefWidth="200" text="Sign Up" />
+    <Label fx:id="errorLabel" textFill="red" />
 </VBox>
