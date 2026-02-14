@@ -7,6 +7,9 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
@@ -31,6 +34,8 @@ public class HelloController {
     private ComboBox<String> roleSelector;
     @FXML
     private ToggleButton themeToggle;
+    @FXML
+    private MediaView liveMediaView;
 
     private boolean isPasswordVisible = false;
     private String generatedOTP;
@@ -39,6 +44,24 @@ public class HelloController {
     public void initialize() {
         if (themeToggle != null) {
             themeToggle.setSelected(DataStore.darkMode);
+        }
+        if (liveMediaView != null) {
+            String mediaFile = liveMediaView.getUserData() != null
+                    ? liveMediaView.getUserData().toString()
+                    : "live.mp4";
+            String mediaUrl = getClass().getResource("/com/tolet/" + mediaFile).toExternalForm();
+            MediaPlayer player = new MediaPlayer(new Media(mediaUrl));
+            liveMediaView.setOpacity(0.0);
+            liveMediaView.setSmooth(true);
+            liveMediaView.setCache(true);
+            player.setAutoPlay(true);
+            player.setMute(true);
+            player.setCycleCount(MediaPlayer.INDEFINITE);
+            player.setOnReady(() -> {
+                liveMediaView.setOpacity(1.0);
+                player.play();
+            });
+            liveMediaView.setMediaPlayer(player);
         }
     }
 
