@@ -1,20 +1,111 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
 
-<VBox alignment="CENTER" spacing="15"
-    xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.HelloController">
-    <Label text="Project To-Let" textFill="#19a3a3">
+<VBox alignment="CENTER" spacing="0" style="-fx-background-color: #FFFFFF;" styleClass="login-root" stylesheets="@light-theme.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.HelloController">
+    <padding>
+        <Insets bottom="40" left="40" right="40" top="40" />
+    </padding>
+
+    <StackPane style="-fx-background-color: #0066FF; -fx-background-radius: 15; -fx-min-width: 60; -fx-min-height: 60; -fx-max-width: 60; -fx-max-height: 60;">
+        <SVGPath content="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" fill="WHITE" scaleX="1.5" scaleY="1.5" />
+        <VBox.margin>
+            <Insets bottom="20" />
+        </VBox.margin>
+    </StackPane>
+
+    <Label text="Welcome Back">
         <font>
-            <Font name="System Bold" size="28"/>
+            <Font name="Segoe UI Bold" size="28" />
         </font>
+        <VBox.margin>
+            <Insets bottom="10" />
+        </VBox.margin>
     </Label>
-    <ToggleButton fx:id="themeToggle" text="Dark Mode" onAction="#onThemeToggle" />
-    <ComboBox fx:id="roleSelector" prefWidth="200" promptText="Select Role"/>
-    <TextField fx:id="usernameField" promptText="Username" maxWidth="200"/>
-    <PasswordField fx:id="passwordField" promptText="Password" maxWidth="200"/>
-    <Button text="Login" onAction="#onLoginClick" prefWidth="200" style="-fx-background-color: #e63946; -fx-text-fill: white;"/>
-    <Button text="Sign Up" onAction="#onSignUpClick" prefWidth="200"/>
-    <Label fx:id="errorLabel" textFill="red"/>
+
+    <Label text="Sign in to access your To-•Let account" textFill="#8c8c8c">
+        <font>
+            <Font name="Segoe UI" size="14" />
+        </font>
+        <VBox.margin>
+            <Insets bottom="30" />
+        </VBox.margin>
+    </Label>
+
+    <VBox maxWidth="400" spacing="15">
+
+        <VBox spacing="5">
+            <Label style="-fx-font-weight: bold; -fx-text-fill: #333;" text="Email or Phone Number">
+            <font>
+               <Font size="15.0" />
+            </font></Label>
+            <HBox alignment="CENTER_LEFT" styleClass="input-box">
+                <SVGPath content="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="#8c8c8c" scaleX="0.8" scaleY="0.8" />
+            <Rectangle arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="30.0" stroke="BLACK" strokeType="INSIDE" visible="false" width="12.0" />
+                <TextField fx:id="emailField" blendMode="SRC_ATOP" promptText="Enter your email or phone number" styleClass="transparent-field" HBox.hgrow="ALWAYS" />
+            </HBox>
+        </VBox>
+
+        <VBox spacing="5">
+            <Label style="-fx-font-weight: bold; -fx-text-fill: #333;" text="Password">
+            <font>
+               <Font size="15.0" />
+            </font></Label>
+            <StackPane>
+                <HBox alignment="CENTER_LEFT" styleClass="input-box">
+                    <SVGPath content="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="#8c8c8c" scaleX="0.8" scaleY="0.8" stroke="WHITE" strokeWidth="0.0" />
+               <Rectangle arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="30.0" stroke="BLACK" strokeType="INSIDE" visible="false" width="14.0" />
+
+                    <PasswordField fx:id="passwordField" promptText="Enter your password" styleClass="transparent-field" HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="passwordVisibleField" managed="false" promptText="Enter your password" styleClass="transparent-field" visible="false" HBox.hgrow="ALWAYS" />
+
+                    <Button onAction="#togglePasswordVisibility" style="-fx-background-color: transparent; -fx-cursor: hand;">
+                        <graphic>
+                            <SVGPath content="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="#8c8c8c" />
+                        </graphic>
+                    </Button>
+                </HBox>
+            </StackPane>
+        </VBox>
+
+        <HBox alignment="CENTER_LEFT">
+            <CheckBox fx:id="rememberMe" style="-fx-text-fill: #555;" text="Remember me" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Hyperlink style="-fx-text-fill: #0066FF; -fx-border-color: transparent;" text="Forgot Password?" />
+        </HBox>
+
+        <Button maxWidth="Infinity" onAction="#onLoginClick" prefHeight="45" styleClass="primary-button" text="Sign In" />
+
+        <Label fx:id="statusLabel" alignment="CENTER" maxWidth="Infinity" />
+
+        <HBox alignment="CENTER" spacing="10">
+            <Separator HBox.hgrow="ALWAYS" />
+            <Label text="Or continue with" textFill="#c402ed" />
+            <Separator HBox.hgrow="ALWAYS" />
+        </HBox>
+
+        <HBox alignment="CENTER" spacing="15">
+            <Button onAction="#onGoogleLogin" prefHeight="45" prefWidth="180" styleClass="social-button" text=" Google">
+                <graphic>
+                    <SVGPath content="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.373-1.147 8.587-3.493 2.293-2.293 2.947-5.467 2.947-7.827 0-.76-.053-1.467-.173-2.16H12.48z" fill="#0682ff" scaleX="0.8" scaleY="0.8" />
+                </graphic>
+            </Button>
+
+            <Button onAction="#onFacebookLogin" prefHeight="45" prefWidth="180" styleClass="social-button" text=" Facebook" textFill="#101010">
+                <graphic>
+                    <SVGPath content="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.79-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#098ffd" scaleX="0.8" scaleY="0.8" />
+                </graphic>
+            </Button>
+        </HBox>
+
+        <HBox alignment="CENTER">
+            <Label text="Don't have an account? " textFill="#555" />
+            <Hyperlink onAction="#onSignUpClick" style="-fx-text-fill: #0066FF; -fx-border-color: transparent; -fx-padding: 0;" text="Sign up now" />
+        </HBox>
+
+    </VBox>
 </VBox>

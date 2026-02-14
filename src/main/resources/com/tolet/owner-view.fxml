@@ -1,34 +1,124 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.OwnerController">
-    <top>
-        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
-            <Label text="Owner Dashboard" style="-fx-font-size: 20px;"/>
-            <Region HBox.hgrow="ALWAYS" />
-            <ToggleButton fx:id="themeToggle" text="Dark Mode" onAction="#onThemeToggle" />
-            <Button text="Back" onAction="#onBack" />
-            <Button text="Logout" onAction="#onLogout" />
-        </HBox>
-    </top>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.OwnerController" styleClass="owner-root" stylesheets="@style.css">
     <left>
-        <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #9f9c9c;">
-            <Label text="Add New Listing" style="-fx-font-weight: bold;"/>
-            <TextField fx:id="locField" promptText="Location"/>
-            <ComboBox fx:id="typeBox" promptText="Type" prefWidth="150"/>
-            <TextField fx:id="rentField" promptText="Rent Amount"/>
-            <Button text="Post Ad" onAction="#onAddListing" style="-fx-background-color: green; -fx-text-fill: white;"/>
+        <VBox styleClass="sidebar" spacing="18">
+            <VBox styleClass="brand-block" spacing="4">
+                <Label text="RentalPro" styleClass="brand-title"/>
+                <Label text="Owner Dashboard" styleClass="brand-subtitle"/>
+            </VBox>
+
+            <VBox spacing="6">
+                <Button text="Dashboard" styleClass="nav-button nav-button-active"/>
+                <Button text="Tenants" styleClass="nav-button"/>
+                <Button text="Properties" styleClass="nav-button"/>
+                <Button text="Requests" styleClass="nav-button"/>
+                <Button text="Analytics" styleClass="nav-button"/>
+                <Button text="Settings" styleClass="nav-button"/>
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <VBox styleClass="profile-card" spacing="4">
+                <Label fx:id="profileNameLabel" text="Owner" styleClass="profile-name"/>
+                <Label fx:id="profileRoleLabel" text="Role" styleClass="profile-role"/>
+                <HBox spacing="10">
+                    <ToggleButton fx:id="themeToggle" text="Dark" onAction="#onThemeToggle" styleClass="ghost-toggle"/>
+                    <Button text="Logout" onAction="#onLogout" styleClass="ghost-button"/>
+                </HBox>
+                <Button text="Back" onAction="#onBack" styleClass="ghost-button"/>
+            </VBox>
         </VBox>
     </left>
+
     <center>
-        <TableView fx:id="houseTable">
-            <columns>
-                <TableColumn fx:id="colLoc" text="Location" prefWidth="200"/>
-                <TableColumn fx:id="colType" text="Type" prefWidth="100"/>
-                <TableColumn fx:id="colRent" text="Rent" prefWidth="100"/>
-            </columns>
-        </TableView>
+        <ScrollPane fitToWidth="true" styleClass="content-scroll">
+            <VBox styleClass="content-root" spacing="22">
+                <HBox alignment="CENTER_LEFT" styleClass="top-bar">
+                    <VBox spacing="4">
+                        <Label text="Dashboard" styleClass="page-title"/>
+                        <Label fx:id="welcomeLabel" text="Welcome back" styleClass="page-subtitle"/>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="dateLabel" text="" styleClass="date-pill"/>
+                </HBox>
+
+                <HBox spacing="16" styleClass="kpi-row">
+                    <VBox styleClass="kpi-card" spacing="6">
+                        <Label text="Total Income" styleClass="kpi-title"/>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label fx:id="kpiIncomeLabel" text="৳0" styleClass="kpi-value"/>
+                            <Region styleClass="kpi-icon kpi-icon-green"/>
+                        </HBox>
+                    </VBox>
+                    <VBox styleClass="kpi-card" spacing="6">
+                        <Label text="Occupancy Rate" styleClass="kpi-title"/>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label fx:id="kpiOccupancyLabel" text="0%" styleClass="kpi-value"/>
+                            <Region styleClass="kpi-icon kpi-icon-blue"/>
+                        </HBox>
+                    </VBox>
+                    <VBox styleClass="kpi-card" spacing="6">
+                        <Label text="Pending Requests" styleClass="kpi-title"/>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label fx:id="kpiPendingLabel" text="0" styleClass="kpi-value"/>
+                            <Region styleClass="kpi-icon kpi-icon-orange"/>
+                        </HBox>
+                    </VBox>
+                </HBox>
+
+                <VBox styleClass="panel" spacing="12">
+                    <Label text="Monthly Revenue" styleClass="panel-title"/>
+                    <HBox spacing="10" alignment="BOTTOM_LEFT" styleClass="chart-row">
+                        <Region styleClass="chart-bar" prefHeight="70"/>
+                        <Region styleClass="chart-bar" prefHeight="82"/>
+                        <Region styleClass="chart-bar" prefHeight="68"/>
+                        <Region styleClass="chart-bar" prefHeight="96"/>
+                        <Region styleClass="chart-bar" prefHeight="78"/>
+                        <Region styleClass="chart-bar" prefHeight="102"/>
+                        <Region styleClass="chart-bar" prefHeight="110"/>
+                        <Region styleClass="chart-bar" prefHeight="104"/>
+                        <Region styleClass="chart-bar" prefHeight="116"/>
+                        <Region styleClass="chart-bar" prefHeight="124"/>
+                        <Region styleClass="chart-bar" prefHeight="130"/>
+                        <Region styleClass="chart-bar" prefHeight="112"/>
+                    </HBox>
+                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="chart-labels">
+                        <Label text="Jan" styleClass="chart-label"/>
+                        <Label text="Feb" styleClass="chart-label"/>
+                        <Label text="Mar" styleClass="chart-label"/>
+                        <Label text="Apr" styleClass="chart-label"/>
+                        <Label text="May" styleClass="chart-label"/>
+                        <Label text="Jun" styleClass="chart-label"/>
+                        <Label text="Jul" styleClass="chart-label"/>
+                        <Label text="Aug" styleClass="chart-label"/>
+                        <Label text="Sep" styleClass="chart-label"/>
+                        <Label text="Oct" styleClass="chart-label"/>
+                        <Label text="Nov" styleClass="chart-label"/>
+                        <Label text="Dec" styleClass="chart-label"/>
+                    </HBox>
+                </VBox>
+
+                <VBox styleClass="panel" spacing="12">
+                    <Label text="Tenant Booking Requests" styleClass="panel-title"/>
+                    <VBox spacing="8" styleClass="table">
+                        <HBox styleClass="table-header" spacing="16">
+                            <Label text="Tenant Name" styleClass="table-title"/>
+                            <Label text="Property" styleClass="table-title"/>
+                            <Label text="Request Date" styleClass="table-title"/>
+                            <Label text="Move-in Date" styleClass="table-title"/>
+                            <Label text="Monthly Rent" styleClass="table-title"/>
+                            <Label text="Status" styleClass="table-title"/>
+                            <Label text="Actions" styleClass="table-title"/>
+                        </HBox>
+
+                        <VBox fx:id="requestsContainer" spacing="8"/>
+                    </VBox>
+                </VBox>
+            </VBox>
+        </ScrollPane>
     </center>
 </BorderPane>

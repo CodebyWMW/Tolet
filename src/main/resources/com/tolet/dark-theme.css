@@ -1,46 +1,146 @@
+/* --- MAIN BACKGROUND --- */
 .root {
-    -fx-background-color: #1e1e1e;
-    -fx-base: #2b2b2b;
-    -fx-control-inner-background: #2b2b2b;
-    -fx-accent: #19a3a3;
-    -fx-text-fill: #e6e6e6;
+    -fx-background-color: #121212; /* Deep Material Black */
+    -fx-base: #121212;
+    -fx-control-inner-background: #1e1e1e;
+    -fx-accent: #0066FF; /* Match your brand blue */
+    -fx-focus-color: #0066FF;
+    -fx-faint-focus-color: #0066FF22;
+    -fx-text-fill: #E0E0E0;
+    -fx-font-family: 'Segoe UI', sans-serif;
 }
 
-.label {
-    -fx-text-fill: #e6e6e6;
+/* --- LABELS & TEXT --- */
+.label, .text {
+    -fx-text-fill: #616060;
 }
 
-.button, .toggle-button {
+/* --- INPUT FIELDS (Modern & Rounded) --- */
+.text-field, .password-field, .combo-box {
+    -fx-background-color: #2c2c2c;
+    -fx-text-fill: rgb(154, 152, 152);
+    -fx-prompt-text-fill: #b7b3b3;
+    -fx-background-radius: 8; /* Rounded Corners */
+    -fx-border-radius: 8;
+    -fx-border-color: #3e3e3e;
+    -fx-border-width: 1;
+    -fx-padding: 8 12 8 12; /* More padding for "breathing room" */
+}
+
+.text-field:focused, .password-field:focused, .combo-box:focused {
+    -fx-border-color: #0066FF; /* Blue glow on focus */
+    -fx-background-color: #464343;
+}
+
+/* --- BUTTONS --- */
+.button {
+    -fx-background-color: #2c2c2c;
+    -fx-text-fill: rgb(169, 166, 166);
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #3e3e3e;
+    -fx-cursor: hand;
+    -fx-padding: 8 16 8 16;
+}
+
+.button:hover {
     -fx-background-color: #3a3a3a;
-    -fx-text-fill: #f2f2f2;
+    -fx-border-color: #666666;
 }
 
-.text-field, .password-field, .combo-box-base {
-    -fx-background-color: #2b2b2b;
-    -fx-text-fill: #e6e6e6;
-    -fx-prompt-text-fill: #9a9a9a;
+.button:pressed {
+    -fx-background-color: #0066FF;
+    -fx-text-fill: white;
+    -fx-border-color: #0066FF;
 }
 
+/* --- TOGGLE BUTTON --- */
+.toggle-button {
+    -fx-background-color: #2c2c2c;
+    -fx-text-fill: #cccccc;
+    -fx-background-radius: 20; /* Pill shape */
+    -fx-border-radius: 20;
+    -fx-border-color: #3e3e3e;
+}
+
+.toggle-button:selected {
+    -fx-background-color: #0066FF;
+    -fx-text-fill: white;
+    -fx-border-color: #0066FF;
+}
+
+/* --- TABLE VIEW (The tricky part) --- */
 .table-view {
-    -fx-background-color: #1f1f1f;
-    -fx-control-inner-background: #1f1f1f;
-    -fx-table-cell-border-color: #3a3a3a;
-}
-
-.table-row-cell {
-    -fx-background-color: #1f1f1f;
-    -fx-text-fill: #e6e6e6;
-}
-
-.table-row-cell:odd {
-    -fx-background-color: #242424;
+    -fx-background-color: transparent;
+    -fx-table-cell-border-color: transparent;
+    -fx-border-color: #333333;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
 }
 
 .table-view .column-header-background {
-    -fx-background-color: #2b2b2b;
+    -fx-background-color: #1e1e1e;
+    -fx-background-radius: 8 8 0 0; /* Top corners rounded */
 }
 
 .table-view .column-header, .table-view .filler {
-    -fx-background-color: #2b2b2b;
-    -fx-border-color: #3a3a3a;
+    -fx-background-color: transparent;
+    -fx-border-color: #333333;
+    -fx-border-width: 0 1 1 0;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #888888;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell {
+    -fx-background-color: #121212;
+    -fx-border-color: transparent;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #1a1a1a; /* Slight stripe effect */
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #003366; /* Dark Blue selection */
+}
+
+.table-row-cell:selected .text {
+    -fx-fill: white;
+}
+
+/* --- SCROLL BARS (Make them dark too) --- */
+.scroll-bar:horizontal, .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:horizontal .track, .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+}
+
+.scroll-bar:horizontal .thumb, .scroll-bar:vertical .thumb {
+    -fx-background-color: #444444;
+    -fx-background-radius: 5;
+}
+
+/* --- SPECIAL INPUT BOX WRAPPER (Fixes the white border issue) --- */
+.input-box {
+    -fx-background-color: #2c2c2c;
+    -fx-border-color: #3e3e3e;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.input-box .text-field, .input-box .password-field {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+/* --- LOGIN VIEW BACKGROUND --- */
+.login-root {
+    -fx-background-color: #000000;
 }

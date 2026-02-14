@@ -2,75 +2,49 @@ package database;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.sql.SQLException;
 
 public class TableCreator {
-
     public static void createTables() {
+        String userTable = "CREATE TABLE IF NOT EXISTS users ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "name TEXT,"
+                + "email TEXT UNIQUE,"
+                + "phone TEXT,"
+                + "password TEXT,"
+                + "role TEXT)";
 
-        String userTable = """
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                role TEXT CHECK(role IN ('tenant','owner')) NOT NULL,
-                phone TEXT
-            );
-        """;
+        // Updated houses table with new columns
+        String houseTable = "CREATE TABLE IF NOT EXISTS houses ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "address TEXT,"
+                + "city TEXT,"
+                + "type TEXT,"
+                + "rent REAL,"
+                + "owner_id INTEGER,"
+                + "image TEXT,"
+                + "bedrooms INTEGER,"
+                + "bathrooms INTEGER,"
+                + "area REAL,"
+                + "FOREIGN KEY(owner_id) REFERENCES users(id))";
 
-        String houseTable = """
-            CREATE TABLE IF NOT EXISTS houses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                owner_id INTEGER NOT NULL,
-                address TEXT NOT NULL,
-                city TEXT NOT NULL,
-                rent REAL NOT NULL,
-                bedrooms INTEGER,
-                type TEXT,
-                description TEXT,
-                status TEXT DEFAULT 'AVAILABLE'
-                       CHECK(status IN ('AVAILABLE','UNAVAILABLE')),
-                FOREIGN KEY (owner_id)
-                    REFERENCES users(id)
-                    ON DELETE CASCADE
-            );
-        """;
-
-        String requestTable = """
-            CREATE TABLE IF NOT EXISTS rent_requests (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                house_id INTEGER NOT NULL,
-                renter_id INTEGER NOT NULL,
-                status TEXT DEFAULT 'PENDING'
-                       CHECK(status IN ('PENDING','APPROVED','REJECTED')),
-                FOREIGN KEY (house_id)
-                    REFERENCES houses(id)
-                    ON DELETE CASCADE,
-                FOREIGN KEY (renter_id)
-                    REFERENCES users(id)
-                    ON DELETE CASCADE
-            );
-        """;
+        String requestTable = "CREATE TABLE IF NOT EXISTS rent_requests ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "house_id INTEGER,"
+                + "tenant_id INTEGER,"
+                + "request_date TEXT,"
+                + "move_in_date TEXT,"
+                + "status TEXT,"
+                + "FOREIGN KEY(house_id) REFERENCES houses(id),"
+                + "FOREIGN KEY(tenant_id) REFERENCES users(id))";
 
         try (Connection conn = DatabaseConnection.connect();
-             Statement stmt = conn.createStatement()) {
-
-            // VERY IMPORTANT for SQLite
-            stmt.execute("PRAGMA foreign_keys = ON");
-
+                Statement stmt = conn.createStatement()) {
             stmt.execute(userTable);
             stmt.execute(houseTable);
             stmt.execute(requestTable);
-
-            System.out.println("✅ Tables created successfully!");
-
-        } catch (Exception e) {
-            System.out.println("❌ Failed to create tables");
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) {
-        createTables();
     }
 }

@@ -7,58 +7,170 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 public class OwnerController {
     @FXML
-    private TextField locField, rentField;
-    @FXML
-    private ComboBox<String> typeBox;
-    @FXML
-    private TableView<House> houseTable;
-    @FXML
-    private TableColumn<House, String> colLoc, colType;
-    @FXML
-    private TableColumn<House, Double> colRent;
-    @FXML
     private ToggleButton themeToggle;
+    @FXML
+    private Label profileNameLabel;
+    @FXML
+    private Label profileRoleLabel;
+    @FXML
+    private Label welcomeLabel;
+    @FXML
+    private Label dateLabel;
+    @FXML
+    private Label kpiIncomeLabel;
+    @FXML
+    private Label kpiOccupancyLabel;
+    @FXML
+    private Label kpiPendingLabel;
+    @FXML
+    private VBox requestsContainer;
+
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy",
+            Locale.ENGLISH);
+    private static final DateTimeFormatter REQUEST_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy",
+            Locale.ENGLISH);
 
     @FXML
     public void initialize() {
-        typeBox.getItems().addAll("Family", "Bachelor (M)", "Bachelor (F)", "Office");
-
-        // Bind columns to House class
-        colLoc.setCellValueFactory(new PropertyValueFactory<>("location"));
-        colType.setCellValueFactory(new PropertyValueFactory<>("type"));
-        colRent.setCellValueFactory(new PropertyValueFactory<>("rent"));
-
-        // Show all houses (In real app, filter by logged in owner)
-        houseTable.setItems(DataStore.houses);
-
-        if (themeToggle != null) {
+        if (themeToggle != null)
             themeToggle.setSelected(DataStore.darkMode);
-        }
-        Platform.runLater(() -> DataStore.applyTheme(houseTable.getScene()));
+        Platform.runLater(() -> DataStore.applyTheme(themeToggle.getScene()));
+
+        populateProfile();
+        populateKpis();
+        populateRequests();
     }
 
-    @FXML
-    protected void onAddListing() {
-        try {
-            String loc = locField.getText();
-            String type = typeBox.getValue();
-            double rent = Double.parseDouble(rentField.getText());
+    private void populateProfile() {
+        String ownerName = DataStore.currentUser != null ? DataStore.currentUser.getUsername() : "Owner";
+        String role = DataStore.currentUser != null ? DataStore.currentUser.getRole() : "Owner";
+        if (profileNameLabel != null)
+            profileNameLabel.setText(ownerName);
+        if (profileRoleLabel != null)
+            profileRoleLabel.setText(role);
+        if (welcomeLabel != null)
+            welcomeLabel.setText("Welcome back, " + ownerName + "!");
+        if (dateLabel != null)
+            dateLabel.setText(LocalDate.now().format(DATE_FORMAT));
+    }
 
-            House newHouse = new House(loc, type, rent, DataStore.currentUser.getUsername());
-            DataStore.houses.add(newHouse);
-
-            locField.clear();
-            rentField.clear();
-        } catch (Exception e) {
-            System.out.println("Invalid Input");
+    private void populateKpis() {
+        String ownerName = DataStore.currentUser != null ? DataStore.currentUser.getUsername() : null;
+        double income = 0;
+        int houseCount = 0;
+        for (House house : DataStore.getHouses()) {
+            if (ownerName == null || ownerName.isBlank() || ownerName.equalsIgnoreCase(house.getOwnerName())) {
+                income += house.getRent();
+                houseCount++;
+            }
         }
+
+        int pendingCount = 0;
+        int approvedCount = 0;
+        for (BookingRequest request : DataStore.getBookingRequests()) {
+            String status = request.getStatus();
+            if (status != null) {
+                if (status.equalsIgnoreCase("Pending"))
+                    pendingCount++;
+                if (status.equalsIgnoreCase("Approved"))
+                    approvedCount++;
+            }
+        }
+
+        int occupancy = 0;
+        if (houseCount > 0) {
+            occupancy = (int) Math.min(100, Math.round((approvedCount * 100.0) / houseCount));
+        }
+
+        if (kpiIncomeLabel != null)
+            kpiIncomeLabel.setText(formatCurrencyCompact(income));
+        if (kpiPendingLabel != null)
+            kpiPendingLabel.setText(String.valueOf(pendingCount));
+        if (kpiOccupancyLabel != null)
+            kpiOccupancyLabel.setText(occupancy + "%");
+    }
+
+    private void populateRequests() {
+        if (requestsContainer == null)
+            return;
+        requestsContainer.getChildren().clear();
+        for (BookingRequest request : DataStore.getBookingRequests()) {
+            requestsContainer.getChildren().add(buildRequestRow(request));
+        }
+    }
+
+    private HBox buildRequestRow(BookingRequest request) {
+        HBox row = new HBox(16);
+        row.getStyleClass().add("table-row");
+
+        Label tenant = buildCellLabel(request.getTenantName());
+        Label property = buildCellLabel(request.getProperty());
+        Label requestDate = buildCellLabel(formatDate(request.getRequestDate()));
+        Label moveInDate = buildCellLabel(formatDate(request.getMoveInDate()));
+        Label rent = buildCellLabel(formatRent(request.getMonthlyRent()));
+
+        Label status = new Label(normalizeStatus(request.getStatus()));
+        status.getStyleClass().add("status-pill");
+        status.getStyleClass().add(normalizeStatus(request.getStatus()).toLowerCase(Locale.ENGLISH));
+
+        Button approve = new Button("Approve");
+        approve.getStyleClass().add("btn-approve");
+        Button deny = new Button("Deny");
+        deny.getStyleClass().add("btn-deny");
+
+        HBox actions = new HBox(8, approve, deny);
+
+        row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status, actions);
+        return row;
+    }
+
+    private Label buildCellLabel(String text) {
+        Label label = new Label(text == null ? "" : text);
+        label.getStyleClass().add("table-text");
+        return label;
+    }
+
+    private String formatDate(LocalDate date) {
+        if (date == null)
+            return "";
+        return date.format(REQUEST_DATE_FORMAT);
+    }
+
+    private String formatRent(double rent) {
+        return "৳" + String.format("%,.0f", rent);
+    }
+
+    private String formatCurrencyCompact(double amount) {
+        if (amount >= 1000) {
+            double value = amount / 1000.0;
+            String formatted = value >= 10 ? String.format("%.0f", value) : String.format("%.1f", value);
+            return "৳" + formatted + "k";
+        }
+        return "৳" + String.format("%.0f", amount);
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank())
+            return "Pending";
+        String value = status.trim().toLowerCase(Locale.ENGLISH);
+        if (value.startsWith("approve"))
+            return "Approved";
+        if (value.startsWith("deny") || value.startsWith("reject"))
+            return "Denied";
+        return "Pending";
     }
 
     @FXML

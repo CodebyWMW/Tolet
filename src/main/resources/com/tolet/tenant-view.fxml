@@ -1,26 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.shape.SVGPath?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.TenantController">
-    <top>
-        <HBox spacing="10" style="-fx-padding: 10; -fx-background-color: #818181;">
-            <Label text="Search House:" style="-fx-padding: 5 0 0 0;"/>
-            <TextField fx:id="searchField" promptText="Type location (e.g. Dhanmondi)" HBox.hgrow="ALWAYS"/>
-            <Button text="Book Selected" onAction="#onBookRequest"/>
-            <Region HBox.hgrow="ALWAYS" />
-            <ToggleButton fx:id="themeToggle" text="Dark Mode" onAction="#onThemeToggle" />
-            <Button text="Back" onAction="#onBack" />
-            <Button text="Logout" onAction="#onLogout" />
-        </HBox>
-    </top>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.TenantController" style="-fx-background-color: #f9fafb;" prefWidth="1200" prefHeight="800">
+
+    <left>
+        <VBox spacing="0" style="-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-width: 0 1 0 0;" prefWidth="250">
+            <padding>
+                <Insets top="20" right="0" bottom="20" left="0"/>
+            </padding>
+
+            <Label text="Project To-Let" textFill="#2563eb" style="-fx-font-weight: bold; -fx-font-size: 20px;">
+                <padding>
+                    <Insets left="24" bottom="30"/>
+                </padding>
+            </Label>
+
+            <ToggleButton text="Dashboard" selected="true" maxWidth="Infinity" style="-fx-alignment: CENTER_LEFT; -fx-background-color: #eff6ff; -fx-text-fill: #2563eb; -fx-font-weight: bold; -fx-padding: 12 24;"/>
+            <Button text="Messages" maxWidth="Infinity" style="-fx-alignment: CENTER_LEFT; -fx-background-color: transparent; -fx-text-fill: #4b5563; -fx-padding: 12 24;"/>
+            <Button text="My Bookings" maxWidth="Infinity" style="-fx-alignment: CENTER_LEFT; -fx-background-color: transparent; -fx-text-fill: #4b5563; -fx-padding: 12 24;"/>
+            <Button text="Saved" maxWidth="Infinity" style="-fx-alignment: CENTER_LEFT; -fx-background-color: transparent; -fx-text-fill: #4b5563; -fx-padding: 12 24;"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <Button text="Log Out" onAction="#onLogout" maxWidth="Infinity" style="-fx-alignment: CENTER_LEFT; -fx-background-color: transparent; -fx-text-fill: #dc2626; -fx-padding: 12 24;"/>
+        </VBox>
+    </left>
+
     <center>
-        <TableView fx:id="searchTable">
-            <columns>
-                <TableColumn fx:id="tLoc" text="Location" prefWidth="300"/>
-                <TableColumn fx:id="tType" text="Category" prefWidth="150"/>
-                <TableColumn fx:id="tRent" text="Rent (BDT)" prefWidth="150"/>
-            </columns>
-        </TableView>
+        <ScrollPane fitToWidth="true" styleClass="edge-to-edge">
+            <VBox spacing="24" style="-fx-padding: 32;">
+
+                <VBox spacing="4">
+                    <Label fx:id="welcomeLabel" text="Welcome Back!" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #111827;"/>
+                    <Label text="Find your perfect home" style="-fx-font-size: 14px; -fx-text-fill: #6b7280;"/>
+                </VBox>
+
+                <HBox alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #d1d5db; -fx-border-radius: 12; -fx-padding: 12;">
+                    <Label text="🔍" style="-fx-padding: 0 10 0 5; -fx-text-fill: #9ca3af;"/>
+                    <TextField fx:id="searchField" promptText="Search by location, property type, or features..." HBox.hgrow="ALWAYS" style="-fx-background-color: transparent; -fx-font-size: 14px;"/>
+                </HBox>
+
+                <FlowPane fx:id="filterContainer" hgap="8" vgap="8">
+                </FlowPane>
+
+                <HBox styleClass="status-card" spacing="15" alignment="CENTER_LEFT">
+                    <Label text="🕒" style="-fx-font-size: 20px;"/>
+                    <VBox>
+                        <Label text="Booking Pending" style="-fx-font-weight: bold; -fx-text-fill: #854d0e;"/>
+                        <Label text="Your request for 'Modern Apartment' is being reviewed." style="-fx-text-fill: #a16207;"/>
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="16">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="Available Properties" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #111827;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="totalCountLabel" text="0 properties" style="-fx-text-fill: #6b7280;"/>
+                    </HBox>
+
+                    <FlowPane fx:id="propertiesGrid" hgap="24" vgap="24" prefWrapLength="1000">
+                    </FlowPane>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
     </center>
 </BorderPane>
