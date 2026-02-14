@@ -6,7 +6,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.shape.SVGPath?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.TenantController" style="-fx-background-color: #f9fafb;" prefWidth="1200" prefHeight="800">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.TenantController" style="-fx-background-color: #f9fafb;" prefWidth="900" prefHeight="600" stylesheets="@style.css">
 
     <left>
         <VBox spacing="0" style="-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-width: 0 1 0 0;" prefWidth="250">
@@ -34,6 +34,13 @@
     <center>
         <ScrollPane fitToWidth="true" styleClass="edge-to-edge">
             <VBox spacing="24" style="-fx-padding: 32;">
+                <HBox alignment="TOP_RIGHT">
+                    <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
+                        <graphic>
+                            <Region styleClass="switch-knob" />
+                        </graphic>
+                    </ToggleButton>
+                </HBox>
 
                 <VBox spacing="4">
                     <Label fx:id="welcomeLabel" text="Welcome Back!" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #111827;"/>

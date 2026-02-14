@@ -1,0 +1,164 @@
+/* Dark overrides for custom app styles */
+
+.owner-root {
+    -fx-background-color: #0f1115;
+}
+
+.sidebar {
+    -fx-background-color: #111827;
+}
+
+.brand-title {
+    -fx-text-fill: #f9fafb;
+}
+
+.brand-subtitle {
+    -fx-text-fill: #9ca3af;
+}
+
+.nav-button {
+    -fx-text-fill: #cbd5f5;
+}
+
+.nav-button:hover {
+    -fx-background-color: #1f2937;
+}
+
+.nav-button-active {
+    -fx-background-color: #1f2937;
+    -fx-text-fill: #ffffff;
+}
+
+.profile-card {
+    -fx-background-color: #0b1324;
+}
+
+.profile-name {
+    -fx-text-fill: #f9fafb;
+}
+
+.profile-role {
+    -fx-text-fill: #9ca3af;
+}
+
+.ghost-button {
+    -fx-border-color: #2f3b5f;
+    -fx-text-fill: #dbe5ff;
+}
+
+.content-scroll {
+    -fx-background-color: transparent;
+}
+
+.top-bar {
+    -fx-background-color: #111827;
+}
+
+.page-title {
+    -fx-text-fill: #f9fafb;
+}
+
+.page-subtitle {
+    -fx-text-fill: #9ca3af;
+}
+
+.date-pill {
+    -fx-text-fill: #9ca3af;
+    -fx-background-color: #1f2937;
+}
+
+.kpi-card {
+    -fx-background-color: #111827;
+}
+
+.kpi-title {
+    -fx-text-fill: #9ca3af;
+}
+
+.kpi-value {
+    -fx-text-fill: #f9fafb;
+}
+
+.panel {
+    -fx-background-color: #111827;
+}
+
+.panel-title {
+    -fx-text-fill: #f9fafb;
+}
+
+.chart-bar {
+    -fx-background-color: #3b82f6;
+}
+
+.table-header {
+    -fx-background-color: #0f172a;
+}
+
+.table-title {
+    -fx-text-fill: #9ca3af;
+}
+
+.table-row {
+    -fx-background-color: #0b1220;
+    -fx-border-color: #1f2a44;
+}
+
+.table-text {
+    -fx-text-fill: #e5e7eb;
+}
+
+.status-pill.pending {
+    -fx-background-color: #3a2a0a;
+    -fx-text-fill: #fbbf24;
+}
+
+.status-pill.approved {
+    -fx-background-color: #0b2e1a;
+    -fx-text-fill: #34d399;
+}
+
+.status-pill.denied {
+    -fx-background-color: #3b0d0d;
+    -fx-text-fill: #f87171;
+}
+
+/* Tenant cards/filters */
+.filter-chip {
+    -fx-background-color: #0f172a;
+    -fx-text-fill: #e5e7eb;
+    -fx-border-color: #1f2937;
+}
+
+.filter-chip:selected {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #2563eb;
+}
+
+.property-card {
+    -fx-background-color: #111827;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.45), 12, 0, 0, 6);
+}
+
+.card-title {
+    -fx-text-fill: #f9fafb;
+}
+
+.card-location {
+    -fx-text-fill: #9ca3af;
+}
+
+.card-price {
+    -fx-text-fill: #60a5fa;
+}
+
+.card-badge {
+    -fx-background-color: #1e3a8a;
+    -fx-text-fill: #bfdbfe;
+}
+
+.status-card {
+    -fx-background-color: #2b2210;
+    -fx-border-color: #b45309;
+}

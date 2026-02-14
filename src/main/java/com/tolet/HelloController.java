@@ -10,6 +10,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import javafx.application.Platform;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
@@ -28,9 +29,18 @@ public class HelloController {
     private Label statusLabel;
     @FXML
     private ComboBox<String> roleSelector;
+    @FXML
+    private ToggleButton themeToggle;
 
     private boolean isPasswordVisible = false;
     private String generatedOTP;
+
+    @FXML
+    public void initialize() {
+        if (themeToggle != null) {
+            themeToggle.setSelected(DataStore.darkMode);
+        }
+    }
 
     @FXML
     protected void onLoginClick(javafx.event.ActionEvent event) {
@@ -46,18 +56,21 @@ public class HelloController {
                 DataStore.currentUser = new User("System Admin", "admin@tolet.com", "140945", "Admin");
 
                 // 2. Direct Jump to Admin Dashboard
-                Parent root = FXMLLoader.load(getClass().getResource("admin-view.fxml"));
+                String resolvedFxml = DataStore.resolveFxml("admin-view.fxml");
+                System.out.println("Loading: " + resolvedFxml);
+                Parent root = FXMLLoader.load(getClass().getResource(resolvedFxml));
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                 Scene scene = new Scene(root);
-                DataStore.applyTheme(scene); // Apply dark mode if active
                 stage.setScene(scene);
+                DataStore.applyWindowSize(stage);
                 stage.show();
 
                 System.out.println("⚠️ Admin Bypass Activated");
                 return; // STOP here (Don't check database)
 
-            } catch (IOException e) {
-                statusLabel.setText("Error loading Admin Panel");
+            } catch (Exception e) {
+                statusLabel.setText("Error loading Admin Panel: " + e.getMessage());
+                statusLabel.setStyle("-fx-text-fill: red;");
                 e.printStackTrace();
             }
         }
@@ -80,13 +93,17 @@ public class HelloController {
                 fxmlFile = "tenant-view.fxml"; // Tenant is default
 
             try {
-                Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
+                String resolvedFxml = DataStore.resolveFxml(fxmlFile);
+                System.out.println("Loading: " + resolvedFxml);
+                Parent root = FXMLLoader.load(getClass().getResource(resolvedFxml));
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                 Scene scene = new Scene(root);
-                DataStore.applyTheme(scene);
                 stage.setScene(scene);
+                DataStore.applyWindowSize(stage);
                 stage.show();
-            } catch (IOException e) {
+            } catch (Exception e) {
+                statusLabel.setText("Error: " + e.getMessage());
+                statusLabel.setStyle("-fx-text-fill: red;");
                 e.printStackTrace();
             }
 
@@ -205,6 +222,26 @@ public class HelloController {
             passwordField.setManaged(true);
             passwordVisibleField.setVisible(false);
             passwordVisibleField.setManaged(false);
+        }
+    }
+
+    @FXML
+    protected void onThemeToggle() {
+        if (themeToggle == null) {
+            return;
+        }
+        DataStore.darkMode = themeToggle.isSelected();
+
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource(
+                    DataStore.resolveFxml("login-view.fxml")));
+            Stage stage = (Stage) themeToggle.getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            DataStore.applyWindowSize(stage);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

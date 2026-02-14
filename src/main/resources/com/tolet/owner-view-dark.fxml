@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.OwnerController" styleClass="owner-root" stylesheets="@style.css" prefWidth="900" prefHeight="600">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.tolet.OwnerController" styleClass="owner-root" prefWidth="900" prefHeight="600">
+    <stylesheets>
+        <URL value="@style.css" />
+        <URL value="@dark-style.css" />
+        <URL value="@dark-theme.css" />
+    </stylesheets>
+
     <left>
         <VBox styleClass="sidebar" spacing="18">
             <VBox styleClass="brand-block" spacing="4">

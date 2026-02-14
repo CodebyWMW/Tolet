@@ -5,6 +5,7 @@ import database.TableCreator;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
+import javafx.stage.Stage;
 import java.sql.*;
 import java.time.LocalDate;
 
@@ -33,6 +34,29 @@ public class DataStore {
         } else {
             scene.getStylesheets().remove(darkThemeUrl);
         }
+    }
+
+    public static void applyWindowSize(Stage stage) {
+        if (stage == null)
+            return;
+        stage.setResizable(true);
+    }
+
+    public static String resolveFxml(String baseFxml) {
+        if (baseFxml == null || baseFxml.isBlank()) {
+            return baseFxml;
+        }
+        if (darkMode) {
+            if (baseFxml.endsWith("-dark.fxml")) {
+                return baseFxml;
+            }
+            if (baseFxml.endsWith(".fxml")) {
+                return baseFxml.replace(".fxml", "-dark.fxml");
+            }
+        } else if (baseFxml.endsWith("-dark.fxml")) {
+            return baseFxml.replace("-dark.fxml", ".fxml");
+        }
+        return baseFxml;
     }
 
     public static ObservableList<House> getHouses() {

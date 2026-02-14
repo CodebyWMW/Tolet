@@ -12,12 +12,14 @@ public class HelloApplication extends Application {
         // Initialize some dummy data so the app isn't empty
         DataStore.initData();
 
-        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("splash-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 900, 600);
+        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource(
+                DataStore.resolveFxml("splash-view.fxml")));
+        Scene scene = new Scene(fxmlLoader.load());
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         DataStore.applyTheme(scene);
         stage.setTitle("Project To-•Let");
         stage.setScene(scene);
+        DataStore.applyWindowSize(stage);
         stage.show();
     }
 

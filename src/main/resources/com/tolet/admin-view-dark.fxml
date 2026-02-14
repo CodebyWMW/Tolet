@@ -3,7 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<StackPane prefHeight="600" prefWidth="900" stylesheets="@style.css"
+<StackPane prefHeight="600" prefWidth="900" style="-fx-background-color: #0b0b0b;" stylesheets="@dark-theme.css,@dark-style.css"
     xmlns:fx="http://javafx.com/fxml/1"
     xmlns="http://javafx.com/javafx/17.0.12" fx:controller="com.tolet.AdminController">
     <HBox alignment="TOP_RIGHT" StackPane.alignment="TOP_RIGHT" style="-fx-padding: 16;">
@@ -14,8 +14,8 @@
         </ToggleButton>
     </HBox>
     <VBox alignment="CENTER" spacing="20">
-        <Label style="-fx-font-size: 24px;" text="Admin Dashboard" />
-        <Label text="Feature Coming Soon: Verify NID/Docs" />
+        <Label style="-fx-font-size: 24px; -fx-text-fill: #f9fafb;" text="Admin Dashboard" />
+        <Label style="-fx-text-fill: #9ca3af;" text="Feature Coming Soon: Verify NID/Docs" />
         <HBox spacing="10" />
         <Button onAction="#onLogout" text="Logout" />
     </VBox>

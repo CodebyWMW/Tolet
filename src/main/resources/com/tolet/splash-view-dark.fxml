@@ -6,9 +6,9 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<StackPane onMouseClicked="#onContinue"
+<StackPane onMouseClicked="#onContinue" style="-fx-background-color: #0b0b0b;" prefWidth="900" prefHeight="600"
     xmlns:fx="http://javafx.com/fxml/1"
-    xmlns="http://javafx.com/javafx/17.0.12" fx:controller="com.tolet.SplashController">
+    xmlns="http://javafx.com/javafx/17.0.12" fx:controller="com.tolet.SplashController" stylesheets="@dark-theme.css">
     <ImageView fx:id="splashImage" fitHeight="412.0" fitWidth="602.0" preserveRatio="true" />
     <HBox alignment="TOP_RIGHT" StackPane.alignment="TOP_RIGHT" style="-fx-padding: 16;">
         <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
@@ -21,8 +21,8 @@
         <padding>
             <Insets top="30" />
         </padding>
-        <Label text="Click anywhere to continue" />
-        <Label fx:id="titleLabel" prefHeight="0.0" prefWidth="198.0" text="Project To-•Let" textAlignment="CENTER" textOverrun="WORD_ELLIPSIS">
+        <Label text="Click anywhere to continue" textFill="#e5e7eb" />
+        <Label fx:id="titleLabel" prefHeight="0.0" prefWidth="198.0" text="Project To-•Let" textAlignment="CENTER" textOverrun="WORD_ELLIPSIS" textFill="#f9fafb">
             <font>
                 <Font name="System Bold" size="28" />
             </font>

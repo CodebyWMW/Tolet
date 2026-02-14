@@ -13,6 +13,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.application.Platform;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ public class TenantController {
     private FlowPane filterContainer;
     @FXML
     private FlowPane propertiesGrid;
+    @FXML
+    private ToggleButton themeToggle;
 
     private List<House> allHouses;
     private List<String> activeFilters = new ArrayList<>();
@@ -35,6 +38,10 @@ public class TenantController {
 
     @FXML
     public void initialize() {
+        if (themeToggle != null) {
+            themeToggle.setSelected(DataStore.darkMode);
+        }
+
         if (DataStore.currentUser != null) {
             welcomeLabel.setText("Welcome Back, " + DataStore.currentUser.getUsername() + "!");
         }
@@ -160,11 +167,30 @@ public class TenantController {
     @FXML
     private void onLogout(javafx.event.ActionEvent event) throws IOException {
         DataStore.currentUser = null;
-        Parent root = FXMLLoader.load(getClass().getResource("login-view.fxml"));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        loadScene(stage, "login-view.fxml");
+    }
+
+    @FXML
+    private void onThemeToggle() {
+        if (themeToggle == null) {
+            return;
+        }
+        DataStore.darkMode = themeToggle.isSelected();
+        try {
+            Stage stage = (Stage) themeToggle.getScene().getWindow();
+            loadScene(stage, "tenant-view.fxml");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadScene(Stage stage, String baseFxml) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource(
+                DataStore.resolveFxml(baseFxml)));
         Scene scene = new Scene(root);
-        DataStore.applyTheme(scene);
         stage.setScene(scene);
+        DataStore.applyWindowSize(stage);
         stage.show();
     }
 }

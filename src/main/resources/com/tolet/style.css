@@ -284,3 +284,36 @@
     -fx-border-radius: 8;
     -fx-background-radius: 8;
 }
+
+/* Theme switch (shared) */
+.theme-switch {
+    -fx-background-color: #f1f1f1;
+    -fx-background-radius: 999;
+    -fx-padding: 5 26 5 5;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-min-width: 60;
+    -fx-min-height: 32;
+    -fx-max-width: 60;
+    -fx-max-height: 32;
+}
+
+.theme-switch:selected {
+    -fx-background-color: #1a1a1a;
+    -fx-alignment: CENTER_RIGHT;
+    -fx-padding: 5 5 5 26;
+}
+
+.theme-switch .switch-knob {
+    -fx-background-color: #d7f802;
+    -fx-background-radius: 999;
+    -fx-min-width: 22;
+    -fx-min-height: 22;
+    -fx-max-width: 22;
+    -fx-max-height: 22;
+}
+
+.theme-switch:selected .switch-knob {
+    -fx-background-color: #2563eb;
+}

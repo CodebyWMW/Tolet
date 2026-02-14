@@ -47,7 +47,6 @@ public class OwnerController {
     public void initialize() {
         if (themeToggle != null)
             themeToggle.setSelected(DataStore.darkMode);
-        Platform.runLater(() -> DataStore.applyTheme(themeToggle.getScene()));
 
         populateProfile();
         populateKpis();
@@ -174,28 +173,36 @@ public class OwnerController {
     }
 
     @FXML
-    private void onBack(ActionEvent event) throws IOException {
-        switchToLogin(event);
-    }
-
-    @FXML
     private void onLogout(ActionEvent event) throws IOException {
         DataStore.currentUser = null;
         switchToLogin(event);
     }
 
     private void switchToLogin(ActionEvent event) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource("login-view.fxml"));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        Scene scene = new Scene(root);
-        DataStore.applyTheme(scene);
-        stage.setScene(scene);
-        stage.show();
+        loadScene(stage, "login-view.fxml");
     }
 
     @FXML
     private void onThemeToggle() {
+        if (themeToggle == null) {
+            return;
+        }
         DataStore.darkMode = themeToggle.isSelected();
-        DataStore.applyTheme(themeToggle.getScene());
+        try {
+            Stage stage = (Stage) themeToggle.getScene().getWindow();
+            loadScene(stage, "owner-view.fxml");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadScene(Stage stage, String baseFxml) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource(
+                DataStore.resolveFxml(baseFxml)));
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        DataStore.applyWindowSize(stage);
+        stage.show();
     }
 }
