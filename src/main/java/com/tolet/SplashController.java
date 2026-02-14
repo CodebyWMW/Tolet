@@ -29,7 +29,7 @@ public class SplashController {
         if (imageFile.exists()) {
             splashImage.setImage(new Image(imageFile.toURI().toString()));
         }
-        titleLabel.setText("Project To-•Let");
+        // Keep the text from FXML so UI edits show without code changes.
 
         if (themeToggle != null) {
             themeToggle.setSelected(DataStore.darkMode);

@@ -22,7 +22,7 @@
             <Insets top="30" />
         </padding>
         <Label text="Click anywhere to continue" textFill="#e5e7eb" />
-        <Label fx:id="titleLabel" prefHeight="0.0" prefWidth="198.0" text="Project To-•Let" textAlignment="CENTER" textOverrun="WORD_ELLIPSIS" textFill="#f9fafb">
+        <Label fx:id="titleLabel" prefHeight="0.0" prefWidth="198.0" text="🏠 TO-•LET 🏡" textAlignment="CENTER" textOverrun="WORD_ELLIPSIS" textFill="#f9fafb">
             <font>
                 <Font name="System Bold" size="28" />
             </font>
