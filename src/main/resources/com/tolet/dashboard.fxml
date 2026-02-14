@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.yourpackage.DashboardController">
+
+    <!-- ================= LEFT SIDEBAR ================= -->
+    <left>
+        <VBox spacing="15" prefWidth="220"
+              style="-fx-background-color: #0f1f3d; -fx-padding: 20;">
+            
+            <Label text="RentEase"
+                   style="-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;"/>
+            <Label text="Tenant Portal"
+                   style="-fx-text-fill: #aab3c5;"/>
+
+            <Separator />
+
+            <Button text="Dashboard"/>
+            <Button text="My Wishlist"/>
+            <Button text="My Bookings"/>
+            <Button text="Applications"/>
+            <Button text="Profile"/>
+            <Button text="Settings"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <Label text="Rashed Ahmed"
+                   style="-fx-text-fill: white;"/>
+            <Button fx:id="logoutButton" text="Logout"
+                    onAction="#handleLogout"/>
+        </VBox>
+    </left>
+
+    <!-- ================= MAIN CONTENT ================= -->
+    <center>
+        <VBox spacing="20" style="-fx-padding: 25;">
+
+            <!-- Welcome Section -->
+            <VBox spacing="5">
+                <Label text="Welcome Back, Rashed!"
+                       style="-fx-font-size: 22; -fx-font-weight: bold;"/>
+                <Label text="Find your perfect home"/>
+            </VBox>
+
+            <!-- Search -->
+            <TextField promptText="Search by location, property type, or features..."/>
+
+            <!-- Filter Buttons -->
+            <HBox spacing="10">
+                <Button text="Family"/>
+                <Button text="Bachelor"/>
+                <Button text="Gas Available"/>
+                <Button text="Parking"/>
+                <Button text="Furnished"/>
+                <Button text="Pet Friendly"/>
+            </HBox>
+
+            <!-- Booking Status Card -->
+            <VBox spacing="5"
+                  style="-fx-background-color: #f4e7c6;
+                         -fx-background-radius: 10;
+                         -fx-padding: 15;">
+                <Label text="Current Booking Status: Pending"
+                       style="-fx-font-weight: bold;"/>
+                <Label text="Your booking request is under review"/>
+                <Label text="Property: Sunset Boulevard Apartment"/>
+                <Label text="Submitted: Feb 5, 2026"/>
+            </VBox>
+
+            <!-- Wishlist Section -->
+            <Label text="My Wishlist"
+                   style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+
+            <ScrollPane fitToWidth="true">
+                <content>
+                    <HBox spacing="20" style="-fx-padding: 10;">
+
+                        <!-- Property Card 1 -->
+                        <VBox prefWidth="250" spacing="8"
+                              style="-fx-background-color: white;
+                                     -fx-background-radius: 10;
+                                     -fx-padding: 10;">
+                            <ImageView fitHeight="120" fitWidth="230"/>
+                            <Label text="Luxury 3BR Apartment"
+                                   style="-fx-font-weight: bold;"/>
+                            <Label text="Gulshan 2, Dhaka"/>
+                            <Label text="3 Bed | 2 Bath | 1500 sqft"/>
+                        </VBox>
+
+                        <!-- Property Card 2 -->
+                        <VBox prefWidth="250" spacing="8"
+                              style="-fx-background-color: white;
+                                     -fx-background-radius: 10;
+                                     -fx-padding: 10;">
+                            <ImageView fitHeight="120" fitWidth="230"/>
+                            <Label text="Modern Bachelor Studio"
+                                   style="-fx-font-weight: bold;"/>
+                            <Label text="Banani, Dhaka"/>
+                            <Label text="1 Bed | 1 Bath | 650 sqft"/>
+                        </VBox>
+
+                        <!-- Property Card 3 -->
+                        <VBox prefWidth="250" spacing="8"
+                              style="-fx-background-color: white;
+                                     -fx-background-radius: 10;
+                                     -fx-padding: 10;">
+                            <ImageView fitHeight="120" fitWidth="230"/>
+                            <Label text="Cozy 2BR with Gas"
+                                   style="-fx-font-weight: bold;"/>
+                            <Label text="Dhanmondi, Dhaka"/>
+                            <Label text="2 Bed | 1 Bath | 1000 sqft"/>
+                        </VBox>
+
+                    </HBox>
+                </content>
+            </ScrollPane>
+
+        </VBox>
+    </center>
+
+</BorderPane>

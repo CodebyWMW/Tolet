@@ -9,9 +9,9 @@ public class TestDB {
         Connection conn = DatabaseConnection.connect();
 
         if (conn != null) {
-            System.out.println("🎉 Connection test PASSED");
+            System.out.println("Connection test PASSED ✅");
         } else {
-            System.out.println("❌ Connection test FAILED");
+            System.out.println("Connection test FAILED ❌");
         }
     }
 }
