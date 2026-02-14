@@ -10,11 +10,9 @@ public class DatabaseConnection {
 
     public static Connection connect() {
         try {
-            Connection conn = DriverManager.getConnection(URL);
-            System.out.println("✅ Database connected successfully");
-            return conn;
+            return DriverManager.getConnection(URL);
         } catch (Exception e) {
-            System.out.println("❌ Database connection failed");
+            System.out.println("Database connection failed");
             e.printStackTrace();
             return null;
         }
