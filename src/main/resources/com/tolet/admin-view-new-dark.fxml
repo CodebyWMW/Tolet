@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="600" prefWidth="900" stylesheets="@dark-theme.css,@dark-style.css"
+    xmlns="http://javafx.com/javafx/25"
+    xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.AdminController">
+    <!-- Top Bar -->
+    <top>
+        <HBox alignment="CENTER_LEFT" style="-fx-background-color: #1e293b; -fx-padding: 16;">
+            <Label text="Admin Dashboard" style="-fx-text-fill: white; -fx-font-size: 24; -fx-font-weight: bold;">
+                <font>
+                    <Font name="System Bold" size="24" />
+                </font>
+            </Label>
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="adminNameLabel" text="Admin" style="-fx-text-fill: #94a3b8; -fx-font-size: 14; -fx-padding: 0 16 0 0;" />
+            <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
+                <graphic>
+                    <Region styleClass="switch-knob" />
+                </graphic>
+            </ToggleButton>
+            <Button text="Logout" onAction="#onLogout" style="-fx-background-color: #ef4444; -fx-text-fill: white; -fx-padding: 8 16; -fx-cursor: hand;">
+                <HBox.margin>
+                    <Insets left="16" />
+                </HBox.margin>
+            </Button>
+        </HBox>
+    </top>
+
+    <!-- Main Content -->
+    <center>
+        <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE">
+            <!-- User Management Tab -->
+            <Tab text="User Management">
+                <VBox spacing="16" style="-fx-padding: 20;">
+                    <HBox spacing="16" alignment="CENTER_LEFT">
+                        <Label text="Filter by Role:" style="-fx-font-size: 14; -fx-font-weight: bold;" />
+                        <ComboBox fx:id="roleFilterCombo" promptText="All Users" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="userCountLabel" text="Total Users: 0" style="-fx-font-size: 14; -fx-text-fill: #64748b;" />
+                    </HBox>
+
+                    <TableView fx:id="usersTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="userIdCol" text="ID" prefWidth="60" />
+                            <TableColumn fx:id="userNameCol" text="Name" prefWidth="180" />
+                            <TableColumn fx:id="userEmailCol" text="Email" prefWidth="220" />
+                            <TableColumn fx:id="userPhoneCol" text="Phone" prefWidth="140" />
+                            <TableColumn fx:id="userRoleCol" text="Role" prefWidth="100" />
+                            <TableColumn fx:id="userVerifiedCol" text="Verified" prefWidth="100" />
+                            <TableColumn fx:id="userActionsCol" text="Actions" prefWidth="200" />
+                            <TableColumn fx:id="userDeleteCol" text="Delete" prefWidth="120" />
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+
+            <!-- House Listings Tab -->
+            <Tab text="House Listings">
+                <VBox spacing="16" style="-fx-padding: 20;">
+                    <HBox spacing="16" alignment="CENTER_LEFT">
+                        <Label text="Filter by Status:" style="-fx-font-size: 14; -fx-font-weight: bold;" />
+                        <ComboBox fx:id="statusFilterCombo" promptText="All Listings" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="houseCountLabel" text="Total Houses: 0" style="-fx-font-size: 14; -fx-text-fill: #64748b;" />
+                    </HBox>
+
+                    <TableView fx:id="housesTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="houseIdCol" text="ID" prefWidth="60" />
+                            <TableColumn fx:id="houseLocationCol" text="Location" prefWidth="250" />
+                            <TableColumn fx:id="houseOwnerIdCol" text="Owner ID" prefWidth="100" />
+                            <TableColumn fx:id="houseFeaturesCol" text="Features" prefWidth="300" />
+                            <TableColumn fx:id="houseStatusCol" text="Status" prefWidth="100" />
+                            <TableColumn fx:id="houseActionsCol" text="Actions" prefWidth="250" />
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+
+            <!-- Tenant Verification Tab -->
+            <Tab text="Tenant Verification">
+                <VBox spacing="16" style="-fx-padding: 20;">
+                    <HBox spacing="16" alignment="CENTER_LEFT">
+                        <Label text="Unverified Tenants" style="-fx-font-size: 16; -fx-font-weight: bold;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="unverifiedCountLabel" text="Unverified: 0" style="-fx-font-size: 14; -fx-text-fill: #ef4444;" />
+                    </HBox>
+
+                    <TableView fx:id="tenantsTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="tenantIdCol" text="ID" prefWidth="60" />
+                            <TableColumn fx:id="tenantNameCol" text="Name" prefWidth="200" />
+                            <TableColumn fx:id="tenantEmailCol" text="Email" prefWidth="250" />
+                            <TableColumn fx:id="tenantPhoneCol" text="Phone" prefWidth="150" />
+                            <TableColumn fx:id="tenantVerifiedCol" text="Status" prefWidth="120" />
+                            <TableColumn fx:id="tenantActionsCol" text="Actions" prefWidth="200" />
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+
+            <!-- Audit Log Tab -->
+            <Tab text="Deleted Users Log">
+                <VBox spacing="16" style="-fx-padding: 20;">
+                    <HBox spacing="16" alignment="CENTER_LEFT">
+                        <Label text="Deleted Users History" style="-fx-font-size: 16; -fx-font-weight: bold;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                    </HBox>
+
+                    <TableView fx:id="auditTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="auditUserIdCol" text="User ID" prefWidth="80" />
+                            <TableColumn fx:id="auditNameCol" text="Name" prefWidth="160" />
+                            <TableColumn fx:id="auditEmailCol" text="Email" prefWidth="200" />
+                            <TableColumn fx:id="auditPhoneCol" text="Phone" prefWidth="140" />
+                            <TableColumn fx:id="auditRoleCol" text="Role" prefWidth="120" />
+                            <TableColumn fx:id="auditDeletedAtCol" text="Deleted At" prefWidth="160" />
+                            <TableColumn fx:id="auditDeletedByCol" text="Deleted By" prefWidth="140" />
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+
+            <!-- Statistics Tab -->
+            <Tab text="Statistics">
+                <VBox spacing="24" style="-fx-padding: 32;" alignment="TOP_CENTER">
+                    <Label text="Platform Statistics" style="-fx-font-size: 24; -fx-font-weight: bold;" />
+
+                    <GridPane hgap="24" vgap="24">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="33" />
+                            <ColumnConstraints percentWidth="33" />
+                            <ColumnConstraints percentWidth="34" />
+                        </columnConstraints>
+
+                        <!-- Total Users Card -->
+                        <VBox spacing="8" style="-fx-background-color: #3b82f6; -fx-background-radius: 8; -fx-padding: 24; -fx-alignment: CENTER;" GridPane.columnIndex="0">
+                            <Label text="Total Users" style="-fx-text-fill: white; -fx-font-size: 14;" />
+                            <Label fx:id="statsTotalUsersLabel" text="0" style="-fx-text-fill: white; -fx-font-size: 36; -fx-font-weight: bold;" />
+                        </VBox>
+
+                        <!-- Total Houses Card -->
+                        <VBox spacing="8" style="-fx-background-color: #10b981; -fx-background-radius: 8; -fx-padding: 24; -fx-alignment: CENTER;" GridPane.columnIndex="1">
+                            <Label text="Total Houses" style="-fx-text-fill: white; -fx-font-size: 14;" />
+                            <Label fx:id="statsTotalHousesLabel" text="0" style="-fx-text-fill: white; -fx-font-size: 36; -fx-font-weight: bold;" />
+                        </VBox>
+
+                        <!-- Pending Approvals Card -->
+                        <VBox spacing="8" style="-fx-background-color: #f59e0b; -fx-background-radius: 8; -fx-padding: 24; -fx-alignment: CENTER;" GridPane.columnIndex="2">
+                            <Label text="Pending Approvals" style="-fx-text-fill: white; -fx-font-size: 14;" />
+                            <Label fx:id="statsPendingLabel" text="0" style="-fx-text-fill: white; -fx-font-size: 36; -fx-font-weight: bold;" />
+                        </VBox>
+
+                        <!-- Owners Card -->
+                        <VBox spacing="8" style="-fx-background-color: #8b5cf6; -fx-background-radius: 8; -fx-padding: 24; -fx-alignment: CENTER;" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <Label text="Owners" style="-fx-text-fill: white; -fx-font-size: 14;" />
+                            <Label fx:id="statsOwnersLabel" text="0" style="-fx-text-fill: white; -fx-font-size: 36; -fx-font-weight: bold;" />
+                        </VBox>
+
+                        <!-- Tenants Card -->
+                        <VBox spacing="8" style="-fx-background-color: #ec4899; -fx-background-radius: 8; -fx-padding: 24; -fx-alignment: CENTER;" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <Label text="Tenants" style="-fx-text-fill: white; -fx-font-size: 14;" />
+                            <Label fx:id="statsTenantsLabel" text="0" style="-fx-text-fill: white; -fx-font-size: 36; -fx-font-weight: bold;" />
+                        </VBox>
+
+                        <!-- Unverified Users Card -->
+                        <VBox spacing="8" style="-fx-background-color: #ef4444; -fx-background-radius: 8; -fx-padding: 24; -fx-alignment: CENTER;" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                            <Label text="Unverified Users" style="-fx-text-fill: white; -fx-font-size: 14;" />
+                            <Label fx:id="statsUnverifiedLabel" text="0" style="-fx-text-fill: white; -fx-font-size: 36; -fx-font-weight: bold;" />
+                        </VBox>
+                    </GridPane>
+
+                    <Button text="Refresh Statistics" onAction="#loadStatistics" style="-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-padding: 12 24; -fx-font-size: 14; -fx-cursor: hand;" />
+                </VBox>
+            </Tab>
+        </TabPane>
+    </center>
+</BorderPane>

@@ -55,7 +55,7 @@
     <VBox maxWidth="400" prefHeight="350.0" prefWidth="400.0" spacing="15">
 
         <VBox prefHeight="20.0" prefWidth="400.0" spacing="5">
-            <Label style="-fx-font-weight: bold; -fx-text-fill: #333;" text="Email or Phone Number">
+            <Label style="-fx-font-weight: bold; -fx-text-fill: #333;" text="Username">
                 <font>
                     <Font size="15.0" />
                 </font>
@@ -63,7 +63,7 @@
             <HBox alignment="CENTER_LEFT" styleClass="input-box">
                 <SVGPath content="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="#8c8c8c" scaleX="0.8" scaleY="0.8" />
                 <Rectangle arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="30.0" stroke="BLACK" strokeType="INSIDE" visible="false" width="12.0" />
-                <TextField fx:id="emailField" blendMode="SRC_ATOP" promptText="Enter your email or phone number" styleClass="transparent-field" HBox.hgrow="ALWAYS" />
+                <TextField fx:id="emailField" blendMode="SRC_ATOP" promptText="Enter your username" styleClass="transparent-field" HBox.hgrow="ALWAYS" />
             </HBox>
         </VBox>
 
@@ -96,7 +96,7 @@
             <Hyperlink style="-fx-text-fill: #0066FF; -fx-border-color: transparent;" text="Forgot Password?" />
         </HBox>
 
-        <Button maxWidth="Infinity" onAction="#onLoginClick" prefHeight="45" styleClass="primary-button" text="Sign In" />
+        <Button maxWidth="Infinity" onAction="#onLoginClick" prefHeight="45" styleClass="primary-button" text="Sign In" defaultButton="true" />
 
         <Label fx:id="statusLabel" alignment="CENTER" maxWidth="Infinity" />
 

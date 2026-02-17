@@ -162,3 +162,21 @@
     -fx-background-color: #2b2210;
     -fx-border-color: #b45309;
 }
+
+/* Theme switch dark mode adjustments */
+.theme-switch {
+    -fx-background-color: #1f2937;
+    -fx-border-color: #374151;
+}
+
+.theme-switch:selected {
+    -fx-background-color: #1e293b;
+}
+
+.theme-switch .switch-knob {
+    -fx-background-color: #9ca3af;
+}
+
+.theme-switch:selected .switch-knob {
+    -fx-background-color: #60a5fa;
+}

@@ -1,7 +1,5 @@
 package models;
 
-
-
 public class House {
 
     private int id;
@@ -13,6 +11,7 @@ public class House {
     private boolean parkingAvailable;
     private boolean furnished;
     private boolean petFriendly;
+    private String approvalStatus; // pending, approved, rejected
 
     // Empty constructor
     public House() {
@@ -20,12 +19,12 @@ public class House {
 
     // Constructor without id (for inserting new house)
     public House(int ownerId, String location,
-                 boolean familyAllowed,
-                 boolean bachelorAllowed,
-                 boolean gasAvailable,
-                 boolean parkingAvailable,
-                 boolean furnished,
-                 boolean petFriendly) {
+            boolean familyAllowed,
+            boolean bachelorAllowed,
+            boolean gasAvailable,
+            boolean parkingAvailable,
+            boolean furnished,
+            boolean petFriendly) {
 
         this.ownerId = ownerId;
         this.location = location;
@@ -39,30 +38,83 @@ public class House {
 
     // Getters and Setters
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public int getId() {
+        return id;
+    }
 
-    public int getOwnerId() { return ownerId; }
-    public void setOwnerId(int ownerId) { this.ownerId = ownerId; }
+    public void setId(int id) {
+        this.id = id;
+    }
 
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
+    public int getOwnerId() {
+        return ownerId;
+    }
 
-    public boolean isFamilyAllowed() { return familyAllowed; }
-    public void setFamilyAllowed(boolean familyAllowed) { this.familyAllowed = familyAllowed; }
+    public void setOwnerId(int ownerId) {
+        this.ownerId = ownerId;
+    }
 
-    public boolean isBachelorAllowed() { return bachelorAllowed; }
-    public void setBachelorAllowed(boolean bachelorAllowed) { this.bachelorAllowed = bachelorAllowed; }
+    public String getLocation() {
+        return location;
+    }
 
-    public boolean isGasAvailable() { return gasAvailable; }
-    public void setGasAvailable(boolean gasAvailable) { this.gasAvailable = gasAvailable; }
+    public void setLocation(String location) {
+        this.location = location;
+    }
 
-    public boolean isParkingAvailable() { return parkingAvailable; }
-    public void setParkingAvailable(boolean parkingAvailable) { this.parkingAvailable = parkingAvailable; }
+    public boolean isFamilyAllowed() {
+        return familyAllowed;
+    }
 
-    public boolean isFurnished() { return furnished; }
-    public void setFurnished(boolean furnished) { this.furnished = furnished; }
+    public void setFamilyAllowed(boolean familyAllowed) {
+        this.familyAllowed = familyAllowed;
+    }
 
-    public boolean isPetFriendly() { return petFriendly; }
-    public void setPetFriendly(boolean petFriendly) { this.petFriendly = petFriendly; }
+    public boolean isBachelorAllowed() {
+        return bachelorAllowed;
+    }
+
+    public void setBachelorAllowed(boolean bachelorAllowed) {
+        this.bachelorAllowed = bachelorAllowed;
+    }
+
+    public boolean isGasAvailable() {
+        return gasAvailable;
+    }
+
+    public void setGasAvailable(boolean gasAvailable) {
+        this.gasAvailable = gasAvailable;
+    }
+
+    public boolean isParkingAvailable() {
+        return parkingAvailable;
+    }
+
+    public void setParkingAvailable(boolean parkingAvailable) {
+        this.parkingAvailable = parkingAvailable;
+    }
+
+    public boolean isFurnished() {
+        return furnished;
+    }
+
+    public void setFurnished(boolean furnished) {
+        this.furnished = furnished;
+    }
+
+    public boolean isPetFriendly() {
+        return petFriendly;
+    }
+
+    public void setPetFriendly(boolean petFriendly) {
+        this.petFriendly = petFriendly;
+    }
+
+    public String getApprovalStatus() {
+        return approvalStatus;
+    }
+
+    public void setApprovalStatus(String approvalStatus) {
+        this.approvalStatus = approvalStatus;
+    }
 }

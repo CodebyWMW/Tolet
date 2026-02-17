@@ -67,19 +67,21 @@ public class HelloController {
 
     @FXML
     protected void onLoginClick(javafx.event.ActionEvent event) {
-        String email = emailField.getText();
-        String password = isPasswordVisible ? passwordVisibleField.getText() : passwordField.getText();
+        String username = emailField.getText().trim();
+        String password = isPasswordVisible ? passwordVisibleField.getText().trim() : passwordField.getText().trim();
+
+        System.out.println("DEBUG - Username: '" + username + "' | Password: '" + password + "'");
 
         // ---------------------------------------------------------
         // 🔓 MASTER KEY BYPASS (ADMIN ONLY)
         // ---------------------------------------------------------
-        if (email.equalsIgnoreCase("admin") && password.equals("140945")) {
+        if (username.equalsIgnoreCase("admin") && password.equals("140945")) {
             try {
                 // 1. Create a "Fake" Authenticated User
                 DataStore.currentUser = new User("System Admin", "admin@tolet.com", "140945", "Admin");
 
                 // 2. Direct Jump to Admin Dashboard
-                String resolvedFxml = DataStore.resolveFxml("admin-view.fxml");
+                String resolvedFxml = DataStore.resolveFxml("admin-view-new.fxml");
                 System.out.println("Loading: " + resolvedFxml);
                 Parent root = FXMLLoader.load(getClass().getResource(resolvedFxml));
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -100,7 +102,7 @@ public class HelloController {
         // ---------------------------------------------------------
 
         // Normal User Login Flow
-        if (DataStore.validateUser(email, password)) {
+        if (DataStore.validateUser(username, password)) {
             statusLabel.setText("Login Successful!");
             statusLabel.setStyle("-fx-text-fill: green;");
 
@@ -109,7 +111,7 @@ public class HelloController {
             String fxmlFile = "";
 
             if (role.equalsIgnoreCase("Admin"))
-                fxmlFile = "admin-view.fxml";
+                fxmlFile = "admin-view-new.fxml";
             else if (role.equalsIgnoreCase("House Owner"))
                 fxmlFile = "owner-view.fxml";
             else
@@ -131,7 +133,7 @@ public class HelloController {
             }
 
         } else {
-            statusLabel.setText("Invalid Email or Password");
+            statusLabel.setText("Invalid Username or Password");
             statusLabel.setStyle("-fx-text-fill: red;");
         }
     }
@@ -150,26 +152,55 @@ public class HelloController {
 
         VBox box = new VBox(10);
         TextField nameIn = new TextField();
-        nameIn.setPromptText("Full Name");
+        nameIn.setPromptText("Username");
         TextField emailIn = new TextField();
         emailIn.setPromptText("Email or Phone");
         PasswordField passIn = new PasswordField();
         passIn.setPromptText("Password");
         ComboBox<String> roleIn = new ComboBox<>();
-        roleIn.getItems().addAll("Tenant", "House Owner");
+        roleIn.getItems().addAll("Tenant", "Owner");
         roleIn.setValue("Tenant");
 
-        box.getChildren().addAll(new Label("Name:"), nameIn, new Label("Contact:"), emailIn, new Label("Password:"),
-                passIn, new Label("I am a:"), roleIn);
+        box.getChildren().addAll(new Label("Username:"), nameIn, new Label("Email/Phone:"), emailIn,
+                new Label("Password:"), passIn, new Label("Role (Tenant/Owner):"), roleIn);
         dialog.getDialogPane().setContent(box);
 
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isPresent() && result.get() == registerBtnType) {
-            if (DataStore.registerUser(nameIn.getText(), emailIn.getText(), passIn.getText(), roleIn.getValue())) {
+            String username = nameIn.getText().trim();
+            String email = emailIn.getText().trim();
+            String password = passIn.getText().trim();
+            String role = roleIn.getValue();
+            if ("Owner".equalsIgnoreCase(role)) {
+                role = "House Owner";
+            }
+
+            // Validate inputs
+            if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                statusLabel.setText("All fields are required!");
+                statusLabel.setStyle("-fx-text-fill: red;");
+                return;
+            }
+
+            // Check if username already exists (case-insensitive)
+            if (DataStore.usernameExists(username)) {
+                statusLabel.setText("Username already taken!");
+                statusLabel.setStyle("-fx-text-fill: red;");
+                return;
+            }
+
+            // Check if email already exists
+            if (email.contains("@") && DataStore.emailExists(email)) {
+                statusLabel.setText("Email already registered!");
+                statusLabel.setStyle("-fx-text-fill: red;");
+                return;
+            }
+
+            if (DataStore.registerUser(username, email, password, role)) {
                 statusLabel.setText("Account Created! Please Login.");
                 statusLabel.setStyle("-fx-text-fill: green;");
             } else {
-                statusLabel.setText("Registration Failed (User exists).");
+                statusLabel.setText("Registration Failed.");
                 statusLabel.setStyle("-fx-text-fill: red;");
             }
         }

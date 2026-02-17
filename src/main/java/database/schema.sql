@@ -27,3 +27,15 @@ CREATE TABLE IF NOT EXISTS bookings (
     FOREIGN KEY (house_id) REFERENCES houses(id),
     FOREIGN KEY (tenant_id) REFERENCES users(id)
 );
+
+-- USERS AUDIT TABLE
+CREATE TABLE IF NOT EXISTS users_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    name TEXT,
+    email TEXT,
+    phone TEXT,
+    role TEXT,
+    deleted_at TEXT,
+    deleted_by TEXT
+);

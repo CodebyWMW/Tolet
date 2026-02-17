@@ -17,11 +17,12 @@ public class DataStore {
         TableCreator.createTables();
 
         // Populate dummy data if empty (for testing)
-        if (getHouses().isEmpty()) {
-            addMockData();
-        }
+        // Commented out to avoid using old House class
+        // if (getHouses().isEmpty()) {
+        // addMockData();
+        // }
 
-        addMockRequestsIfEmpty();
+        // addMockRequestsIfEmpty();
     }
 
     public static void applyTheme(Scene scene) {
@@ -61,7 +62,7 @@ public class DataStore {
 
     public static ObservableList<House> getHouses() {
         ObservableList<House> list = FXCollections.observableArrayList();
-        String query = "SELECT h.address, h.type, h.rent, h.image, h.bedrooms, h.bathrooms, h.area, u.name " +
+        String query = "SELECT h.location, h.type, h.rent, h.image, h.bedrooms, h.bathrooms, h.area, u.name " +
                 "FROM houses h JOIN users u ON h.owner_id = u.id";
 
         try (Connection conn = DatabaseConnection.connect();
@@ -70,7 +71,7 @@ public class DataStore {
 
             while (rs.next()) {
                 list.add(new House(
-                        rs.getString("address"),
+                        rs.getString("location"),
                         rs.getString("type"),
                         rs.getDouble("rent"),
                         rs.getString("name"),
@@ -93,7 +94,7 @@ public class DataStore {
                 && currentUser.getRole().toLowerCase().contains("owner")
                 && ownerId != null;
 
-        String query = "SELECT u.name AS tenant_name, h.address, r.request_date, r.move_in_date, h.rent, r.status "
+        String query = "SELECT u.name AS tenant_name, h.location, r.request_date, r.move_in_date, h.rent, r.status "
                 + "FROM rent_requests r "
                 + "JOIN users u ON r.tenant_id = u.id "
                 + "JOIN houses h ON r.house_id = h.id";
@@ -110,7 +111,7 @@ public class DataStore {
             while (rs.next()) {
                 list.add(new BookingRequest(
                         rs.getString("tenant_name"),
-                        rs.getString("address"),
+                        rs.getString("location"),
                         parseDate(rs.getString("request_date")),
                         parseDate(rs.getString("move_in_date")),
                         rs.getDouble("rent"),
@@ -289,13 +290,12 @@ public class DataStore {
 
     // --- KEEP YOUR EXISTING AUTH METHODS BELOW (validateUser, registerUser, etc)
     // ---
-    public static boolean validateUser(String emailOrPhone, String password) {
-        String query = "SELECT * FROM users WHERE (email = ? OR phone = ?) AND password = ?";
+    public static boolean validateUser(String username, String password) {
+        String query = "SELECT * FROM users WHERE name = ? COLLATE NOCASE AND password = ?";
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, emailOrPhone);
-            pstmt.setString(2, emailOrPhone);
-            pstmt.setString(3, password);
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 currentUser = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"),
@@ -313,14 +313,18 @@ public class DataStore {
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, name);
-            pstmt.setString(2, email);
+            String trimmedEmail = email == null ? "" : email.trim();
             pstmt.setString(3, password);
             pstmt.setString(4, role);
-            if (email.contains("@")) {
+            if (!trimmedEmail.isBlank() && trimmedEmail.contains("@")) {
+                pstmt.setString(2, trimmedEmail);
                 pstmt.setString(5, null);
+            } else if (!trimmedEmail.isBlank()) {
+                pstmt.setString(2, null);
+                pstmt.setString(5, trimmedEmail);
             } else {
-                pstmt.setString(2, "temp_" + System.currentTimeMillis());
-                pstmt.setString(5, email);
+                pstmt.setString(2, null);
+                pstmt.setString(5, null);
             }
             pstmt.executeUpdate();
             return true;
@@ -333,6 +337,16 @@ public class DataStore {
         String query = "SELECT email FROM users WHERE email = ?";
         try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, email);
+            return pstmt.executeQuery().next();
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public static boolean usernameExists(String username) {
+        String query = "SELECT name FROM users WHERE name = ? COLLATE NOCASE";
+        try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, username);
             return pstmt.executeQuery().next();
         } catch (SQLException e) {
             return false;
