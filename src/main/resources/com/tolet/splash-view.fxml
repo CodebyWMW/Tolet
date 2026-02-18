@@ -20,7 +20,7 @@
         <padding>
             <Insets top="30" />
         </padding>
-        <Label fx:id="titleLabel" alignment="CENTER" graphicTextGap="2.0" prefHeight="45.0" prefWidth="253.0" text="🏠 TO-•LET 🏡" textAlignment="CENTER" textOverrun="WORD_ELLIPSIS">
+        <Label fx:id="titleLabel" alignment="CENTER" graphicTextGap="2.0" prefHeight="45.0" prefWidth="253.0" style="-fx-text-fill: #fac208;" text="🏠 TO-•LET 🏡" textAlignment="CENTER" textOverrun="WORD_ELLIPSIS">
             <font>
                 <Font name="Webdings" size="30.0" />
             </font>
