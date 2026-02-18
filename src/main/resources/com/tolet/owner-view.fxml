@@ -12,7 +12,7 @@
             </VBox>
 
             <VBox spacing="6">
-                <Button layoutX="10.0" layoutY="39.0" prefHeight="35.0" prefWidth="175.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Tenants" />
+                <Button layoutX="10.0" layoutY="39.0" prefHeight="35.0" prefWidth="175.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Dashboard" />
                 <Button prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Tenants" />
                 <Button prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Properties" />
                 <Button prefHeight="35.0" prefWidth="207.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Requests" />
