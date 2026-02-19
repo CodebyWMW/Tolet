@@ -40,7 +40,7 @@ public class SplashController {
     private void onContinue() throws IOException {
         Stage stage = (Stage) splashImage.getScene().getWindow();
         Parent root = FXMLLoader.load(getClass().getResource(
-                DataStore.resolveFxml("login-view.fxml")));
+                DataStore.resolveFxml("Overview.fxml")));
         Scene scene = new Scene(root);
         stage.setScene(scene);
         DataStore.applyWindowSize(stage);

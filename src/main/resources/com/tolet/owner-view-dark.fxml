@@ -12,35 +12,35 @@
     </stylesheets>
 
     <left>
-        <VBox maxWidth="160.0" prefHeight="600.0" prefWidth="163.0" spacing="18" style="-fx-background-color: #38384a;" styleClass="sidebar">
+        <VBox maxWidth="160.0" prefHeight="600.0" prefWidth="163.0" spacing="18" style="-fx-background-color: #474743;" styleClass="sidebar">
             <VBox spacing="4" styleClass="brand-block">
-                <Label prefHeight="23.0" prefWidth="158.0" style="-fx-text-fill: #e8fff5;" styleClass="brand-title" text="RentalPro" />
-                <Label prefHeight="14.0" prefWidth="183.0" style="-fx-text-fill: #e8fff5;" styleClass="brand-subtitle" text="Owner Dashboard" />
+                <Label prefHeight="23.0" prefWidth="158.0" style="-fx-text-fill: #ff7547;" styleClass="brand-title" text="RentalPro" />
+                <Label prefHeight="14.0" prefWidth="183.0" style="-fx-text-fill: #faa387;" styleClass="brand-subtitle" text="Owner Dashboard" />
             </VBox>
 
             <VBox spacing="6">
-                <Button layoutX="10.0" layoutY="51.0" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #16163c; -fx-text-fill: #e8fff5;" styleClass="nav-button" text="Dashboard" />
-                <Button prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #16163c; -fx-text-fill: #e8fff5;" styleClass="nav-button" text="Tenants" />
-                <Button prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #16163c; -fx-text-fill: #e8fff5;" styleClass="nav-button" text="Properties" />
-                <Button prefHeight="35.0" prefWidth="207.0" style="-fx-background-color: #16163c; -fx-text-fill: #e8fff5;" styleClass="nav-button" text="Requests" />
-                <Button prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #16163c; -fx-text-fill: #e8fff5;" styleClass="nav-button" text="Analytics" />
-                <Button prefHeight="35.0" prefWidth="187.0" style="-fx-background-color: #16163c; -fx-text-fill: #e8fff5;" styleClass="nav-button" text="Settings" />
+                <Button layoutX="10.0" layoutY="51.0" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Dashboard" />
+                <Button prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Tenants" />
+                <Button prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Properties" />
+                <Button prefHeight="35.0" prefWidth="207.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Requests" />
+                <Button prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Analytics" />
+                <Button prefHeight="35.0" prefWidth="187.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Settings" />
             </VBox>
 
-            <Region style="-fx-background-color: #38384a;" VBox.vgrow="ALWAYS" />
+            <Region style="-fx-background-color: #474743;" VBox.vgrow="ALWAYS" />
 
-            <VBox maxWidth="150.0" prefHeight="117.0" prefWidth="124.0" spacing="4" style="-fx-background-color: #16163c;" styleClass="profile-card">
-                <Label fx:id="profileNameLabel" prefHeight="27.0" prefWidth="125.0" style="-fx-text-fill: #e8fff5;" styleClass="profile-name" text="Owner" />
-                <Label fx:id="profileRoleLabel" prefHeight="26.0" prefWidth="111.0" style="-fx-text-fill: #e8fff5;" styleClass="profile-role" text="Role" />
+            <VBox maxWidth="150.0" prefHeight="117.0" prefWidth="124.0" spacing="4" style="-fx-background-color: #262624;" styleClass="profile-card">
+                <Label fx:id="profileNameLabel" prefHeight="27.0" prefWidth="125.0" style="-fx-text-fill: #ff7547;" styleClass="profile-name" text="Owner" />
+                <Label fx:id="profileRoleLabel" prefHeight="26.0" prefWidth="111.0" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Role" />
                 <HBox spacing="10" />
-                <Button onAction="#onLogout" prefHeight="30.0" prefWidth="124.0" style="-fx-background-color: #16163c; -fx-text-fill: #e8fff5; -fx-border-color: #e8fff5;" styleClass="ghost-button" text="Logout" />
+                <Button onAction="#onLogout" prefHeight="30.0" prefWidth="124.0" style="-fx-background-color: #474743; -fx-text-fill: #e8fff5; -fx-border-color: #e8fff5;" styleClass="ghost-button" text="Logout" />
             </VBox>
         </VBox>
     </left>
 
     <center>
-        <ScrollPane fitToWidth="true" style="-fx-background-color: #262627;" styleClass="content-scroll">
-            <VBox maxHeight="2000.0" prefHeight="1080.0" prefWidth="691.0" spacing="22" style="-fx-background-color: #262627;" styleClass="content-root">
+        <ScrollPane fitToWidth="true" style="-fx-background-color: #262624;" styleClass="content-scroll">
+            <VBox maxHeight="2000.0" prefHeight="1080.0" prefWidth="691.0" spacing="22" style="-fx-background-color: #262624;" styleClass="content-root">
                 <HBox alignment="TOP_RIGHT">
                     <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" style="-fx-background-color: #99a3b4;" styleClass="theme-switch">
                         <graphic>
@@ -48,32 +48,32 @@
                         </graphic>
                     </ToggleButton>
                 </HBox>
-                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #16163c;" styleClass="top-bar">
+                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #30302e;" styleClass="top-bar">
                     <VBox spacing="4">
-                        <Label style="-fx-background-color: #16163c; -fx-text-fill: #e8fff5;" styleClass="page-title" text="Dashboard" />
+                        <Label style="-fx-background-color: #30302e; -fx-text-fill: #ff7547;" styleClass="page-title" text="Dashboard" />
                         <Label fx:id="welcomeLabel" style="-fx-text-fill: #e8fff5;" styleClass="page-subtitle" text="Welcome back" />
                     </VBox>
                     <Region HBox.hgrow="ALWAYS" />
-                    <Label fx:id="dateLabel" style="-fx-background-color: #16163c; -fx-text-fill: #e8fff5;" styleClass="date-pill" text="" />
+                    <Label fx:id="dateLabel" style="-fx-background-color: #474743; -fx-text-fill: #e8fff5;" styleClass="date-pill" text="" />
                 </HBox>
 
                 <HBox spacing="16" styleClass="kpi-row">
-                    <VBox spacing="6" style="-fx-background-color: #16163c;" styleClass="kpi-card">
-                        <Label style="-fx-text-fill: #e8fff5;" styleClass="kpi-title" text="Total Income" />
+                    <VBox spacing="6" style="-fx-background-color: #30302e;" styleClass="kpi-card">
+                        <Label style="-fx-text-fill: #ff7547;" styleClass="kpi-title" text="Total Income" />
                         <HBox alignment="CENTER_LEFT" spacing="10">
                             <Label fx:id="kpiIncomeLabel" style="-fx-text-fill: #e8fff5;" styleClass="kpi-value" text="৳0" />
                             <Region styleClass="kpi-icon kpi-icon-green" />
                         </HBox>
                     </VBox>
-                    <VBox spacing="6" style="-fx-background-color: #16163c;" styleClass="kpi-card">
-                        <Label style="-fx-text-fill: #e8fff5;" styleClass="kpi-title" text="Occupancy Rate" />
+                    <VBox spacing="6" style="-fx-background-color: #30302e;" styleClass="kpi-card">
+                        <Label style="-fx-text-fill: #ff7547;" styleClass="kpi-title" text="Occupancy Rate" />
                         <HBox alignment="CENTER_LEFT" spacing="10">
                             <Label fx:id="kpiOccupancyLabel" style="-fx-text-fill: #e8fff5;" styleClass="kpi-value" text="0%" />
                             <Region styleClass="kpi-icon kpi-icon-blue" />
                         </HBox>
                     </VBox>
-                    <VBox spacing="6" style="-fx-background-color: #16163c;" styleClass="kpi-card">
-                        <Label style="-fx-text-fill: #e8fff5;" styleClass="kpi-title" text="Pending Requests" />
+                    <VBox spacing="6" style="-fx-background-color: #30302e;" styleClass="kpi-card">
+                        <Label style="-fx-text-fill: #ff7547;" styleClass="kpi-title" text="Pending Requests" />
                         <HBox alignment="CENTER_LEFT" spacing="10">
                             <Label fx:id="kpiPendingLabel" style="-fx-text-fill: #e8fff5;" styleClass="kpi-value" text="0" />
                             <Region styleClass="kpi-icon kpi-icon-orange" />
@@ -115,17 +115,17 @@
                 </VBox>
                 -->
 
-                <VBox maxHeight="1000.0" prefHeight="187.0" prefWidth="643.0" spacing="12" style="-fx-background-color: #16163c;" styleClass="panel">
-                    <Label style="-fx-text-fill: #e8fff5;" styleClass="panel-title" text="Tenant Booking Requests" />
+                <VBox maxHeight="1000.0" prefHeight="187.0" prefWidth="643.0" spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
+                    <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Tenant Booking Requests" />
                     <VBox spacing="8" styleClass="table">
-                        <HBox spacing="16" style="-fx-background-color: #16163c;" styleClass="table-header">
-                            <Label style="-fx-text-fill: #e8fff5;" styleClass="table-title" text="Tenant Name" />
-                            <Label style="-fx-text-fill: #e8fff5;" styleClass="table-title" text="Property" />
-                            <Label style="-fx-text-fill: #e8fff5;" styleClass="table-title" text="Request Date" />
-                            <Label style="-fx-text-fill: #e8fff5;" styleClass="table-title" text="Move-in Date" />
-                            <Label style="-fx-text-fill: #e8fff5;" styleClass="table-title" text="Monthly Rent" />
-                            <Label style="-fx-text-fill: #e8fff5 #e8fff5;" styleClass="table-title" text="Status" />
-                            <Label style="-fx-text-fill: #e8fff5;" styleClass="table-title" text="Actions" />
+                        <HBox spacing="16" style="-fx-background-color: #30302e;" styleClass="table-header">
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Tenant Name" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Property" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Request Date" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Move-in Date" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Monthly Rent" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Status" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Actions" />
                         </HBox>
 
                         <VBox fx:id="requestsContainer" spacing="8" />

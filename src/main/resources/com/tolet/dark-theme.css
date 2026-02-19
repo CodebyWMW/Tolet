@@ -229,3 +229,169 @@
 .theme-switch:selected .switch-knob {
     -fx-background-color: #2563eb;
 }
+
+/* ============ Overview Page Styles (Dark) ============ */
+.main-container {
+    -fx-background-color: #0b0b0b;
+}
+
+.navbar {
+    -fx-background-color: #121212;
+    -fx-border-color: #2d2d2d;
+    -fx-border-width: 0 0 1 0;
+}
+
+.logo {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.nav-link {
+    -fx-text-fill: #9ca3af;
+    -fx-font-size: 14px;
+}
+
+.nav-link:hover {
+    -fx-text-fill: #60a5fa;
+}
+
+.theme-toggle {
+    -fx-background-color: #1f1f1f;
+    -fx-text-fill: #e5e7eb;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.btn-login {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.btn-login:hover {
+    -fx-background-color: #3b82f6;
+}
+
+.hero-section {
+    -fx-background-color: #121212;
+}
+
+.hero-eyebrow {
+    -fx-font-size: 14px;
+    -fx-text-fill: #9ca3af;
+}
+
+.hero-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.hero-description {
+    -fx-font-size: 16px;
+    -fx-text-fill: #9ca3af;
+    -fx-line-spacing: 4;
+}
+
+.btn-primary {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-padding: 14 28;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #3b82f6;
+}
+
+.btn-secondary {
+    -fx-background-color: #1f1f1f;
+    -fx-text-fill: #60a5fa;
+    -fx-border-color: #2563eb;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 14 28;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #1e3a5f;
+}
+
+.stats-strip {
+    -fx-background-color: #0b0b0b;
+    -fx-border-color: #2d2d2d;
+    -fx-border-width: 1 0 1 0;
+}
+
+.stat-num {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #60a5fa;
+}
+
+.stat-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #9ca3af;
+}
+
+.section-container {
+    -fx-background-color: #0b0b0b;
+}
+
+.section-eyebrow {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6b7280;
+    -fx-font-weight: bold;
+}
+
+.section-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.view-all {
+    -fx-text-fill: #60a5fa;
+    -fx-font-size: 14px;
+}
+
+.house-card {
+    -fx-background-color: #1f1f1f;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #2d2d2d;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 2);
+}
+
+.house-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 12, 0, 0, 4);
+}
+
+.house-image-placeholder {
+    -fx-fill: #2d2d2d;
+}
+
+.house-price {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.house-details {
+    -fx-text-fill: #9ca3af;
+}
+
+.house-location {
+    -fx-text-fill: #6b7280;
+}
