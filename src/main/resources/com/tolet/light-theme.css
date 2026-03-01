@@ -1,6 +1,6 @@
 /* --- LOGIN VIEW BACKGROUND --- */
 .login-root {
-    -fx-background-color: #ffe3e0;
+    -fx-background-color: #99a3b4;
 }
 
 /* Theme switch (light view) */
@@ -38,8 +38,8 @@
 
 /* Primary Button */
 .button.primary-button {
-    -fx-background-color: #0066FF;
-    -fx-text-fill: white;
+    -fx-background-color: #1F2933;
+    -fx-text-fill: #D4AF37;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-background-radius: 8;
@@ -49,25 +49,25 @@
 }
 
 .button.primary-button:hover {
-    -fx-background-color: #0052CC;
+    -fx-background-color: #28537e;
 }
 
 .button.primary-button:pressed {
-    -fx-background-color: #003D99;
+    -fx-background-color: #293948;
 }
 
 /* Transparent Field */
 .transparent-field {
     -fx-background-color: transparent;
     -fx-border-width: 0;
-    -fx-text-fill: #333;
-    -fx-prompt-text-fill: #999;
+    -fx-text-fill: #D4AF37;
+    -fx-prompt-text-fill: #D4AF37;
 }
 
 /* Input Box */
 .input-box {
-    -fx-background-color: #f5f5f5;
-    -fx-border-color: #d1d5db;
+    -fx-background-color: #1F2933;
+    -fx-border-color: #04152f;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
     -fx-padding: 10 12 10 12;
@@ -80,17 +80,17 @@
 
 /* Social Button */
 .button.social-button {
-    -fx-background-color: white;
-    -fx-border-color: #e0e0e0;
+    -fx-background-color: #1F2933;
+    -fx-border-color: #12263b;
     -fx-border-width: 1;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
-    -fx-text-fill: #333;
+    -fx-text-fill: #D4AF37;
     -fx-cursor: hand;
     -fx-padding: 12 20 12 20;
 }
 
 .button.social-button:hover {
-    -fx-background-color: #f5f5f5;
-    -fx-border-color: #ccc;
+    -fx-background-color: #28537e;
+    -fx-border-color: #1F2933;
 }

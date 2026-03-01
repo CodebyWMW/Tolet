@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<VBox prefWidth="280" spacing="10" style="-fx-background-color: #1F2933; -fx-background-radius: 12;" styleClass="house-card" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1">
+    <padding>
+        <Insets bottom="10" left="10" right="10" top="10" />
+    </padding>
+
+    <!-- Placeholder for house image -->
+    <Rectangle arcHeight="8" arcWidth="8" height="160" style="-fx-fill: #99a3b4;" styleClass="house-image-placeholder" width="260" />
+
+    <VBox spacing="5">
+        <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #D4AF37;" styleClass="house-price" text="৳ 15,000/month" />
+        <Label style="-fx-text-fill: #ffffff;" styleClass="house-details" text="2 Bed • 1 Bath • 850 sqft" />
+        <Label style="-fx-text-fill: #99a3b4;" styleClass="house-location" text="Mirpur, Dhaka" />
+    </VBox>
+</VBox>
