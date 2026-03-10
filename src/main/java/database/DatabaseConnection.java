@@ -2,19 +2,24 @@ package database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DatabaseConnection {
 
     // private static final String URL = "jdbc:sqlite:Data/rental.db";
-    private static final String URL = "jdbc:sqlite:Data/rental.db";
+    private static final String URL =
+        "jdbc:sqlite:C:/Users/User/OneDrive/Desktop/HOmerental/Data/rental.db";
 
-    public static Connection connect() {
+    static {
         try {
-            return DriverManager.getConnection(URL);
-        } catch (Exception e) {
-            System.out.println("Database connection failed");
+            Class.forName("org.sqlite.JDBC"); // Ensure driver loads
+        } catch (ClassNotFoundException e) {
+            System.err.println("SQLite JDBC Driver not found!");
             e.printStackTrace();
-            return null;
         }
+    }
+
+    public static Connection connect() throws SQLException {
+        return DriverManager.getConnection(URL);
     }
 }

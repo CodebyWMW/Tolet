@@ -1,8 +1,11 @@
 package com.tolet;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import dao.HouseDAO;
 import dao.UserDAO;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,7 +16,15 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -21,10 +32,6 @@ import javafx.stage.StageStyle;
 import models.House;
 import models.User;
 import models.UserAudit;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AdminController {
     @FXML
@@ -375,12 +382,13 @@ public class AdminController {
     }
 
     private void loadAuditLog() {
-        List<UserAudit> audit = userDAO.getUserAuditLog();
-        auditTable.setItems(FXCollections.observableArrayList(audit));
+        // TODO: Implement getAuditLog() method in UserDAO
+        auditTable.setItems(FXCollections.observableArrayList());
     }
 
     private void loadTenants() {
-        List<User> tenants = userDAO.getUsersByRole("tenant");
+        List<User> users = userDAO.getAllUsers();
+        List<User> tenants = users.stream().filter(u -> "tenant".equals(u.getRole())).toList();
         tenantsTable.setItems(FXCollections.observableArrayList(tenants));
         long unverified = tenants.stream().filter(t -> !t.isVerified()).count();
         unverifiedCountLabel.setText("Unverified: " + unverified);

@@ -1,11 +1,23 @@
 package com.tolet;
 
+import java.io.IOException;
+import java.util.Optional;
+
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
@@ -14,8 +26,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import models.User;
 import services.UserService;
-import java.io.IOException;
-import java.util.Optional;
 
 public class OverviewController {
 
@@ -62,13 +72,29 @@ public class OverviewController {
     private void loadHouseCards() {
         houseCardsPane.getChildren().clear();
 
-        // Add all 5 sample cards
-        for (int i = 0; i < SAMPLE_HOUSES.length; i++) {
-            VBox card = createHouseCard(SAMPLE_HOUSES[i][0], SAMPLE_HOUSES[i][1], SAMPLE_HOUSES[i][2],
-                    SAMPLE_HOUSES[i][3]);
-            houseCardsPane.getChildren().add(card);
+        // If a tenant is logged in, load houses from DB; otherwise show sample data
+        if (DataStore.currentUser != null && DataStore.currentUser.getRole() != null
+                && DataStore.currentUser.getRole().toLowerCase().contains("tenant")) {
+            var houses = DataStore.getHouses();
+            for (var h : houses) {
+                String price = "৳ " + (int) h.getRent() + "/month";
+                String details = h.getBedrooms() + " Bed • " + h.getBathrooms() + " Bath • " + (int) h.getArea()
+                        + " sqft";
+                String location = h.getLocation();
+                String imageName = h.getImage();
+                VBox card = createHouseCard(price, details, location, imageName);
+                houseCardsPane.getChildren().add(card);
+            }
+            System.out.println("Loaded " + houses.size() + " house cards from DB");
+        } else {
+            // Add all 5 sample cards
+            for (int i = 0; i < SAMPLE_HOUSES.length; i++) {
+                VBox card = createHouseCard(SAMPLE_HOUSES[i][0], SAMPLE_HOUSES[i][1], SAMPLE_HOUSES[i][2],
+                        SAMPLE_HOUSES[i][3]);
+                houseCardsPane.getChildren().add(card);
+            }
+            System.out.println("Loaded " + SAMPLE_HOUSES.length + " sample house cards");
         }
-        System.out.println("Loaded " + SAMPLE_HOUSES.length + " house cards");
     }
 
     private VBox createHouseCard(String price, String details, String location, String imageName) {

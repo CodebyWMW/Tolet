@@ -5,26 +5,38 @@ public class House {
     private int id;
     private int ownerId;
     private String location;
+
     private boolean familyAllowed;
     private boolean bachelorAllowed;
     private boolean gasAvailable;
     private boolean parkingAvailable;
     private boolean furnished;
     private boolean petFriendly;
+
+    private String title;          // NEW
+    private double rent;           // NEW
+
     private String approvalStatus; // pending, approved, rejected
 
+    // =============================
     // Empty constructor
+    // =============================
     public House() {
     }
 
-    // Constructor without id (for inserting new house)
-    public House(int ownerId, String location,
-            boolean familyAllowed,
-            boolean bachelorAllowed,
-            boolean gasAvailable,
-            boolean parkingAvailable,
-            boolean furnished,
-            boolean petFriendly) {
+    // =============================
+    // Constructor without id
+    // =============================
+    public House(int ownerId,
+                 String location,
+                 boolean familyAllowed,
+                 boolean bachelorAllowed,
+                 boolean gasAvailable,
+                 boolean parkingAvailable,
+                 boolean furnished,
+                 boolean petFriendly,
+                 String title,
+                 double rent) {
 
         this.ownerId = ownerId;
         this.location = location;
@@ -34,9 +46,13 @@ public class House {
         this.parkingAvailable = parkingAvailable;
         this.furnished = furnished;
         this.petFriendly = petFriendly;
+        this.title = title;
+        this.rent = rent;
     }
 
+    // =============================
     // Getters and Setters
+    // =============================
 
     public int getId() {
         return id;
@@ -108,6 +124,22 @@ public class House {
 
     public void setPetFriendly(boolean petFriendly) {
         this.petFriendly = petFriendly;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public double getRent() {
+        return rent;
+    }
+
+    public void setRent(double rent) {
+        this.rent = rent;
     }
 
     public String getApprovalStatus() {

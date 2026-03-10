@@ -1,8 +1,8 @@
 package database;
 
 import java.sql.Connection;
-import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class TableCreator {
     public static void createTables() {
@@ -15,11 +15,16 @@ public class TableCreator {
                 + "role TEXT,"
                 + "verified INTEGER DEFAULT 0)";
 
-        // Updated houses table with new columns matching House model
-        String houseTable = "CREATE TABLE IF NOT EXISTS houses ("
+        // Updated houses table with new columns matching DataStore expectations
+        String houseTable = "CREATE TABLE IF NOT EXISTS houses (" 
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "location TEXT,"
                 + "owner_id INTEGER,"
+                + "type TEXT,"
+                + "image TEXT,"
+                + "bedrooms INTEGER DEFAULT 0,"
+                + "bathrooms INTEGER DEFAULT 0,"
+                + "area REAL DEFAULT 0.0,"
                 + "family_allowed INTEGER DEFAULT 0,"
                 + "bachelor_allowed INTEGER DEFAULT 0,"
                 + "gas_available INTEGER DEFAULT 0,"
