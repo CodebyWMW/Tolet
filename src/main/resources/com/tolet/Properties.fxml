@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TableColumn?>
+
+<TableView fx:id="propertyTable" prefHeight="500" prefWidth="800"
+           xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml">
+
+    <columns>
+
+        <TableColumn fx:id="idColumn" text="ID" prefWidth="60"/>
+
+        <TableColumn fx:id="titleColumn" text="Title" prefWidth="150"/>
+
+        <TableColumn fx:id="locationColumn" text="Location" prefWidth="200"/>
+
+        <TableColumn fx:id="rentColumn" text="Rent" prefWidth="100"/>
+
+        <TableColumn fx:id="statusColumn" text="Status" prefWidth="120"/>
+
+    </columns>
+
+</TableView>

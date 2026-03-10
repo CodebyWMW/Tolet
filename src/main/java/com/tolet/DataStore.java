@@ -1,13 +1,18 @@
 package com.tolet;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.LocalDate;
+
 import database.DatabaseConnection;
 import database.TableCreator;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import java.sql.*;
-import java.time.LocalDate;
 
 public class DataStore {
     public static User currentUser;
@@ -15,14 +20,49 @@ public class DataStore {
 
     public static void initData() {
         TableCreator.createTables();
+        // Populate basic seed data (create a system owner/tenant and sample houses)
+        ensureSeedData();
+    }
 
-        // Populate dummy data if empty (for testing)
-        // Commented out to avoid using old House class
-        // if (getHouses().isEmpty()) {
-        // addMockData();
-        // }
+    private static void ensureSeedData() {
+        // Create owner and tenant if missing
+        if (countRows("users") == 0) {
+            registerUser("System Owner", "sys@owner.com", "123", "House Owner");
+            registerUser("System Tenant", "tenant@demo.com", "123", "Tenant");
+        }
 
-        // addMockRequestsIfEmpty();
+        // Insert sample houses if none exist
+        if (countRows("houses") == 0) {
+            Integer ownerId = getUserIdByRole("House Owner");
+            if (ownerId == null) {
+                registerUser("System Owner", "sys@owner.com", "123", "House Owner");
+                ownerId = getUserIdByRole("House Owner");
+            }
+
+            String sql = "INSERT INTO houses (location, type, rent, owner_id, image, bedrooms, bathrooms, area) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                Object[][] mock = new Object[][] {
+                        { "Gulshan 2, Dhaka", "Family", 45000.0, ownerId, "https://images.unsplash.com/photo-1594873604892-b599f847e859?w=400", 3, 2, 1500.0 },
+                        { "Banani, Dhaka", "Bachelor", 18000.0, ownerId, "https://images.unsplash.com/photo-1706808849780-7a04fbac83ef?w=400", 1, 1, 650.0 },
+                        { "Dhanmondi, Dhaka", "Family", 28000.0, ownerId, "https://images.unsplash.com/photo-1612419299101-6c294dc2901d?w=400", 2, 1, 1000.0 },
+                        { "Uttara, Dhaka", "Family", 65000.0, ownerId, "https://images.unsplash.com/photo-1760561148422-bbb515696fb7?w=400", 4, 3, 2200.0 }
+                };
+                for (Object[] row : mock) {
+                    pstmt.setString(1, (String) row[0]);
+                    pstmt.setString(2, (String) row[1]);
+                    pstmt.setDouble(3, (Double) row[2]);
+                    pstmt.setInt(4, (Integer) row[3]);
+                    pstmt.setString(5, (String) row[4]);
+                    pstmt.setInt(6, (Integer) row[5]);
+                    pstmt.setInt(7, (Integer) row[6]);
+                    pstmt.setDouble(8, (Double) row[7]);
+                    pstmt.addBatch();
+                }
+                pstmt.executeBatch();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static void applyTheme(Scene scene) {
@@ -69,6 +109,8 @@ public class DataStore {
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
 
+            System.out.println("DEBUG: Executing getHouses query: " + query);
+            int rowCount = 0;
             while (rs.next()) {
                 list.add(new House(
                         rs.getString("location"),
@@ -79,8 +121,11 @@ public class DataStore {
                         rs.getInt("bedrooms"),
                         rs.getInt("bathrooms"),
                         rs.getDouble("area")));
+                rowCount++;
             }
+            System.out.println("DEBUG: getHouses fetched rows=" + rowCount);
         } catch (SQLException e) {
+            System.out.println("ERROR: getHouses SQLException");
             e.printStackTrace();
         }
         return list;

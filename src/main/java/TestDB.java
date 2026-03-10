@@ -1,10 +1,11 @@
-package database;
-
 import java.sql.Connection;
+import java.sql.SQLException;
+
+import database.DatabaseConnection;
 
 public class TestDB {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
 
         Connection conn = DatabaseConnection.connect();
 
