@@ -200,68 +200,16 @@ public class OverviewController {
     }
 
     private void showSignUpDialog() {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Create Account");
-        dialog.setHeaderText("Join Project To-Let");
-
-        ButtonType registerBtnType = new ButtonType("Register", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(registerBtnType, ButtonType.CANCEL);
-
-        VBox box = new VBox(10);
-        TextField nameIn = new TextField();
-        nameIn.setPromptText("Username");
-        TextField emailIn = new TextField();
-        emailIn.setPromptText("Email or Phone");
-        PasswordField passIn = new PasswordField();
-        passIn.setPromptText("Password");
-        ComboBox<String> roleIn = new ComboBox<>();
-        roleIn.getItems().addAll("Tenant", "Owner");
-        roleIn.setValue("Tenant");
-
-        box.getChildren().addAll(new Label("Username:"), nameIn, new Label("Email/Phone:"), emailIn,
-                new Label("Password:"), passIn, new Label("Role (Tenant/Owner):"), roleIn);
-        dialog.getDialogPane().setContent(box);
-
-        Optional<ButtonType> result = dialog.showAndWait();
-        if (result.isPresent() && result.get() == registerBtnType) {
-            String username = nameIn.getText().trim();
-            String email = emailIn.getText().trim();
-            String password = passIn.getText().trim();
-            String role = roleIn.getValue();
-            if ("Owner".equalsIgnoreCase(role)) {
-                role = "House Owner";
-            }
-
-            if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Error");
-                alert.setHeaderText(null);
-                alert.setContentText("All fields are required!");
-                alert.showAndWait();
-                return;
-            }
-
-            // Create User object and register
-            UserService userService = new UserService();
-            User user = new User(username, email, password, role, "");
-            boolean registered = userService.registerUser(user);
-
-            if (registered) {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Success");
-                alert.setHeaderText(null);
-                alert.setContentText("Account created successfully! You can now login.");
-                alert.showAndWait();
-
-                // Navigate to login
-                navigateToLogin();
-            } else {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Error");
-                alert.setHeaderText(null);
-                alert.setContentText("Registration failed. Please try again.");
-                alert.showAndWait();
-            }
+        try {
+            Stage stage = (Stage) seePopularButton.getScene().getWindow();
+            Parent root = FXMLLoader.load(getClass().getResource(
+                    DataStore.resolveFxml("signup-view.fxml")));
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            DataStore.applyWindowSize(stage);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

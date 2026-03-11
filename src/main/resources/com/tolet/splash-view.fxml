@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<StackPane onMouseClicked="#onContinue" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.SplashController">
+<StackPane fx:id="rootPane" onMouseClicked="#onContinue" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.SplashController">
     <ImageView fx:id="splashImage" fitHeight="412.0" fitWidth="602.0" preserveRatio="true" />
     <!-- <HBox alignment="TOP_RIGHT" StackPane.alignment="TOP_RIGHT" style="-fx-padding: 16;">
         <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">

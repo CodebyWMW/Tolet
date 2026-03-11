@@ -8,6 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.application.Platform;
 import java.io.File;
@@ -19,6 +20,8 @@ public class SplashController {
     @FXML
     private ImageView splashImage;
     @FXML
+    private StackPane rootPane;
+    @FXML
     private Label titleLabel;
     @FXML
     private ToggleButton themeToggle;
@@ -29,6 +32,13 @@ public class SplashController {
         if (imageFile.exists()) {
             splashImage.setImage(new Image(imageFile.toURI().toString()));
         }
+
+        if (rootPane != null && splashImage != null) {
+            splashImage.fitWidthProperty().bind(rootPane.widthProperty());
+            splashImage.fitHeightProperty().bind(rootPane.heightProperty());
+            splashImage.setPreserveRatio(false);
+        }
+
         // Keep the text from FXML so UI edits show without code changes.
 
         if (themeToggle != null) {

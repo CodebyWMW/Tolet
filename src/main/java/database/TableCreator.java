@@ -1,19 +1,23 @@
 package database;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TableCreator {
     public static void createTables() {
         String userTable = "CREATE TABLE IF NOT EXISTS users ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "name TEXT UNIQUE COLLATE NOCASE,"
-                + "email TEXT UNIQUE,"
-                + "phone TEXT,"
-                + "password TEXT,"
-                + "role TEXT,"
-                + "verified INTEGER DEFAULT 0)";
+                                + "email TEXT UNIQUE COLLATE NOCASE,"
+                                + "phone TEXT UNIQUE,"
+                                + "password TEXT,"
+                                + "role TEXT,"
+                                + "birthdate TEXT,"
+                                + "verified INTEGER DEFAULT 0)";
 
         // Updated houses table with new columns matching DataStore expectations
         String houseTable = "CREATE TABLE IF NOT EXISTS houses (" 
@@ -59,6 +63,7 @@ public class TableCreator {
         try (Connection conn = DatabaseConnection.connect();
                 Statement stmt = conn.createStatement()) {
             stmt.execute(userTable);
+                        ensureUserSchema(stmt);
             stmt.execute(houseTable);
             stmt.execute(requestTable);
             stmt.execute(userAuditTable);
@@ -66,4 +71,30 @@ public class TableCreator {
             e.printStackTrace();
         }
     }
+
+        private static void ensureUserSchema(Statement stmt) throws SQLException {
+                Set<String> columns = new HashSet<>();
+                try (ResultSet rs = stmt.executeQuery("PRAGMA table_info(users)")) {
+                        while (rs.next()) {
+                                columns.add(rs.getString("name").toLowerCase());
+                        }
+                }
+
+                if (!columns.contains("email")) {
+                        stmt.execute("ALTER TABLE users ADD COLUMN email TEXT");
+                }
+                if (!columns.contains("phone")) {
+                        stmt.execute("ALTER TABLE users ADD COLUMN phone TEXT");
+                }
+                if (!columns.contains("birthdate")) {
+                        stmt.execute("ALTER TABLE users ADD COLUMN birthdate TEXT");
+                }
+                if (!columns.contains("verified")) {
+                        stmt.execute("ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0");
+                }
+
+                stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_name_unique ON users(name COLLATE NOCASE)");
+                stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users(email COLLATE NOCASE)");
+                stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_unique ON users(phone)");
+        }
 }

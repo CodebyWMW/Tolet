@@ -51,6 +51,8 @@ public class AdminController {
     @FXML
     private TableColumn<User, String> userPhoneCol;
     @FXML
+    private TableColumn<User, String> userBirthdateCol;
+    @FXML
     private TableColumn<User, String> userRoleCol;
     @FXML
     private TableColumn<User, String> userVerifiedCol;
@@ -94,6 +96,8 @@ public class AdminController {
     private TableColumn<User, String> tenantEmailCol;
     @FXML
     private TableColumn<User, String> tenantPhoneCol;
+    @FXML
+    private TableColumn<User, String> tenantBirthdateCol;
     @FXML
     private TableColumn<User, String> tenantVerifiedCol;
     @FXML
@@ -176,6 +180,10 @@ public class AdminController {
         });
         userPhoneCol.setCellValueFactory(data -> new SimpleStringProperty(
                 data.getValue().getPhone() != null ? data.getValue().getPhone() : "N/A"));
+        userBirthdateCol.setCellValueFactory(data -> new SimpleStringProperty(
+            data.getValue().getBirthdate() != null && !data.getValue().getBirthdate().isBlank()
+                ? data.getValue().getBirthdate()
+                : "N/A"));
         userRoleCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getRole()));
         userVerifiedCol
                 .setCellValueFactory(data -> new SimpleStringProperty(data.getValue().isVerified() ? "✓ Yes" : "✗ No"));
@@ -320,6 +328,10 @@ public class AdminController {
         });
         tenantPhoneCol.setCellValueFactory(data -> new SimpleStringProperty(
                 data.getValue().getPhone() != null ? data.getValue().getPhone() : "N/A"));
+        tenantBirthdateCol.setCellValueFactory(data -> new SimpleStringProperty(
+            data.getValue().getBirthdate() != null && !data.getValue().getBirthdate().isBlank()
+                ? data.getValue().getBirthdate()
+                : "N/A"));
         tenantVerifiedCol.setCellValueFactory(
                 data -> new SimpleStringProperty(data.getValue().isVerified() ? "✓ Verified" : "✗ Unverified"));
 

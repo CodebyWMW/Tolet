@@ -12,11 +12,18 @@ import database.TableCreator;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
+import javafx.geometry.Rectangle2D;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 public class DataStore {
     public static User currentUser;
     public static boolean darkMode = false;
+    private static Double lastWindowWidth;
+    private static Double lastWindowHeight;
+    private static Double lastWindowX;
+    private static Double lastWindowY;
+    private static final String WINDOW_TRACKING_KEY = "windowSizeTrackingAttached";
 
     public static void initData() {
         TableCreator.createTables();
@@ -78,9 +85,60 @@ public class DataStore {
     }
 
     public static void applyWindowSize(Stage stage) {
-        if (stage == null)
+        if (stage == null) {
             return;
+        }
+
         stage.setResizable(true);
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+
+        if (lastWindowWidth != null && lastWindowHeight != null) {
+            double width = Math.min(lastWindowWidth, bounds.getWidth() - 40);
+            double height = Math.min(lastWindowHeight, bounds.getHeight() - 40);
+            if (width > 0 && height > 0) {
+                stage.setWidth(width);
+                stage.setHeight(height);
+            }
+        }
+
+        if (lastWindowX != null && lastWindowY != null) {
+            double maxX = bounds.getMaxX() - stage.getWidth();
+            double maxY = bounds.getMaxY() - stage.getHeight();
+            double clampedX = Math.max(bounds.getMinX(), Math.min(lastWindowX, maxX));
+            double clampedY = Math.max(bounds.getMinY(), Math.min(lastWindowY, maxY));
+            stage.setX(clampedX);
+            stage.setY(clampedY);
+        }
+
+        if (Boolean.TRUE.equals(stage.getProperties().get(WINDOW_TRACKING_KEY))) {
+            return;
+        }
+
+        stage.widthProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null && newValue.doubleValue() > 0) {
+                lastWindowWidth = newValue.doubleValue();
+            }
+        });
+
+        stage.heightProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null && newValue.doubleValue() > 0) {
+                lastWindowHeight = newValue.doubleValue();
+            }
+        });
+
+        stage.xProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null) {
+                lastWindowX = newValue.doubleValue();
+            }
+        });
+
+        stage.yProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null) {
+                lastWindowY = newValue.doubleValue();
+            }
+        });
+
+        stage.getProperties().put(WINDOW_TRACKING_KEY, true);
     }
 
     public static String resolveFxml(String baseFxml) {
@@ -354,22 +412,30 @@ public class DataStore {
     }
 
     public static boolean registerUser(String name, String email, String password, String role) {
-        String query = "INSERT INTO users (name, email, password, role, phone) VALUES (?, ?, ?, ?, ?)";
+        return registerUser(name, email, password, role, null);
+    }
+
+    public static boolean registerUser(String name, String email, String password, String role, String birthdate) {
+        String query = "INSERT INTO users (name, email, password, role, phone, birthdate) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, name);
+            String trimmedName = name == null ? "" : name.trim();
             String trimmedEmail = email == null ? "" : email.trim();
+            pstmt.setString(1, trimmedName);
             pstmt.setString(3, password);
             pstmt.setString(4, role);
             if (!trimmedEmail.isBlank() && trimmedEmail.contains("@")) {
-                pstmt.setString(2, trimmedEmail);
+                pstmt.setString(2, trimmedEmail.toLowerCase());
                 pstmt.setString(5, null);
+                pstmt.setString(6, birthdate);
             } else if (!trimmedEmail.isBlank()) {
                 pstmt.setString(2, null);
                 pstmt.setString(5, trimmedEmail);
+                pstmt.setString(6, birthdate);
             } else {
                 pstmt.setString(2, null);
                 pstmt.setString(5, null);
+                pstmt.setString(6, birthdate);
             }
             pstmt.executeUpdate();
             return true;
@@ -379,9 +445,9 @@ public class DataStore {
     }
 
     public static boolean emailExists(String email) {
-        String query = "SELECT email FROM users WHERE email = ?";
+        String query = "SELECT 1 FROM users WHERE lower(email) = lower(?)";
         try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, email);
+            pstmt.setString(1, email == null ? null : email.trim());
             return pstmt.executeQuery().next();
         } catch (SQLException e) {
             return false;
@@ -391,7 +457,17 @@ public class DataStore {
     public static boolean usernameExists(String username) {
         String query = "SELECT name FROM users WHERE name = ? COLLATE NOCASE";
         try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, username);
+            pstmt.setString(1, username == null ? null : username.trim());
+            return pstmt.executeQuery().next();
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public static boolean phoneExists(String phone) {
+        String query = "SELECT 1 FROM users WHERE phone = ?";
+        try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, phone == null ? null : phone.trim());
             return pstmt.executeQuery().next();
         } catch (SQLException e) {
             return false;

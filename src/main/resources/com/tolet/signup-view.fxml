@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox alignment="TOP_CENTER" prefHeight="780.0" prefWidth="900.0" spacing="12"
+      style="-fx-background-color: #eef2ff;"
+      stylesheets="@light-theme.css"
+      xmlns="http://javafx.com/javafx/17.0.12"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.tolet.SignupPageController">
+
+    <padding>
+        <Insets top="24" right="28" bottom="24" left="28"/>
+    </padding>
+
+    <HBox alignment="TOP_RIGHT" maxWidth="Infinity">
+        <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
+            <graphic>
+                <Region styleClass="switch-knob" />
+            </graphic>
+        </ToggleButton>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+    <VBox maxWidth="620" spacing="10" style="-fx-padding: 10 6 10 6;" prefWidth="620">
+        <Label text="Create Account" style="-fx-text-fill: #0f172a; -fx-font-size: 42; -fx-font-weight: 800;" />
+
+        <Label text="Email" style="-fx-text-fill: #0f172a; -fx-font-size: 32;" />
+        <TextField fx:id="emailField" promptText=""
+                   style="-fx-background-color: #ffffff; -fx-text-fill: #111827; -fx-prompt-text-fill: #64748b; -fx-background-radius: 8; -fx-padding: 12 14 12 14;"
+                   prefHeight="50" />
+
+        <Label text="Username" style="-fx-text-fill: #0f172a; -fx-font-size: 32;" />
+        <TextField fx:id="usernameField" promptText=""
+                   style="-fx-background-color: #ffffff; -fx-text-fill: #111827; -fx-prompt-text-fill: #64748b; -fx-background-radius: 8; -fx-padding: 12 14 12 14;"
+                   prefHeight="50" />
+
+        <Label text="Password" style="-fx-text-fill: #0f172a; -fx-font-size: 32;" />
+        <PasswordField fx:id="passwordField" promptText=""
+                       style="-fx-background-color: #ffffff; -fx-text-fill: #111827; -fx-prompt-text-fill: #64748b; -fx-background-radius: 8; -fx-padding: 12 14 12 14;"
+                       prefHeight="50" />
+
+        <Label text="Confirm Password" style="-fx-text-fill: #0f172a; -fx-font-size: 32;" />
+        <PasswordField fx:id="confirmPasswordField" promptText=""
+                       style="-fx-background-color: #ffffff; -fx-text-fill: #111827; -fx-prompt-text-fill: #64748b; -fx-background-radius: 8; -fx-padding: 12 14 12 14;"
+                       prefHeight="50" />
+
+        <Label text="Date of birth" style="-fx-text-fill: #0f172a; -fx-font-size: 38;" />
+        <HBox spacing="10">
+            <ComboBox fx:id="monthCombo" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: #ffffff; -fx-mark-color: #64748b; -fx-text-fill: #111827; -fx-background-radius: 8; -fx-padding: 8 10 8 10;" />
+            <ComboBox fx:id="dayCombo" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: #ffffff; -fx-mark-color: #64748b; -fx-text-fill: #111827; -fx-background-radius: 8; -fx-padding: 8 10 8 10;" />
+            <ComboBox fx:id="yearCombo" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: #ffffff; -fx-mark-color: #64748b; -fx-text-fill: #111827; -fx-background-radius: 8; -fx-padding: 8 10 8 10;" />
+        </HBox>
+
+        <CheckBox fx:id="marketingCheck" text="Email me about products, news, and promotions."
+                  wrapText="true"
+                  style="-fx-text-fill: #0f172a; -fx-font-size: 18;" />
+
+        <HBox spacing="6" alignment="CENTER_LEFT">
+            <CheckBox fx:id="termsCheck" text="I agree to the"
+                      style="-fx-text-fill: #0f172a; -fx-font-size: 18;" />
+            <Hyperlink text="Terms of Service" style="-fx-text-fill: #1d4ed8; -fx-underline: true; -fx-border-color: transparent; -fx-padding: 0;" />
+            <Label text="and" style="-fx-text-fill: #0f172a; -fx-font-size: 18;" />
+            <Hyperlink text="Privacy Policy." style="-fx-text-fill: #1d4ed8; -fx-underline: true; -fx-border-color: transparent; -fx-padding: 0;" />
+        </HBox>
+
+        <Label fx:id="statusLabel" style="-fx-text-fill: #b91c1c; -fx-font-size: 14;" />
+
+        <Button text="Create Account" onAction="#onCreateAccount" maxWidth="Infinity"
+                style="-fx-background-color: #f91852; -fx-text-fill: white; -fx-font-size: 38; -fx-font-weight: 800; -fx-background-radius: 4; -fx-padding: 10 0 10 0;" />
+
+        <Button text="Have an account? Sign in" onAction="#onBackToSignIn" maxWidth="Infinity"
+                style="-fx-background-color: #cbd5e1; -fx-text-fill: #0f172a; -fx-font-size: 38; -fx-font-weight: 800; -fx-background-radius: 4; -fx-padding: 10 0 10 0;" />
+    </VBox>
+    </ScrollPane>
+</VBox>

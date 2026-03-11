@@ -55,7 +55,8 @@ public class SignupController {
             messageLabel.setText("Registration successful!");
             clearFields();
         } else {
-            messageLabel.setText("Registration failed!");
+            String error = service.getLastErrorMessage();
+            messageLabel.setText(error == null || error.isBlank() ? "Registration failed!" : error);
         }
     }
 

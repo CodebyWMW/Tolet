@@ -9,6 +9,7 @@ public class User {
     private String role;
     private String phone;
     private boolean verified;
+    private String birthdate;
 
     // Default constructor
     public User() {
@@ -30,6 +31,15 @@ public class User {
         this.password = password;
         this.role = role;
         this.phone = phone;
+    }
+
+    public User(String name, String email, String password, String role, String phone, String birthdate) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.phone = phone;
+        this.birthdate = birthdate;
     }
 
     // Getters
@@ -88,5 +98,13 @@ public class User {
 
     public void setVerified(boolean verified) {
         this.verified = verified;
+    }
+
+    public String getBirthdate() {
+        return birthdate;
+    }
+
+    public void setBirthdate(String birthdate) {
+        this.birthdate = birthdate;
     }
 }

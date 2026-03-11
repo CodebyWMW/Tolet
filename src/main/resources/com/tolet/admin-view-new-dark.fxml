@@ -50,6 +50,7 @@
                             <TableColumn fx:id="userNameCol" text="Name" prefWidth="180" />
                             <TableColumn fx:id="userEmailCol" text="Email" prefWidth="220" />
                             <TableColumn fx:id="userPhoneCol" text="Phone" prefWidth="140" />
+                            <TableColumn fx:id="userBirthdateCol" text="Birthdate" prefWidth="120" />
                             <TableColumn fx:id="userRoleCol" text="Role" prefWidth="100" />
                             <TableColumn fx:id="userVerifiedCol" text="Verified" prefWidth="100" />
                             <TableColumn fx:id="userActionsCol" text="Actions" prefWidth="200" />
@@ -97,6 +98,7 @@
                             <TableColumn fx:id="tenantNameCol" text="Name" prefWidth="200" />
                             <TableColumn fx:id="tenantEmailCol" text="Email" prefWidth="250" />
                             <TableColumn fx:id="tenantPhoneCol" text="Phone" prefWidth="150" />
+                            <TableColumn fx:id="tenantBirthdateCol" text="Birthdate" prefWidth="130" />
                             <TableColumn fx:id="tenantVerifiedCol" text="Status" prefWidth="120" />
                             <TableColumn fx:id="tenantActionsCol" text="Actions" prefWidth="200" />
                         </columns>

@@ -1,5 +1,7 @@
 package com.tolet;
 
+import javafx.animation.PauseTransition;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -16,10 +18,14 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.application.Platform;
+import javafx.util.Duration;
+import javafx.concurrent.Task;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -38,9 +44,13 @@ public class TenantController {
     private List<House> allHouses;
     private List<String> activeFilters = new ArrayList<>();
     private final String[] FILTERS = { "Family", "Bachelor", "Gas Available", "Parking", "Furnished" };
+    private final PauseTransition searchDebounce = new PauseTransition(Duration.millis(300));
+    private static final Map<String, Image> IMAGE_CACHE = new HashMap<>();
 
     @FXML
     public void initialize() {
+        allHouses = new ArrayList<>();
+
         if (themeToggle != null) {
             themeToggle.setSelected(DataStore.darkMode);
         }
@@ -57,12 +67,35 @@ public class TenantController {
             filterContainer.getChildren().add(chip);
         }
 
-        // Load Data
-        allHouses = DataStore.getHouses();
-        renderProperties(allHouses);
+        // Load data off the UI thread to keep scene switch responsive.
+        loadHousesAsync();
 
-        // Search Listener
-        searchField.textProperty().addListener((obs, old, val) -> applyFilters());
+        // Search listener with debounce to avoid rerendering on every keystroke.
+        searchDebounce.setOnFinished(e -> applyFilters());
+        searchField.textProperty().addListener((obs, old, val) -> searchDebounce.playFromStart());
+    }
+
+    private void loadHousesAsync() {
+        Task<List<House>> task = new Task<>() {
+            @Override
+            protected List<House> call() {
+                return new ArrayList<>(DataStore.getHouses());
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            allHouses = task.getValue() != null ? task.getValue() : new ArrayList<>();
+            renderProperties(allHouses);
+        });
+
+        task.setOnFailed(e -> {
+            allHouses = new ArrayList<>();
+            renderProperties(allHouses);
+        });
+
+        Thread loaderThread = new Thread(task, "tenant-houses-loader");
+        loaderThread.setDaemon(true);
+        loaderThread.start();
     }
 
     private void toggleFilter(String filter, boolean isSelected) {
@@ -74,7 +107,12 @@ public class TenantController {
     }
 
     private void applyFilters() {
-        String search = searchField.getText().toLowerCase();
+        if (allHouses == null) {
+            return;
+        }
+
+        String query = searchField.getText();
+        String search = query == null ? "" : query.toLowerCase();
 
         List<House> filtered = allHouses.stream()
                 .filter(h -> {
@@ -110,7 +148,7 @@ public class TenantController {
         // Image
         ImageView imgView = new ImageView();
         try {
-            imgView.setImage(new Image(h.getImage(), 300, 200, true, true));
+            imgView.setImage(loadHouseImage(h.getImage()));
         } catch (Exception e) {
             /* fallback image if URL fails */ }
         imgView.setFitWidth(300);
@@ -160,6 +198,22 @@ public class TenantController {
         card.getChildren().addAll(imgView, content);
 
         return card;
+    }
+
+    private Image loadHouseImage(String imageSource) {
+        String source = imageSource;
+        if (source == null || source.isBlank()) {
+            source = getClass().getResource("images/house1.png").toExternalForm();
+        }
+
+        Image cached = IMAGE_CACHE.get(source);
+        if (cached != null) {
+            return cached;
+        }
+
+        Image image = new Image(source, 300, 200, true, true, true);
+        IMAGE_CACHE.put(source, image);
+        return image;
     }
 
     private void onBookRequest(House h) {

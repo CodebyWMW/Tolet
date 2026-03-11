@@ -15,7 +15,7 @@ public class UserDAO {
     // ================= REGISTER USER =================
     public boolean registerUser(User user) {
 
-        String sql = "INSERT INTO users (name, email, password, role, phone) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (name, email, password, role, phone, birthdate) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -25,6 +25,7 @@ public class UserDAO {
             pstmt.setString(3, user.getPassword());
             pstmt.setString(4, user.getRole());
             pstmt.setString(5, user.getPhone());
+            pstmt.setString(6, user.getBirthdate());
 
             int rows = pstmt.executeUpdate();
             return rows > 0;
@@ -57,6 +58,12 @@ public class UserDAO {
                 user.setPassword(rs.getString("password"));
                 user.setRole(rs.getString("role"));
                 user.setPhone(rs.getString("phone"));
+
+                try {
+                    user.setBirthdate(rs.getString("birthdate"));
+                } catch (SQLException ignored) {
+                    user.setBirthdate(null);
+                }
 
                 try {
                     user.setVerified(rs.getInt("verified") == 1);
@@ -110,6 +117,12 @@ public boolean updateUserVerification(int userId, boolean verified) {
                 user.setPassword(rs.getString("password"));
                 user.setRole(rs.getString("role"));
                 user.setPhone(rs.getString("phone"));
+
+                try {
+                    user.setBirthdate(rs.getString("birthdate"));
+                } catch (SQLException ignored) {
+                    user.setBirthdate(null);
+                }
 
                 try {
                     user.setVerified(rs.getInt("verified") == 1);
@@ -205,6 +218,12 @@ public boolean updateUserVerification(int userId, boolean verified) {
                 user.setPhone(rs.getString("phone"));
 
                 try {
+                    user.setBirthdate(rs.getString("birthdate"));
+                } catch (SQLException ignored) {
+                    user.setBirthdate(null);
+                }
+
+                try {
                     user.setVerified(rs.getInt("verified") == 1);
                 } catch (SQLException ignored) {
                     user.setVerified(false);
@@ -239,6 +258,12 @@ public boolean updateUserVerification(int userId, boolean verified) {
                 user.setPassword(rs.getString("password"));
                 user.setRole(rs.getString("role"));
                 user.setPhone(rs.getString("phone"));
+
+                try {
+                    user.setBirthdate(rs.getString("birthdate"));
+                } catch (SQLException ignored) {
+                    user.setBirthdate(null);
+                }
 
                 try {
                     user.setVerified(rs.getInt("verified") == 1);
