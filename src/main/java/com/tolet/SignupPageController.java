@@ -9,15 +9,18 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 
 public class SignupPageController {
+    private static final double SIGNUP_WINDOW_WIDTH = 400;
+    private static final double SIGNUP_WINDOW_HEIGHT = 900;
 
     @FXML
     private TextField emailField;
@@ -26,7 +29,9 @@ public class SignupPageController {
     @FXML
     private PasswordField passwordField;
     @FXML
-    private PasswordField confirmPasswordField;
+    private ToggleButton tenantRoleButton;
+    @FXML
+    private ToggleButton ownerRoleButton;
     @FXML
     private ComboBox<String> monthCombo;
     @FXML
@@ -34,19 +39,33 @@ public class SignupPageController {
     @FXML
     private ComboBox<String> yearCombo;
     @FXML
-    private CheckBox marketingCheck;
-    @FXML
-    private CheckBox termsCheck;
-    @FXML
     private Label statusLabel;
     @FXML
     private ToggleButton themeToggle;
+
+    private final ToggleGroup accountTypeGroup = new ToggleGroup();
 
     @FXML
     public void initialize() {
         if (themeToggle != null) {
             themeToggle.setSelected(DataStore.darkMode);
         }
+
+        // Force signup to a fixed window size regardless of opener page behavior.
+        emailField.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                if (newScene.getWindow() instanceof Stage existingStage) {
+                    applySignupWindowLock(existingStage);
+                }
+                newScene.windowProperty().addListener((obs2, oldWin, newWin) -> {
+                    if (newWin instanceof Stage stg) {
+                        applySignupWindowLock(stg);
+                    }
+                });
+            }
+        });
+
+        configureRoleButtons();
 
         monthCombo.getItems().add("MM");
         for (int m = 1; m <= 12; m++) {
@@ -73,12 +92,12 @@ public class SignupPageController {
         String email = emailField.getText().trim();
         String username = usernameField.getText().trim();
         String password = passwordField.getText().trim();
-        String confirmPassword = confirmPasswordField.getText().trim();
+        String selectedRole = getSelectedRole();
         String month = monthCombo.getValue();
         String day = dayCombo.getValue();
         String year = yearCombo.getValue();
 
-        if (email.isEmpty() || username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+        if (email.isEmpty() || username.isEmpty() || password.isEmpty()) {
             setStatus("Please fill all required fields.", false);
             return;
         }
@@ -88,13 +107,8 @@ public class SignupPageController {
             return;
         }
 
-        if (!password.equals(confirmPassword)) {
-            setStatus("Passwords do not match.", false);
-            return;
-        }
-
-        if (!termsCheck.isSelected()) {
-            setStatus("Please accept Terms of Service and Privacy Policy.", false);
+        if (selectedRole == null || selectedRole.isBlank()) {
+            setStatus("Please select account type.", false);
             return;
         }
 
@@ -108,8 +122,13 @@ public class SignupPageController {
             return;
         }
 
+        if (!email.contains("@") && DataStore.phoneExists(email)) {
+            setStatus("Phone already registered.", false);
+            return;
+        }
+
         String birthdate = year + "-" + month + "-" + day;
-        boolean created = DataStore.registerUser(username, email, password, "Tenant", birthdate);
+        boolean created = DataStore.registerUser(username, email, password, selectedRole, birthdate);
         if (created) {
             setStatus("Account created successfully. Please sign in.", true);
         } else {
@@ -137,7 +156,13 @@ public class SignupPageController {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             Scene scene = new Scene(root);
             stage.setScene(scene);
+            if (!fxml.contains("signup-view")) {
+                clearSignupWindowLock(stage);
+            }
             DataStore.applyWindowSize(stage);
+            if (fxml.contains("signup-view")) {
+                applySignupWindowLock(stage);
+            }
             stage.show();
         } catch (IOException e) {
             setStatus("Could not open page.", false);
@@ -148,5 +173,53 @@ public class SignupPageController {
     private void setStatus(String text, boolean success) {
         statusLabel.setText(text);
         statusLabel.setStyle(success ? "-fx-text-fill: #7dff9b;" : "-fx-text-fill: #ff8a8a;");
+    }
+
+    private void configureRoleButtons() {
+        tenantRoleButton.setToggleGroup(accountTypeGroup);
+        ownerRoleButton.setToggleGroup(accountTypeGroup);
+        tenantRoleButton.setSelected(true);
+        accountTypeGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle == null) {
+                tenantRoleButton.setSelected(true);
+            }
+        });
+    }
+
+    private String getSelectedRole() {
+        if (ownerRoleButton != null && ownerRoleButton.isSelected()) {
+            return "House Owner";
+        }
+        if (tenantRoleButton != null && tenantRoleButton.isSelected()) {
+            return "Tenant";
+        }
+        return null;
+    }
+
+    private void applySignupWindowLock(Stage stage) {
+        stage.setWidth(SIGNUP_WINDOW_WIDTH);
+        stage.setHeight(SIGNUP_WINDOW_HEIGHT);
+        // Lock width only — height stays free for vertical resize
+        stage.setMinWidth(SIGNUP_WINDOW_WIDTH);
+        stage.setMaxWidth(SIGNUP_WINDOW_WIDTH);
+        stage.setMinHeight(SIGNUP_WINDOW_HEIGHT);
+        stage.setMaxHeight(Double.MAX_VALUE);
+        stage.setResizable(true);
+
+        Platform.runLater(() -> {
+            stage.setMinWidth(SIGNUP_WINDOW_WIDTH);
+            stage.setMaxWidth(SIGNUP_WINDOW_WIDTH);
+            stage.setMinHeight(SIGNUP_WINDOW_HEIGHT);
+            stage.setMaxHeight(Double.MAX_VALUE);
+            stage.setResizable(true);
+        });
+    }
+
+    private void clearSignupWindowLock(Stage stage) {
+        stage.setMinWidth(0);
+        stage.setMinHeight(0);
+        stage.setMaxWidth(Double.MAX_VALUE);
+        stage.setMaxHeight(Double.MAX_VALUE);
+        stage.setResizable(true);
     }
 }

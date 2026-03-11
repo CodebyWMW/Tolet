@@ -240,6 +240,54 @@
   -fx-background-color: #2563eb;
 }
 
+/* Signup account type dropdown popup readability */
+.account-type-combo .list-cell {
+  -fx-text-fill: #000000;
+}
+
+.account-type-combo .combo-box-popup .list-view {
+  -fx-background-color: #ff7547;
+}
+
+.account-type-combo .combo-box-popup .list-cell {
+  -fx-background-color: #ff7547;
+  -fx-text-fill: #000000;
+}
+
+.account-type-combo .combo-box-popup .list-cell:hover,
+.account-type-combo .combo-box-popup .list-cell:filled:selected {
+  -fx-background-color: #f95f2f;
+  -fx-text-fill: #000000;
+}
+
+/* Role selector toggle buttons */
+.role-selector-btn {
+  -fx-background-color: #ff7547;
+  -fx-text-fill: #000000;
+  -fx-font-size: 14px;
+  -fx-background-radius: 8;
+  -fx-padding: 8 10 8 10;
+}
+
+.role-selector-btn:selected {
+  -fx-background-color: #ffffff;
+  -fx-text-fill: #ff7547;
+  -fx-font-weight: bold;
+  -fx-effect: dropshadow(gaussian, rgba(255, 117, 71, 0.65), 8, 0.4, 0, 0);
+}
+
+.role-selector-btn:hover {
+  -fx-background-color: #f95f2f;
+  -fx-text-fill: #000000;
+  -fx-cursor: hand;
+}
+
+.role-selector-btn:selected:hover {
+  -fx-background-color: #ffe5dc;
+  -fx-text-fill: #ff7547;
+  -fx-cursor: hand;
+}
+
 /* ============ Overview Page Styles (Dark) ============ */
 .main-container {
   -fx-background-color: #0b0b0b;
