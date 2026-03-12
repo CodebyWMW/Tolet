@@ -141,6 +141,21 @@ public class DataStore {
         stage.getProperties().put(WINDOW_TRACKING_KEY, true);
     }
 
+    public static void rememberWindowState(Stage stage) {
+        if (stage == null) {
+            return;
+        }
+
+        if (stage.getWidth() > 0) {
+            lastWindowWidth = stage.getWidth();
+        }
+        if (stage.getHeight() > 0) {
+            lastWindowHeight = stage.getHeight();
+        }
+        lastWindowX = stage.getX();
+        lastWindowY = stage.getY();
+    }
+
     public static String resolveFxml(String baseFxml) {
         if (baseFxml == null || baseFxml.isBlank()) {
             return baseFxml;

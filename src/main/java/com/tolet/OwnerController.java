@@ -80,10 +80,43 @@ public class OwnerController {
             profileVerificationLabel.setText("Status - " + (profileMeta.verified ? "Verified" : "Unverified"));
         if (profileRoleLabel != null)
             profileRoleLabel.setText("Role - " + sanitizeRole(profileMeta.role));
-        if (profileEmailLabel != null)
-            profileEmailLabel.setText("Email: " + profileMeta.email);
-        if (profilePhoneLabel != null)
-            profilePhoneLabel.setText("Phone: " + profileMeta.phone);
+        String phone = profileMeta.phone == null ? "" : profileMeta.phone.trim();
+        String email = profileMeta.email == null ? "" : profileMeta.email.trim();
+        boolean hasPhone = !phone.isBlank() && !"-".equals(phone);
+        boolean hasEmail = !email.isBlank() && !"-".equals(email);
+
+        // Show only one contact field: phone has priority over email.
+        if (hasPhone) {
+            if (profilePhoneLabel != null) {
+                profilePhoneLabel.setText("Phone: " + phone);
+                profilePhoneLabel.setVisible(true);
+                profilePhoneLabel.setManaged(true);
+            }
+            if (profileEmailLabel != null) {
+                profileEmailLabel.setVisible(false);
+                profileEmailLabel.setManaged(false);
+            }
+        } else if (hasEmail) {
+            if (profileEmailLabel != null) {
+                profileEmailLabel.setText("Email: " + email);
+                profileEmailLabel.setVisible(true);
+                profileEmailLabel.setManaged(true);
+            }
+            if (profilePhoneLabel != null) {
+                profilePhoneLabel.setVisible(false);
+                profilePhoneLabel.setManaged(false);
+            }
+        } else {
+            if (profileEmailLabel != null) {
+                profileEmailLabel.setText("Contact: -");
+                profileEmailLabel.setVisible(true);
+                profileEmailLabel.setManaged(true);
+            }
+            if (profilePhoneLabel != null) {
+                profilePhoneLabel.setVisible(false);
+                profilePhoneLabel.setManaged(false);
+            }
+        }
         if (welcomeLabel != null)
             welcomeLabel.setText("Welcome back, " + profileMeta.name + "!");
         if (dateLabel != null)
@@ -356,11 +389,19 @@ public class OwnerController {
     }
 
     private void loadScene(Stage stage, String baseFxml) throws IOException {
+        DataStore.rememberWindowState(stage);
+        boolean wasMaximized = stage.isMaximized();
+        boolean wasFullScreen = stage.isFullScreen();
+
         Parent root = FXMLLoader.load(getClass().getResource(
                 DataStore.resolveFxml(baseFxml)));
         Scene scene = new Scene(root);
         stage.setScene(scene);
-        DataStore.applyWindowSize(stage);
+        if (!wasFullScreen) {
+            DataStore.applyWindowSize(stage);
+        }
+        stage.setMaximized(wasMaximized);
+        stage.setFullScreen(wasFullScreen);
         stage.show();
     }
 }
