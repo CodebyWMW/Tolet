@@ -8,7 +8,7 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
-<VBox alignment="CENTER" prefHeight="600" prefWidth="900" spacing="0" styleClass="login-root" stylesheets="@light-theme.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.HelloController">
+<VBox alignment="CENTER" prefHeight="1200.0" prefWidth="500.0" spacing="0" styleClass="login-root" stylesheets="@light-theme.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.HelloController">
     <padding>
         <Insets bottom="40" left="40" right="40" top="40" />
     </padding>
@@ -88,7 +88,7 @@
             <Hyperlink onAction="#onForgotPassword" style="-fx-text-fill: #0066FF; -fx-border-color: transparent;" text="Forgot Password?" />
         </HBox>
 
-        <Button defaultButton="true" maxWidth="Infinity" onAction="#onLoginClick" prefHeight="45" styleClass="primary-button" text="Sign In" />
+        <Button defaultButton="true" maxWidth="Infinity" onAction="#onLoginClick" prefHeight="45" style="-fx-background-color: #f91852; -fx-text-fill: white;" styleClass="primary-button" text="Sign In" />
 
         <Label fx:id="statusLabel" alignment="CENTER" maxWidth="Infinity" />
 
@@ -99,15 +99,15 @@
         </HBox>
 
         <HBox alignment="CENTER" spacing="15">
-            <Button onAction="#onGoogleLogin" prefHeight="45" prefWidth="180" styleClass="social-button" text=" Google">
+            <Button onAction="#onGoogleLogin" prefHeight="45" prefWidth="180" style="-fx-background-color: #525252; -fx-border-color: #525252;" styleClass="social-button" text=" Google">
                 <graphic>
-                    <SVGPath content="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.373-1.147 8.587-3.493 2.293-2.293 2.947-5.467 2.947-7.827 0-.76-.053-1.467-.173-2.16H12.48z" fill="#D4AF37" scaleX="0.8" scaleY="0.8" />
+                    <SVGPath content="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.373-1.147 8.587-3.493 2.293-2.293 2.947-5.467 2.947-7.827 0-.76-.053-1.467-.173-2.16H12.48z" fill="#0682ff" scaleX="0.8" scaleY="0.8" />
                 </graphic>
             </Button>
 
-            <Button onAction="#onFacebookLogin" prefHeight="45" prefWidth="180" styleClass="social-button" text=" Facebook" textFill="#101010">
+            <Button onAction="#onFacebookLogin" prefHeight="45" prefWidth="180" style="-fx-background-color: #525252; -fx-border-color: #525252;" styleClass="social-button" text=" Facebook" textFill="#101010">
                 <graphic>
-                    <SVGPath content="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.79-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#D4AF37" scaleX="0.8" scaleY="0.8" />
+                    <SVGPath content="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.79-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#0682ff" scaleX="0.8" scaleY="0.8" />
                 </graphic>
             </Button>
         </HBox>
