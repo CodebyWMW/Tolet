@@ -21,7 +21,14 @@ import javafx.application.Platform;
 import javafx.util.Duration;
 import javafx.concurrent.Task;
 
+import database.DatabaseConnection;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -211,9 +218,59 @@ public class TenantController {
             return cached;
         }
 
-        Image image = new Image(source, 300, 200, true, true, true);
+        Image image;
+        if (source.startsWith("db-image://house/")) {
+            image = loadDbHouseImage(source);
+        } else {
+            image = new Image(source, 300, 200, true, true, true);
+        }
+
+        if (image == null || image.isError()) {
+            image = new Image(getClass().getResource("images/house1.png").toExternalForm(), 300, 200, true, true, true);
+        }
+
         IMAGE_CACHE.put(source, image);
         return image;
+    }
+
+    private Image loadDbHouseImage(String source) {
+        String prefix = "db-image://house/";
+        String raw = source.substring(prefix.length());
+        String[] parts = raw.split("/");
+        if (parts.length == 0) {
+            return null;
+        }
+
+        int houseId;
+        int sortOrder = 1;
+        try {
+            houseId = Integer.parseInt(parts[0]);
+            if (parts.length > 1) {
+                sortOrder = Integer.parseInt(parts[1]);
+            }
+        } catch (NumberFormatException e) {
+            return null;
+        }
+
+        String sql = "SELECT image_data FROM house_images WHERE house_id = ? AND sort_order = ? LIMIT 1";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, houseId);
+            pstmt.setInt(2, sortOrder);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    byte[] bytes = rs.getBytes("image_data");
+                    if (bytes != null && bytes.length > 0) {
+                        return new Image(new ByteArrayInputStream(bytes), 300, 200, true, true);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            return null;
+        }
+
+        return null;
     }
 
     private void onBookRequest(House h) {

@@ -73,9 +73,10 @@
                     <TableView fx:id="housesTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="houseIdCol" text="ID" prefWidth="60" />
-                            <TableColumn fx:id="houseLocationCol" text="Location" prefWidth="250" />
+                            <TableColumn fx:id="houseTitleCol" text="Title" prefWidth="220" />
+                            <TableColumn fx:id="houseLocationCol" text="Location" prefWidth="210" />
                             <TableColumn fx:id="houseOwnerIdCol" text="Owner ID" prefWidth="100" />
-                            <TableColumn fx:id="houseFeaturesCol" text="Features" prefWidth="300" />
+                            <TableColumn fx:id="houseFeaturesCol" text="Features" prefWidth="250" />
                             <TableColumn fx:id="houseStatusCol" text="Status" prefWidth="100" />
                             <TableColumn fx:id="houseActionsCol" text="Actions" prefWidth="250" />
                         </columns>

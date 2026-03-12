@@ -71,6 +71,8 @@ public class AdminController {
     @FXML
     private TableColumn<House, String> houseIdCol;
     @FXML
+    private TableColumn<House, String> houseTitleCol;
+    @FXML
     private TableColumn<House, String> houseLocationCol;
     @FXML
     private TableColumn<House, String> houseOwnerIdCol;
@@ -160,7 +162,7 @@ public class AdminController {
         roleFilterCombo.getSelectionModel().select(0);
 
         statusFilterCombo.getItems().addAll("All", "pending", "approved", "rejected");
-        statusFilterCombo.getSelectionModel().select(0);
+        statusFilterCombo.getSelectionModel().select("pending");
 
         setupUserManagement();
         setupHouseListings();
@@ -251,6 +253,13 @@ public class AdminController {
 
     private void setupHouseListings() {
         houseIdCol.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getId())));
+        houseTitleCol.setCellValueFactory(data -> {
+            String title = data.getValue().getTitle();
+            if (title == null || title.isBlank()) {
+                return new SimpleStringProperty("Untitled House");
+            }
+            return new SimpleStringProperty(title);
+        });
         houseLocationCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getLocation()));
         houseOwnerIdCol
                 .setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getOwnerId())));
@@ -384,10 +393,9 @@ public class AdminController {
         usersTable.setItems(allUsers);
         userCountLabel.setText("Total Users: " + users.size());
 
-        List<House> houses = houseDAO.getAllHouses();
+        List<House> houses = houseDAO.getAllListingsForAdmin();
         allHouses = FXCollections.observableArrayList(houses);
-        housesTable.setItems(allHouses);
-        houseCountLabel.setText("Total Houses: " + houses.size());
+        filterHouses();
 
         loadTenants();
         loadAuditLog();
@@ -419,12 +427,21 @@ public class AdminController {
     }
 
     private void filterHouses() {
+        if (allHouses == null) {
+            housesTable.setItems(FXCollections.observableArrayList());
+            houseCountLabel.setText("Total Houses: 0");
+            return;
+        }
+
         String filter = statusFilterCombo.getValue();
         if (filter == null || filter.equals("All")) {
             housesTable.setItems(allHouses);
             houseCountLabel.setText("Total Houses: " + allHouses.size());
         } else {
-            ObservableList<House> filtered = allHouses.filtered(h -> filter.equals(h.getApprovalStatus()));
+            ObservableList<House> filtered = allHouses.filtered(h -> {
+                String status = h.getApprovalStatus() == null ? "" : h.getApprovalStatus();
+                return filter.equalsIgnoreCase(status);
+            });
             housesTable.setItems(filtered);
             houseCountLabel.setText("Total Houses: " + filtered.size());
         }
@@ -480,7 +497,7 @@ public class AdminController {
         List<User> allUsersList = userDAO.getAllUsers();
         List<User> owners = userDAO.getUsersByRole("owner");
         List<User> tenants = userDAO.getUsersByRole("tenant");
-        List<House> allHousesList = houseDAO.getAllHouses();
+        List<House> allHousesList = houseDAO.getAllListingsForAdmin();
         List<House> pending = houseDAO.getHousesByStatus("pending");
 
         statsTotalUsersLabel.setText(String.valueOf(allUsersList.size()));

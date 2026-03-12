@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="720.0" prefWidth="1024.0" styleClass="list-house-root" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.OwnerListHouseController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="top-bar" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets top="14" right="20" bottom="14" left="20" />
+            </padding>
+            <Button onAction="#onBackToOwnerDashboard" styleClass="ghost-button" text="← Back to Dashboard" />
+            <Region HBox.hgrow="ALWAYS" />
+            <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
+                <graphic>
+                    <Region styleClass="switch-knob" />
+                </graphic>
+            </ToggleButton>
+        </HBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="list-house-scroll">
+            <VBox styleClass="list-house-content">
+                <VBox styleClass="list-house-hero">
+                    <Label styleClass="list-house-title" text="List Your House &amp; Start Earning" />
+                    <Label styleClass="list-house-subtitle" text="Create a modern listing with details tenants care about. First image becomes the cover photo." wrapText="true" />
+                </VBox>
+
+                <HBox spacing="16">
+                    <VBox HBox.hgrow="ALWAYS" spacing="14" styleClass="list-house-panel">
+                        <Label styleClass="field-label" text="House Pictures (max 3)" />
+                        <VBox styleClass="upload-card" spacing="10">
+                            <Button onAction="#onUploadHouseImages" styleClass="primary-action" text="Upload Images" />
+                            <Label fx:id="imageCountLabel" styleClass="upload-caption" text="0/3 selected" />
+                            <Label fx:id="imageListLabel" styleClass="upload-list" text="No images selected" wrapText="true" />
+                        </VBox>
+
+                        <Label styleClass="field-label" text="House Short Detail" />
+                        <TextField fx:id="shortDetailField" promptText="e.g. 3 Bed apartment in Uttara" styleClass="list-text-field" />
+
+                        <GridPane hgap="12" vgap="10">
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
+                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
+                            </columnConstraints>
+
+                            <Label styleClass="field-label" text="Number of Beds" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <Label styleClass="field-label" text="Number of Baths" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <TextField fx:id="bedsField" promptText="3" styleClass="list-text-field" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                            <TextField fx:id="bathsField" promptText="2" styleClass="list-text-field" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        </GridPane>
+
+                        <Label styleClass="field-label" text="Location" />
+                        <TextField fx:id="locationField" promptText="Area, Road, City" styleClass="list-text-field" />
+
+                        <Label styleClass="field-label" text="Details About the House" />
+                        <TextArea fx:id="detailsArea" prefRowCount="5" promptText="Lift, generator, tiles, balcony, nearby market..." styleClass="list-text-area" wrapText="true" />
+                    </VBox>
+
+                    <VBox HBox.hgrow="ALWAYS" spacing="14" styleClass="list-house-panel">
+                        <Label styleClass="field-label" text="Tags" />
+                        <HBox spacing="8">
+                            <ToggleButton fx:id="tagSingleButton" styleClass="tag-chip" text="Single" />
+                            <ToggleButton fx:id="tagFamilyButton" styleClass="tag-chip" text="Family" />
+                            <ToggleButton fx:id="tagWorkspaceButton" styleClass="tag-chip" text="Workspace/Office" />
+                        </HBox>
+
+                        <Label styleClass="field-label" text="Availability" />
+                        <ChoiceBox fx:id="availabilityChoice" styleClass="list-choice-box" />
+
+                        <Label styleClass="field-label" text="Utilities" />
+                        <HBox spacing="16">
+                            <CheckBox fx:id="gasCheck" styleClass="utility-check" text="Gas" />
+                            <CheckBox fx:id="waterCheck" styleClass="utility-check" text="Water" />
+                            <CheckBox fx:id="currentCheck" styleClass="utility-check" text="Current" />
+                        </HBox>
+
+                        <Label styleClass="field-label" text="Asking Price (BDT / month)" />
+                        <TextField fx:id="askingPriceField" promptText="25000" styleClass="list-text-field" />
+
+                        <Label styleClass="field-label" text="Owner Contact / Details" />
+                        <TextField fx:id="contactField" promptText="Phone or email" styleClass="list-text-field" />
+
+                        <Region VBox.vgrow="ALWAYS" />
+                        <Label fx:id="statusMessageLabel" styleClass="form-message" text="" wrapText="true" />
+                        <HBox alignment="CENTER_RIGHT" spacing="10">
+                            <Button onAction="#onResetForm" styleClass="ghost-button" text="Clear" />
+                            <Button onAction="#onSubmitHouseListing" styleClass="primary-action" text="Publish Listing" />
+                        </HBox>
+                    </VBox>
+                </HBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

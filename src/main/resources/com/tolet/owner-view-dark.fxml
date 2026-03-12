@@ -24,6 +24,7 @@
                 <Button prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Properties" />
                 <Button prefHeight="35.0" prefWidth="207.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Requests" />
                 <Button prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Analytics" />
+                <Button onAction="#onOpenListHouse" prefHeight="42.0" prefWidth="320.0" styleClass="list-house-cta" text="+ List New House" />
             </VBox>
 
             <Region style="-fx-background-color: #474743;" VBox.vgrow="ALWAYS" />
@@ -132,6 +133,20 @@
                         </HBox>
 
                         <VBox fx:id="requestsContainer" spacing="8" />
+                    </VBox>
+                </VBox>
+
+                <VBox maxHeight="1000.0" prefHeight="187.0" prefWidth="643.0" spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
+                    <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Your Listed Houses" />
+                    <VBox spacing="8" styleClass="table">
+                        <HBox spacing="16" style="-fx-background-color: #30302e;" styleClass="table-header">
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Title" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Location" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Asking Price" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Status" />
+                        </HBox>
+
+                        <VBox fx:id="listedHousesContainer" spacing="8" />
                     </VBox>
                 </VBox>
             </VBox>

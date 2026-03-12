@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
@@ -16,6 +17,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import java.io.IOException;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -54,6 +56,8 @@ public class OwnerController {
     private Label kpiPendingLabel;
     @FXML
     private VBox requestsContainer;
+    @FXML
+    private VBox listedHousesContainer;
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy",
             Locale.ENGLISH);
@@ -68,6 +72,7 @@ public class OwnerController {
         populateProfile();
         populateKpis();
         populateRequests();
+        populateListedHouses();
     }
 
     private void populateProfile() {
@@ -255,6 +260,111 @@ public class OwnerController {
         }
     }
 
+    private void populateListedHouses() {
+        if (listedHousesContainer == null) {
+            return;
+        }
+
+        listedHousesContainer.getChildren().clear();
+
+        int ownerId = resolveCurrentOwnerId();
+        if (ownerId <= 0) {
+            listedHousesContainer.getChildren().add(buildEmptyListedRow("No owner account found."));
+            return;
+        }
+
+        String query = "SELECT id, "
+                + "COALESCE(NULLIF(TRIM(title), ''), location, 'Untitled House') AS title, "
+                + "COALESCE(location, '-') AS location, "
+                + "COALESCE(rent, 0) AS rent, "
+                + "COALESCE(approval_status, 'pending') AS approval_status "
+                + "FROM houses WHERE owner_id = ? ORDER BY id DESC LIMIT 12";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, ownerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                boolean hasRows = false;
+                while (rs.next()) {
+                    hasRows = true;
+                    String title = rs.getString("title");
+                    String location = rs.getString("location");
+                    double rent = rs.getDouble("rent");
+                    String status = rs.getString("approval_status");
+                    listedHousesContainer.getChildren().add(buildListedHouseRow(title, location, rent, status));
+                }
+                if (!hasRows) {
+                    listedHousesContainer.getChildren().add(buildEmptyListedRow("No houses listed yet."));
+                }
+            }
+        } catch (SQLException e) {
+            listedHousesContainer.getChildren().add(buildEmptyListedRow("Could not load house listings."));
+        }
+    }
+
+    private int resolveCurrentOwnerId() {
+        if (DataStore.currentUser == null) {
+            return -1;
+        }
+        if (DataStore.currentUser.getId() > 0) {
+            return DataStore.currentUser.getId();
+        }
+
+        String query = "SELECT id FROM users WHERE lower(email) = lower(?) OR name = ? COLLATE NOCASE LIMIT 1";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, DataStore.currentUser.getEmail());
+            pstmt.setString(2, DataStore.currentUser.getUsername());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            return -1;
+        }
+        return -1;
+    }
+
+    private HBox buildListedHouseRow(String title, String location, double rent, String approvalStatus) {
+        HBox row = new HBox(16);
+        row.getStyleClass().add("table-row");
+
+        Label titleLabel = buildCellLabel(title == null ? "Untitled House" : title);
+        Label locationLabel = buildCellLabel(location == null ? "-" : location);
+        Label rentLabel = buildCellLabel(formatRent(rent));
+
+        String normalized = normalizeListingStatus(approvalStatus);
+        Label status = new Label(normalized);
+        status.getStyleClass().add("status-pill");
+        status.getStyleClass().add(normalized.toLowerCase(Locale.ENGLISH));
+
+        row.getChildren().addAll(titleLabel, locationLabel, rentLabel, status);
+        return row;
+    }
+
+    private HBox buildEmptyListedRow(String message) {
+        HBox row = new HBox(16);
+        row.getStyleClass().add("table-row");
+        Label label = buildCellLabel(message);
+        row.getChildren().add(label);
+        return row;
+    }
+
+    private String normalizeListingStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return "Pending";
+        }
+        String value = status.trim().toLowerCase(Locale.ENGLISH);
+        if (value.startsWith("approve")) {
+            return "Approved";
+        }
+        if (value.startsWith("reject") || value.startsWith("deny")) {
+            return "Denied";
+        }
+        return "Pending";
+    }
+
     private HBox buildRequestRow(BookingRequest request) {
         HBox row = new HBox(16);
         row.getStyleClass().add("table-row");
@@ -322,6 +432,60 @@ public class OwnerController {
             DataStore.currentUser = null;
             switchToLogin(event);
         }
+    }
+
+    @FXML
+    private void onOpenListHouse(ActionEvent event) {
+        Stage stage = null;
+        if (event != null && event.getSource() instanceof Node) {
+            stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        } else if (themeToggle != null && themeToggle.getScene() != null) {
+            stage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (stage == null) {
+            showNavigationError("Unable to locate the current window for navigation.");
+            return;
+        }
+
+        String resolved = DataStore.resolveFxml("owner-list-house.fxml");
+        URL viewUrl = getClass().getResource(resolved);
+
+        // Fallback to light view when the resolved themed file is unavailable.
+        if (viewUrl == null && resolved != null && resolved.endsWith("-dark.fxml")) {
+            viewUrl = getClass().getResource("owner-list-house.fxml");
+        }
+
+        if (viewUrl == null) {
+            showNavigationError("List House page is missing. Expected: " + resolved);
+            return;
+        }
+
+        try {
+            DataStore.rememberWindowState(stage);
+            boolean wasMaximized = stage.isMaximized();
+            boolean wasFullScreen = stage.isFullScreen();
+
+            Parent root = FXMLLoader.load(viewUrl);
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            if (!wasFullScreen) {
+                DataStore.applyWindowSize(stage);
+            }
+            stage.setMaximized(wasMaximized);
+            stage.setFullScreen(wasFullScreen);
+            stage.show();
+        } catch (IOException e) {
+            showNavigationError("Failed to open List House page: " + e.getMessage());
+        }
+    }
+
+    private void showNavigationError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Navigation Error");
+        alert.setHeaderText("Could not open List New House page");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private boolean showLogoutConfirmation() {

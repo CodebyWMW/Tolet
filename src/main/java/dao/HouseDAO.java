@@ -18,23 +18,45 @@ public class HouseDAO {
     private House extractHouse(ResultSet rs) throws SQLException {
         House house = new House();
 
-        house.setId(rs.getInt("id"));
-        house.setOwnerId(rs.getInt("owner_id"));
-        house.setLocation(rs.getString("location"));
-        house.setFamilyAllowed(rs.getInt("family_allowed") == 1);
-        house.setBachelorAllowed(rs.getInt("bachelor_allowed") == 1);
-        house.setGasAvailable(rs.getInt("gas_available") == 1);
-        house.setParkingAvailable(rs.getInt("parking_available") == 1);
-        house.setFurnished(rs.getInt("furnished") == 1);
-        house.setPetFriendly(rs.getInt("pet_friendly") == 1);
-
-        try {
-            house.setApprovalStatus(rs.getString("approval_status"));
-        } catch (SQLException e) {
-            house.setApprovalStatus("approved");
-        }
+        house.setId(safeInt(rs, "id", 0));
+        house.setOwnerId(safeInt(rs, "owner_id", 0));
+        house.setLocation(safeString(rs, "location", "-"));
+        house.setFamilyAllowed(safeInt(rs, "family_allowed", 0) == 1);
+        house.setBachelorAllowed(safeInt(rs, "bachelor_allowed", 0) == 1);
+        house.setGasAvailable(safeInt(rs, "gas_available", 0) == 1);
+        house.setParkingAvailable(safeInt(rs, "parking_available", 0) == 1);
+        house.setFurnished(safeInt(rs, "furnished", 0) == 1);
+        house.setPetFriendly(safeInt(rs, "pet_friendly", 0) == 1);
+        house.setTitle(safeString(rs, "title", ""));
+        house.setRent(safeDouble(rs, "rent", 0.0));
+        house.setApprovalStatus(safeString(rs, "approval_status", "pending"));
 
         return house;
+    }
+
+    private String safeString(ResultSet rs, String column, String fallback) {
+        try {
+            String value = rs.getString(column);
+            return value == null ? fallback : value;
+        } catch (SQLException e) {
+            return fallback;
+        }
+    }
+
+    private int safeInt(ResultSet rs, String column, int fallback) {
+        try {
+            return rs.getInt(column);
+        } catch (SQLException e) {
+            return fallback;
+        }
+    }
+
+    private double safeDouble(ResultSet rs, String column, double fallback) {
+        try {
+            return rs.getDouble(column);
+        } catch (SQLException e) {
+            return fallback;
+        }
     }
 
     // =============================
@@ -43,6 +65,28 @@ public class HouseDAO {
     public List<House> getAllHouses() {
         List<House> houses = new ArrayList<>();
         String sql = "SELECT * FROM houses WHERE approval_status = 'approved'";
+
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                houses.add(extractHouse(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return houses;
+    }
+
+    // =============================
+    // ADMIN: Get All Listings
+    // =============================
+    public List<House> getAllListingsForAdmin() {
+        List<House> houses = new ArrayList<>();
+        String sql = "SELECT * FROM houses ORDER BY id DESC";
 
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql);

@@ -1,182 +1,272 @@
 /* Dark overrides for custom app styles */
 
 .owner-root {
-    -fx-background-color: #0f1115;
+  -fx-background-color: #0f1115;
 }
 
 .sidebar {
-    -fx-background-color: #111827;
+  -fx-background-color: #111827;
 }
 
 .brand-title {
-    -fx-text-fill: #f9fafb;
+  -fx-text-fill: #f9fafb;
 }
 
 .brand-subtitle {
-    -fx-text-fill: #9ca3af;
+  -fx-text-fill: #9ca3af;
 }
 
 .nav-button {
-    -fx-text-fill: #cbd5f5;
+  -fx-text-fill: #cbd5f5;
 }
 
 .nav-button:hover {
-    -fx-background-color: #1f2937;
+  -fx-background-color: #1f2937;
 }
 
 .nav-button-active {
-    -fx-background-color: #1f2937;
-    -fx-text-fill: #ffffff;
+  -fx-background-color: #1f2937;
+  -fx-text-fill: #ffffff;
 }
 
 .profile-card {
-    -fx-background-color: #0b1324;
+  -fx-background-color: #0b1324;
 }
 
 .profile-name {
-    -fx-text-fill: #f9fafb;
+  -fx-text-fill: #f9fafb;
 }
 
 .profile-role {
-    -fx-text-fill: #9ca3af;
+  -fx-text-fill: #9ca3af;
 }
 
 .ghost-button {
-    -fx-border-color: #2f3b5f;
-    -fx-text-fill: #dbe5ff;
+  -fx-border-color: #2f3b5f;
+  -fx-text-fill: #dbe5ff;
 }
 
 .content-scroll {
-    -fx-background-color: transparent;
+  -fx-background-color: transparent;
 }
 
 .top-bar {
-    -fx-background-color: #111827;
+  -fx-background-color: #111827;
 }
 
 .page-title {
-    -fx-text-fill: #f9fafb;
+  -fx-text-fill: #f9fafb;
 }
 
 .page-subtitle {
-    -fx-text-fill: #9ca3af;
+  -fx-text-fill: #9ca3af;
 }
 
 .date-pill {
-    -fx-text-fill: #9ca3af;
-    -fx-background-color: #1f2937;
+  -fx-text-fill: #9ca3af;
+  -fx-background-color: #1f2937;
 }
 
 .kpi-card {
-    -fx-background-color: #111827;
+  -fx-background-color: #111827;
 }
 
 .kpi-title {
-    -fx-text-fill: #9ca3af;
+  -fx-text-fill: #9ca3af;
 }
 
 .kpi-value {
-    -fx-text-fill: #f9fafb;
+  -fx-text-fill: #f9fafb;
 }
 
 .panel {
-    -fx-background-color: #111827;
+  -fx-background-color: #111827;
 }
 
 .panel-title {
-    -fx-text-fill: #f9fafb;
+  -fx-text-fill: #f9fafb;
 }
 
 .chart-bar {
-    -fx-background-color: #3b82f6;
+  -fx-background-color: #3b82f6;
 }
 
 .table-header {
-    -fx-background-color: #0f172a;
+  -fx-background-color: #0f172a;
 }
 
 .table-title {
-    -fx-text-fill: #9ca3af;
+  -fx-text-fill: #9ca3af;
 }
 
 .table-row {
-    -fx-background-color: #0b1220;
-    -fx-border-color: #1f2a44;
+  -fx-background-color: #0b1220;
+  -fx-border-color: #1f2a44;
 }
 
 .table-text {
-    -fx-text-fill: #e5e7eb;
+  -fx-text-fill: #e5e7eb;
 }
 
 .status-pill.pending {
-    -fx-background-color: #3a2a0a;
-    -fx-text-fill: #fbbf24;
+  -fx-background-color: #3a2a0a;
+  -fx-text-fill: #fbbf24;
 }
 
 .status-pill.approved {
-    -fx-background-color: #0b2e1a;
-    -fx-text-fill: #34d399;
+  -fx-background-color: #0b2e1a;
+  -fx-text-fill: #34d399;
 }
 
 .status-pill.denied {
-    -fx-background-color: #3b0d0d;
-    -fx-text-fill: #f87171;
+  -fx-background-color: #3b0d0d;
+  -fx-text-fill: #f87171;
 }
 
 /* Tenant cards/filters */
 .filter-chip {
-    -fx-background-color: #0f172a;
-    -fx-text-fill: #e5e7eb;
-    -fx-border-color: #1f2937;
+  -fx-background-color: #0f172a;
+  -fx-text-fill: #e5e7eb;
+  -fx-border-color: #1f2937;
 }
 
 .filter-chip:selected {
-    -fx-background-color: #2563eb;
-    -fx-text-fill: #ffffff;
-    -fx-border-color: #2563eb;
+  -fx-background-color: #2563eb;
+  -fx-text-fill: #ffffff;
+  -fx-border-color: #2563eb;
 }
 
 .property-card {
-    -fx-background-color: #111827;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.45), 12, 0, 0, 6);
+  -fx-background-color: #111827;
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.45), 12, 0, 0, 6);
 }
 
 .card-title {
-    -fx-text-fill: #f9fafb;
+  -fx-text-fill: #f9fafb;
 }
 
 .card-location {
-    -fx-text-fill: #9ca3af;
+  -fx-text-fill: #9ca3af;
 }
 
 .card-price {
-    -fx-text-fill: #60a5fa;
+  -fx-text-fill: #60a5fa;
 }
 
 .card-badge {
-    -fx-background-color: #1e3a8a;
-    -fx-text-fill: #bfdbfe;
+  -fx-background-color: #1e3a8a;
+  -fx-text-fill: #bfdbfe;
 }
 
 .status-card {
-    -fx-background-color: #2b2210;
-    -fx-border-color: #b45309;
+  -fx-background-color: #2b2210;
+  -fx-border-color: #b45309;
 }
 
 /* Theme switch dark mode adjustments */
 .theme-switch {
-    -fx-background-color: #1f2937;
-    -fx-border-color: #374151;
+  -fx-background-color: #1f2937;
+  -fx-border-color: #374151;
 }
 
 .theme-switch:selected {
-    -fx-background-color: #1e293b;
+  -fx-background-color: #1e293b;
 }
 
 .theme-switch .switch-knob {
-    -fx-background-color: #9ca3af;
+  -fx-background-color: #9ca3af;
 }
 
 .theme-switch:selected .switch-knob {
-    -fx-background-color: #60a5fa;
+  -fx-background-color: #60a5fa;
+}
+
+.list-house-cta {
+  -fx-background-color: linear-gradient(to right, #ff7f50, #ff9d6c);
+  -fx-text-fill: #111827;
+}
+
+.list-house-cta:hover {
+  -fx-background-color: linear-gradient(to right, #ef6f3f, #eb8d5e);
+}
+
+.list-house-root {
+  -fx-background-color: linear-gradient(to bottom, #0f1115, #141923);
+}
+
+.list-house-hero {
+  -fx-background-color: rgba(20, 25, 35, 0.96);
+}
+
+.list-house-title {
+  -fx-text-fill: #f8fafc;
+}
+
+.list-house-subtitle {
+  -fx-text-fill: #97a4bf;
+}
+
+.list-house-panel {
+  -fx-background-color: rgba(17, 24, 39, 0.97);
+}
+
+.field-label {
+  -fx-text-fill: #9fb1d9;
+}
+
+.list-text-field,
+.list-text-area,
+.list-choice-box {
+  -fx-background-color: #101827;
+  -fx-border-color: #27344f;
+  -fx-text-fill: #f1f5f9;
+}
+
+.list-text-field:focused,
+.list-text-area:focused,
+.list-choice-box:focused {
+  -fx-border-color: #4e7dff;
+  -fx-background-color: #111f35;
+}
+
+.upload-card {
+  -fx-background-color: linear-gradient(to bottom right, #101827, #1a2438);
+  -fx-border-color: #364a77;
+}
+
+.upload-caption {
+  -fx-text-fill: #9db0db;
+}
+
+.upload-list {
+  -fx-text-fill: #e2e8f0;
+}
+
+.tag-chip {
+  -fx-background-color: #1b2a48;
+  -fx-border-color: #354b79;
+  -fx-text-fill: #c7d8ff;
+}
+
+.tag-chip:selected {
+  -fx-background-color: #3e64f4;
+  -fx-border-color: #3e64f4;
+  -fx-text-fill: #f8fafc;
+}
+
+.utility-check {
+  -fx-text-fill: #c8d3eb;
+}
+
+.form-message {
+  -fx-text-fill: #9db8ff;
+}
+
+.primary-action {
+  -fx-background-color: linear-gradient(to right, #ff7b48, #ff975f);
+  -fx-text-fill: #0f172a;
+}
+
+.primary-action:hover {
+  -fx-background-color: linear-gradient(to right, #ef6e3f, #e88c59);
 }
