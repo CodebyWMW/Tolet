@@ -20,6 +20,12 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import database.DatabaseConnection;
 
 public class OwnerController {
     @FXML
@@ -27,7 +33,15 @@ public class OwnerController {
     @FXML
     private Label profileNameLabel;
     @FXML
+    private Label profileInitialLabel;
+    @FXML
     private Label profileRoleLabel;
+    @FXML
+    private Label profileVerificationLabel;
+    @FXML
+    private Label profileEmailLabel;
+    @FXML
+    private Label profilePhoneLabel;
     @FXML
     private Label welcomeLabel;
     @FXML
@@ -57,16 +71,110 @@ public class OwnerController {
     }
 
     private void populateProfile() {
-        String ownerName = DataStore.currentUser != null ? DataStore.currentUser.getUsername() : "Owner";
-        String role = DataStore.currentUser != null ? DataStore.currentUser.getRole() : "Owner";
+        ProfileMeta profileMeta = resolveProfileMeta();
         if (profileNameLabel != null)
-            profileNameLabel.setText(ownerName);
+            profileNameLabel.setText(profileMeta.name);
+        if (profileInitialLabel != null)
+            profileInitialLabel.setText(profileMeta.initial);
+        if (profileVerificationLabel != null)
+            profileVerificationLabel.setText("Status - " + (profileMeta.verified ? "Verified" : "Unverified"));
         if (profileRoleLabel != null)
-            profileRoleLabel.setText(role);
+            profileRoleLabel.setText("Role - " + sanitizeRole(profileMeta.role));
+        if (profileEmailLabel != null)
+            profileEmailLabel.setText("Email: " + profileMeta.email);
+        if (profilePhoneLabel != null)
+            profilePhoneLabel.setText("Phone: " + profileMeta.phone);
         if (welcomeLabel != null)
-            welcomeLabel.setText("Welcome back, " + ownerName + "!");
+            welcomeLabel.setText("Welcome back, " + profileMeta.name + "!");
         if (dateLabel != null)
             dateLabel.setText(LocalDate.now().format(DATE_FORMAT));
+    }
+
+    private ProfileMeta resolveProfileMeta() {
+        String fallbackName = "Owner";
+        String fallbackRole = "-";
+        String fallbackEmail = "-";
+        String fallbackPhone = "-";
+
+        if (DataStore.currentUser == null) {
+            return new ProfileMeta(fallbackName, fallbackRole, fallbackEmail, fallbackPhone, false);
+        }
+
+        String currentName = DataStore.currentUser.getUsername();
+        String currentEmail = DataStore.currentUser.getEmail();
+        int currentUserId = DataStore.currentUser.getId();
+        String name = currentName != null && !currentName.isBlank() ? currentName : fallbackName;
+        String role = fallbackRole;
+        String email = fallbackEmail;
+        String phone = fallbackPhone;
+        boolean verified = false;
+
+        String query;
+        boolean queryById = currentUserId > 0;
+        if (queryById) {
+            query = "SELECT name, role, email, phone, verified FROM users WHERE id = ? LIMIT 1";
+        } else {
+            query = "SELECT name, role, email, phone, verified FROM users WHERE name = ? COLLATE NOCASE OR lower(email) = lower(?) LIMIT 1";
+        }
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            if (queryById) {
+                pstmt.setInt(1, currentUserId);
+            } else {
+                pstmt.setString(1, currentName);
+                pstmt.setString(2, currentEmail);
+            }
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String dbName = rs.getString("name");
+                    String dbRole = rs.getString("role");
+                    String dbEmail = rs.getString("email");
+                    String dbPhone = rs.getString("phone");
+
+                    if (dbName != null && !dbName.isBlank())
+                        name = dbName;
+                    if (dbRole != null && !dbRole.isBlank())
+                        role = dbRole;
+                    if (dbEmail != null && !dbEmail.isBlank())
+                        email = dbEmail;
+                    if (dbPhone != null && !dbPhone.isBlank())
+                        phone = dbPhone;
+
+                    verified = rs.getInt("verified") == 1;
+                }
+            }
+        } catch (SQLException e) {
+            verified = false;
+        }
+
+        return new ProfileMeta(name, role, email, phone, verified);
+    }
+
+    private String sanitizeRole(String role) {
+        if (role == null) {
+            return "-";
+        }
+        String cleaned = role.replaceAll("(?i)\\s*\\((verified|unverified)\\)\\s*", "").trim();
+        return cleaned.isBlank() ? "-" : cleaned;
+    }
+
+    private static class ProfileMeta {
+        private final String name;
+        private final String role;
+        private final String email;
+        private final String phone;
+        private final boolean verified;
+        private final String initial;
+
+        private ProfileMeta(String name, String role, String email, String phone, boolean verified) {
+            this.name = name;
+            this.role = role;
+            this.email = email;
+            this.phone = phone;
+            this.verified = verified;
+            this.initial = (name != null && !name.isBlank()) ? String.valueOf(Character.toUpperCase(name.charAt(0))) : "O";
+        }
     }
 
     private void populateKpis() {
