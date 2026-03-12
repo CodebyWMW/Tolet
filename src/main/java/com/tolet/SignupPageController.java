@@ -17,6 +17,8 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.application.Platform;
 import javafx.stage.Stage;
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
 
 public class SignupPageController {
     private static final double SIGNUP_WINDOW_WIDTH = 400;
@@ -130,7 +132,25 @@ public class SignupPageController {
         String birthdate = year + "-" + month + "-" + day;
         boolean created = DataStore.registerUser(username, email, password, selectedRole, birthdate);
         if (created) {
-            setStatus("Account created successfully. Please sign in.", true);
+            setStatus("Account created successfully. Redirecting to login...", true);
+            
+            // Add 2-3 second delay before navigating to login page
+            PauseTransition delay = new PauseTransition(Duration.seconds(2.5));
+            delay.setOnFinished(event -> {
+                try {
+                    Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml("login-view.fxml")));
+                    Stage stage = (Stage) statusLabel.getScene().getWindow();
+                    Scene scene = new Scene(root);
+                    stage.setScene(scene);
+                    clearSignupWindowLock(stage);
+                    DataStore.applyWindowSize(stage);
+                    stage.show();
+                } catch (IOException e) {
+                    setStatus("Could not open login page.", false);
+                    e.printStackTrace();
+                }
+            });
+            delay.play();
         } else {
             setStatus("Registration failed. Try another email/username.", false);
         }
@@ -172,7 +192,7 @@ public class SignupPageController {
 
     private void setStatus(String text, boolean success) {
         statusLabel.setText(text);
-        statusLabel.setStyle(success ? "-fx-text-fill: #7dff9b;" : "-fx-text-fill: #ff8a8a;");
+        statusLabel.setStyle(success ? "-fx-text-fill: #7dff9b;" : "-fx-text-fill: #ff0000;");
     }
 
     private void configureRoleButtons() {

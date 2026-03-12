@@ -3,6 +3,11 @@
   -fx-background-color: #99a3b4;
 }
 
+/* Status Label - Allow dynamic color from Java */
+#statusLabel {
+  -fx-text-fill: inherit;
+}
+
 /* Theme switch (light view) */
 .theme-switch {
   -fx-background-color: #f1f1f1;
@@ -126,20 +131,20 @@
 }
 
 .role-selector-btn:selected {
-  -fx-background-color: #d4af37;
+  -fx-background-color: #f75d5d;
   -fx-text-fill: #1e2731;
   -fx-font-weight: bold;
-  -fx-effect: dropshadow(gaussian, rgba(212, 175, 55, 0.55), 8, 0.4, 0, 0);
+  -fx-effect: dropshadow(gaussian, rgb(255, 0, 0), 8, 0.4, 0, 0);
 }
 
 .role-selector-btn:hover {
   -fx-background-color: #28537e;
-  -fx-text-fill: #d4af37;
+  -fx-text-fill: #f75d5d;
   -fx-cursor: hand;
 }
 
 .role-selector-btn:selected:hover {
-  -fx-background-color: #c99a28;
+  -fx-background-color: #f75d5d;
   -fx-text-fill: #1e2731;
   -fx-cursor: hand;
 }
