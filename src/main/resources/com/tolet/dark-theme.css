@@ -259,9 +259,116 @@
   -fx-text-fill: #000000;
 }
 
+/* Owner list-house dark view: keep prompt and entered text pure white */
+.list-house-root .list-text-field,
+.list-house-root .list-text-area,
+.list-house-root .list-choice-box {
+  -fx-text-fill: #ffffff;
+}
+
+.list-house-root .list-text-field,
+.list-house-root .list-text-area {
+  -fx-prompt-text-fill: #ffffff;
+}
+
+.list-house-root .list-text-field .text,
+.list-house-root .list-text-area .text,
+.list-house-root .list-text-area .content .text {
+  -fx-fill: #ffffff;
+}
+
+.list-house-root .list-choice-box > .label,
+.list-house-root .list-choice-box .menu-item > .label {
+  -fx-text-fill: #ffffff;
+}
+
+.list-house-root .list-text-area {
+  -fx-background-color: #30302e;
+  -fx-border-color: #30302e;
+  -fx-control-inner-background: #30302e;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+}
+
+.list-house-root .list-text-area .content {
+  -fx-background-color: #30302e;
+}
+
+.list-house-root .list-text-area:focused {
+  -fx-background-color: #30302e;
+  -fx-border-color: #30302e;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+}
+
+.list-house-root .list-text-area:focused .content {
+  -fx-background-color: #30302e;
+}
+
+/* Owner list-house bottom action buttons (Clear + Publish) */
+.list-house-root .list-house-panel > .hbox > .ghost-button {
+  -fx-background-color: rgba(255, 255, 255, 0.06);
+  -fx-border-color: #8aa0c7;
+  -fx-text-fill: #ffffff;
+  -fx-font-weight: 700;
+  -fx-background-radius: 12;
+  -fx-border-radius: 12;
+  -fx-padding: 10 18 10 18;
+}
+
+.list-house-root .list-house-panel > .hbox > .ghost-button:hover {
+  -fx-background-color: rgba(255, 255, 255, 0.14);
+  -fx-border-color: #b6c7e4;
+}
+
+.list-house-root .list-house-panel > .hbox > .primary-action {
+  -fx-background-color: linear-gradient(to right, #ff8c5a, #ffad7d);
+  -fx-text-fill: #0f172a;
+  -fx-font-weight: 800;
+  -fx-background-radius: 12;
+  -fx-padding: 10 20 10 20;
+}
+
+.list-house-root .list-house-panel > .hbox > .primary-action:hover {
+  -fx-background-color: linear-gradient(to right, #ff7a42, #ff9a66);
+}
+
 .account-type-combo .combo-box-popup .list-cell:hover,
 .account-type-combo .combo-box-popup .list-cell:filled:selected {
   -fx-background-color: #f95f2f;
+  -fx-text-fill: #000000;
+}
+
+/* Signup date of birth combo readability */
+.dob-combo {
+  -fx-background-color: #39ac4d;
+  -fx-text-fill: #000000;
+  -fx-mark-color: #000000;
+}
+
+.dob-combo > .list-cell,
+.dob-combo .list-cell {
+  -fx-background-color: #39ac4d;
+  -fx-text-fill: #000000;
+}
+
+.dob-combo > .list-cell .text,
+.dob-combo .list-cell .text {
+  -fx-fill: #000000;
+}
+
+.dob-combo .combo-box-popup .list-view {
+  -fx-background-color: #39ac4d;
+}
+
+.dob-combo .combo-box-popup .list-cell {
+  -fx-background-color: #39ac4d;
+  -fx-text-fill: #000000;
+}
+
+.dob-combo .combo-box-popup .list-cell:hover,
+.dob-combo .combo-box-popup .list-cell:filled:selected {
+  -fx-background-color: #fdff79;
   -fx-text-fill: #000000;
 }
 

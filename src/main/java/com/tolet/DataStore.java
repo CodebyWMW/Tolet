@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.prefs.Preferences;
 
 import database.DatabaseConnection;
 import database.TableCreator;
@@ -24,6 +25,13 @@ public class DataStore {
     private static Double lastWindowX;
     private static Double lastWindowY;
     private static final String WINDOW_TRACKING_KEY = "windowSizeTrackingAttached";
+    private static final Preferences PREFS = Preferences.userNodeForPackage(DataStore.class);
+    private static final String KEY_KEEP_SIGNED_IN = "keepSignedIn";
+    private static final String KEY_SESSION_ROLE = "sessionRole";
+    private static final String KEY_SESSION_USERNAME = "sessionUsername";
+    private static final String KEY_SESSION_EMAIL = "sessionEmail";
+    private static final String KEY_SESSION_MIGRATION_VERSION = "sessionMigrationVersion";
+    private static final int CURRENT_SESSION_MIGRATION_VERSION = 1;
 
     public static void initData() {
         TableCreator.createTables();
@@ -171,6 +179,114 @@ public class DataStore {
             return baseFxml.replace("-dark.fxml", ".fxml");
         }
         return baseFxml;
+    }
+
+    public static boolean isKeepSignedInEnabled() {
+        return PREFS.getBoolean(KEY_KEEP_SIGNED_IN, false);
+    }
+
+    public static void updateRememberedSession(boolean keepSignedIn) {
+        if (!keepSignedIn) {
+            clearRememberedSession();
+            return;
+        }
+
+        if (currentUser == null) {
+            clearRememberedSession();
+            return;
+        }
+
+        PREFS.putBoolean(KEY_KEEP_SIGNED_IN, true);
+        PREFS.put(KEY_SESSION_ROLE, safeValue(currentUser.getRole()));
+        PREFS.put(KEY_SESSION_USERNAME, safeValue(currentUser.getUsername()));
+        PREFS.put(KEY_SESSION_EMAIL, safeValue(currentUser.getEmail()));
+    }
+
+    public static void clearRememberedSession() {
+        PREFS.putBoolean(KEY_KEEP_SIGNED_IN, false);
+        PREFS.remove(KEY_SESSION_ROLE);
+        PREFS.remove(KEY_SESSION_USERNAME);
+        PREFS.remove(KEY_SESSION_EMAIL);
+    }
+
+    public static boolean restoreRememberedSession() {
+        migrateRememberedSessionIfNeeded();
+
+        if (!isKeepSignedInEnabled()) {
+            return false;
+        }
+
+        String role = PREFS.get(KEY_SESSION_ROLE, "").trim();
+        String username = PREFS.get(KEY_SESSION_USERNAME, "").trim();
+        String email = PREFS.get(KEY_SESSION_EMAIL, "").trim();
+
+        if ("admin".equalsIgnoreCase(role)) {
+            currentUser = new User("System Admin", "admin@tolet.com", "140945", "Admin");
+            return true;
+        }
+
+        if (username.isBlank() && email.isBlank()) {
+            clearRememberedSession();
+            return false;
+        }
+
+        String byNameWithRole = "SELECT * FROM users WHERE lower(name) = lower(?) AND lower(ifnull(role, '')) = lower(?) LIMIT 1";
+        String byNameOnly = "SELECT * FROM users WHERE lower(name) = lower(?) LIMIT 1";
+        String byEmailWithRole = "SELECT * FROM users WHERE lower(ifnull(email, '')) = lower(?) AND lower(ifnull(role, '')) = lower(?) LIMIT 1";
+        String byEmailOnly = "SELECT * FROM users WHERE lower(ifnull(email, '')) = lower(?) LIMIT 1";
+
+        try (Connection conn = DatabaseConnection.connect()) {
+            // First try username (most stable, especially for phone-based accounts).
+            if (!username.isBlank()) {
+                String query = role.isBlank() ? byNameOnly : byNameWithRole;
+                try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                    pstmt.setString(1, username);
+                    if (!role.isBlank()) {
+                        pstmt.setString(2, role);
+                    }
+                    ResultSet rs = pstmt.executeQuery();
+                    if (rs.next()) {
+                        currentUser = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"),
+                                rs.getString("role"));
+                        return true;
+                    }
+                }
+            }
+
+            // Fallback to email only when non-blank.
+            if (!email.isBlank()) {
+                String query = role.isBlank() ? byEmailOnly : byEmailWithRole;
+                try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                    pstmt.setString(1, email);
+                    if (!role.isBlank()) {
+                        pstmt.setString(2, role);
+                    }
+                    ResultSet rs = pstmt.executeQuery();
+                    if (rs.next()) {
+                        currentUser = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"),
+                                rs.getString("role"));
+                        return true;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            clearRememberedSession();
+            return false;
+        }
+
+        clearRememberedSession();
+        return false;
+    }
+
+    private static void migrateRememberedSessionIfNeeded() {
+        int existingVersion = PREFS.getInt(KEY_SESSION_MIGRATION_VERSION, 0);
+        if (existingVersion >= CURRENT_SESSION_MIGRATION_VERSION) {
+            return;
+        }
+
+        // One-time cleanup for older remember-me data that could restore the wrong account.
+        clearRememberedSession();
+        PREFS.putInt(KEY_SESSION_MIGRATION_VERSION, CURRENT_SESSION_MIGRATION_VERSION);
     }
 
     public static ObservableList<House> getHouses() {
@@ -406,6 +522,10 @@ public class DataStore {
         }
     }
 
+    private static String safeValue(String value) {
+        return value == null ? "" : value;
+    }
+
     // --- KEEP YOUR EXISTING AUTH METHODS BELOW (validateUser, registerUser, etc)
     // ---
     public static boolean validateUser(String username, String password) {
@@ -445,7 +565,7 @@ public class DataStore {
                 pstmt.setString(6, birthdate);
             } else if (!trimmedEmail.isBlank()) {
                 pstmt.setString(2, null);
-                pstmt.setString(5, trimmedEmail);
+                pstmt.setString(5, normalizePhone(trimmedEmail));
                 pstmt.setString(6, birthdate);
             } else {
                 pstmt.setString(2, null);
@@ -480,13 +600,15 @@ public class DataStore {
     }
 
     public static boolean phoneExists(String phone) {
-        String query = "SELECT 1 FROM users WHERE phone = ?";
-        try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, phone == null ? null : phone.trim());
-            return pstmt.executeQuery().next();
-        } catch (SQLException e) {
+        return findUserIdByPhone(phone) != null;
+    }
+
+    public static boolean contactExists(String contact) {
+        String trimmedContact = contact == null ? "" : contact.trim();
+        if (trimmedContact.isBlank()) {
             return false;
         }
+        return findUserIdByContact(trimmedContact) != null;
     }
 
     public static void updatePassword(String email, String newPass) {
@@ -498,6 +620,92 @@ public class DataStore {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static boolean updatePasswordByContact(String contact, String newPass) {
+        String trimmedContact = contact == null ? "" : contact.trim();
+        if (trimmedContact.isBlank()) {
+            return false;
+        }
+
+        Integer userId = findUserIdByContact(trimmedContact);
+        if (userId == null) {
+            return false;
+        }
+
+        String query = "UPDATE users SET password = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, newPass);
+            pstmt.setInt(2, userId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static Integer findUserIdByContact(String contact) {
+        String trimmedContact = contact == null ? "" : contact.trim();
+        if (trimmedContact.isBlank()) {
+            return null;
+        }
+        // Try both paths so users can reset via either email or phone without strict input assumptions.
+        if (trimmedContact.contains("@")) {
+            Integer userId = findUserIdByEmail(trimmedContact);
+            return userId != null ? userId : findUserIdByPhone(trimmedContact);
+        }
+        Integer userId = findUserIdByPhone(trimmedContact);
+        return userId != null ? userId : findUserIdByEmail(trimmedContact);
+    }
+
+    private static Integer findUserIdByEmail(String email) {
+        String query = "SELECT id FROM users WHERE lower(email) = lower(?) LIMIT 1";
+        try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, email == null ? null : email.trim());
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+        } catch (SQLException e) {
+            return null;
+        }
+        return null;
+    }
+
+    private static Integer findUserIdByPhone(String phone) {
+        String normalizedTarget = normalizePhone(phone);
+        if (normalizedTarget.isBlank()) {
+            return null;
+        }
+
+        String query = "SELECT id, phone FROM users WHERE phone IS NOT NULL";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String storedPhone = rs.getString("phone");
+                if (normalizedTarget.equals(normalizePhone(storedPhone))) {
+                    return rs.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            return null;
+        }
+        return null;
+    }
+
+    private static String normalizePhone(String phone) {
+        if (phone == null) {
+            return "";
+        }
+        String digitsOnly = phone.replaceAll("\\D", "");
+        if (digitsOnly.startsWith("880") && digitsOnly.length() >= 13) {
+            return digitsOnly.substring(2);
+        }
+        if (digitsOnly.startsWith("88") && digitsOnly.length() == 13) {
+            return digitsOnly.substring(2);
+        }
+        return digitsOnly;
     }
 
     // Stub for addHouse used by OwnerController - update this later to match new

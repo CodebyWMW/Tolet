@@ -1,18 +1,16 @@
 package com.tolet;
 
 import java.io.IOException;
-import java.util.Optional;
-
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -29,6 +27,8 @@ public class HelloController {
     private TextField passwordVisibleField;
     @FXML
     private Label statusLabel;
+    @FXML
+    private CheckBox rememberMe;
     @FXML
     private ToggleButton themeToggle;
     @FXML
@@ -66,6 +66,12 @@ public class HelloController {
             passwordVisibleField.setVisible(false);
             passwordVisibleField.setManaged(false);
         }
+
+        if (rememberMe != null) {
+            rememberMe.setSelected(DataStore.isKeepSignedInEnabled());
+        }
+
+        Platform.runLater(this::tryAutoLoginFromRememberedSession);
     }
 
     @FXML
@@ -76,50 +82,32 @@ public class HelloController {
         if (username.equalsIgnoreCase("admin") && password.equals("140945")) {
             try {
                 DataStore.currentUser = new User("System Admin", "admin@tolet.com", "140945", "Admin");
-                Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml("admin-view-new.fxml")));
+                DataStore.updateRememberedSession(rememberMe != null && rememberMe.isSelected());
+                showStatus("Login Successful!", false);
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
-                DataStore.applyWindowSize(stage);
-                stage.show();
+                loadDashboardForCurrentUser(stage);
                 return;
             } catch (Exception e) {
-                statusLabel.setText("Error loading Admin Panel: " + e.getMessage());
-                statusLabel.setStyle("-fx-text-fill: red;");
+                showStatus("Error loading Admin Panel: " + e.getMessage(), true);
                 e.printStackTrace();
                 return;
             }
         }
 
         if (DataStore.validateUser(username, password)) {
-            statusLabel.setText("Login Successful!");
-            statusLabel.setStyle("-fx-text-fill: green;");
-
-            String role = DataStore.currentUser.getRole();
-            String fxmlFile;
-            if (role.equalsIgnoreCase("Admin")) {
-                fxmlFile = "admin-view-new.fxml";
-            } else if (role.equalsIgnoreCase("House Owner")) {
-                fxmlFile = "owner-view.fxml";
-            } else {
-                fxmlFile = "tenant-view.fxml";
-            }
+            DataStore.updateRememberedSession(rememberMe != null && rememberMe.isSelected());
+            showStatus("Login Successful!", false);
 
             try {
-                Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml(fxmlFile)));
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
-                DataStore.applyWindowSize(stage);
-                stage.show();
+                loadDashboardForCurrentUser(stage);
             } catch (Exception e) {
-                statusLabel.setText("Error: " + e.getMessage());
-                statusLabel.setStyle("-fx-text-fill: red;");
+                showStatus("Error: " + e.getMessage(), true);
                 e.printStackTrace();
             }
         } else {
-            statusLabel.setText("Invalid Username or Password");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            DataStore.clearRememberedSession();
+            showStatus("Invalid Username or Password", true);
         }
     }
 
@@ -133,8 +121,7 @@ public class HelloController {
             DataStore.applyWindowSize(stage);
             stage.show();
         } catch (IOException e) {
-            statusLabel.setText("Could not open signup page.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            showStatus("Could not open signup page.", true);
             e.printStackTrace();
         }
     }
@@ -149,8 +136,7 @@ public class HelloController {
             DataStore.applyWindowSize(stage);
             stage.show();
         } catch (IOException e) {
-            statusLabel.setText("Could not open password reset page.");
-            statusLabel.setStyle("-fx-text-fill: red;");
+            showStatus("Could not open password reset page.", true);
             e.printStackTrace();
         }
     }
@@ -198,5 +184,64 @@ public class HelloController {
 
     @FXML
     protected void onFacebookLogin() {
+    }
+
+    private void tryAutoLoginFromRememberedSession() {
+        if (!DataStore.restoreRememberedSession()) {
+            return;
+        }
+
+        Stage stage = null;
+        if (themeToggle != null && themeToggle.getScene() != null) {
+            stage = (Stage) themeToggle.getScene().getWindow();
+        } else if (emailField != null && emailField.getScene() != null) {
+            stage = (Stage) emailField.getScene().getWindow();
+        }
+
+        if (stage == null) {
+            return;
+        }
+
+        try {
+            showStatus("Signed in automatically.", false);
+            loadDashboardForCurrentUser(stage);
+        } catch (IOException e) {
+            DataStore.clearRememberedSession();
+            DataStore.currentUser = null;
+        }
+    }
+
+    private void loadDashboardForCurrentUser(Stage stage) throws IOException {
+        String role = DataStore.currentUser != null ? DataStore.currentUser.getRole() : "";
+        String fxmlFile;
+        if (role != null && role.equalsIgnoreCase("Admin")) {
+            fxmlFile = "admin-view-new.fxml";
+        } else if (role != null && role.equalsIgnoreCase("House Owner")) {
+            fxmlFile = "owner-view.fxml";
+        } else {
+            fxmlFile = "tenant-view.fxml";
+        }
+
+        Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml(fxmlFile)));
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        DataStore.applyWindowSize(stage);
+        stage.show();
+    }
+
+    private void showStatus(String message, boolean error) {
+        if (statusLabel != null) {
+            statusLabel.setText("");
+        }
+
+        Stage ownerStage = null;
+        if (themeToggle != null && themeToggle.getScene() != null) {
+            ownerStage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (!StatusPopupHelper.showStatusPopup(ownerStage, message, error) && statusLabel != null) {
+            statusLabel.setText(message);
+            statusLabel.setStyle(error ? "-fx-text-fill: #d92d20;" : "-fx-text-fill: #159a62;");
+        }
     }
 }

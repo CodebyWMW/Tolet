@@ -43,9 +43,9 @@
 
         <Label alignment="BOTTOM_LEFT" prefHeight="30.0" style="-fx-text-fill: #f3f5fb; -fx-font-size: 11;" text="Date of birth" />
         <HBox prefHeight="30.0" spacing="5.0">
-            <ComboBox fx:id="monthCombo" maxWidth="Infinity" style="-fx-background-color: #39ac4d; -fx-mark-color: #000000; -fx-text-fill: #000000; -fx-background-radius: 8; -fx-padding: 8 10 8 10;" HBox.hgrow="ALWAYS" />
-            <ComboBox fx:id="dayCombo" maxWidth="Infinity" style="-fx-background-color: #39ac4d; -fx-mark-color: #000000; -fx-text-fill: #000000; -fx-background-radius: 8; -fx-padding: 8 10 8 10;" HBox.hgrow="ALWAYS" />
-            <ComboBox fx:id="yearCombo" maxWidth="Infinity" style="-fx-background-color: #39ac4d; -fx-mark-color: #000000; -fx-text-fill: #000000; -fx-background-radius: 8; -fx-padding: 8 10 8 10;" HBox.hgrow="ALWAYS">
+            <ComboBox fx:id="monthCombo" maxWidth="Infinity" style="-fx-background-color: #39ac4d; -fx-mark-color: #000000; -fx-text-fill: #000000; -fx-background-radius: 8; -fx-padding: 8 10 8 10;" styleClass="dob-combo" HBox.hgrow="ALWAYS" />
+            <ComboBox fx:id="dayCombo" maxWidth="Infinity" style="-fx-background-color: #39ac4d; -fx-mark-color: #000000; -fx-text-fill: #000000; -fx-background-radius: 8; -fx-padding: 8 10 8 10;" styleClass="dob-combo" HBox.hgrow="ALWAYS" />
+            <ComboBox fx:id="yearCombo" maxWidth="Infinity" style="-fx-background-color: #39ac4d; -fx-mark-color: #000000; -fx-text-fill: #000000; -fx-background-radius: 8; -fx-padding: 8 10 8 10;" styleClass="dob-combo" HBox.hgrow="ALWAYS">
                <padding>
                   <Insets bottom="-10.0" />
                </padding></ComboBox>

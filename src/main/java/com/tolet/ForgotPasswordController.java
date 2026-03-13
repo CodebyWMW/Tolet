@@ -1,22 +1,34 @@
 package com.tolet;
 
 import java.io.IOException;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class ForgotPasswordController {
+    private static final double FORGOT_WINDOW_WIDTH = 400;
+    private static final double FORGOT_WINDOW_HEIGHT = 900;
+    private static final int OTP_COOLDOWN_SECONDS = 60;
+
 
     @FXML
     private TextField emailField;
+    @FXML
+    private Button sendOtpButton;
     @FXML
     private TextField otpField;
     @FXML
@@ -29,40 +41,107 @@ public class ForgotPasswordController {
     private Label stepLabel;
     @FXML
     private ToggleButton themeToggle;
+    @FXML
+    private VBox emailStep;
+    @FXML
+    private VBox otpStep;
+    @FXML
+    private VBox passwordStep;
 
     private String generatedOTP;
-    private String userEmail;
+    private String userContact;
     private int currentStep = 1; // 1 = email, 2 = otp, 3 = password
+    private long otpCooldownEndsAtMillis;
+    private Timeline otpCooldownTimeline;
 
     @FXML
     public void initialize() {
         if (themeToggle != null) {
             themeToggle.setSelected(DataStore.darkMode);
         }
+
+        // Match signup behavior: keep a fixed width and controlled minimum height.
+        emailField.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                if (newScene.getWindow() instanceof Stage existingStage) {
+                    applyForgotWindowLock(existingStage);
+                }
+                newScene.windowProperty().addListener((obs2, oldWin, newWin) -> {
+                    if (newWin instanceof Stage stg) {
+                        applyForgotWindowLock(stg);
+                    }
+                });
+            }
+        });
+
         updateUI();
+        updateSendOtpButtonState();
     }
 
     @FXML
     private void onSendOTP(ActionEvent event) {
-        userEmail = emailField.getText().trim();
-
-        if (userEmail.isEmpty()) {
-            setStatus("Please enter your email.", false);
+        long now = System.currentTimeMillis();
+        if (now < otpCooldownEndsAtMillis) {
+            long remainingSeconds = Math.max(1, (otpCooldownEndsAtMillis - now + 999) / 1000);
+            setStatus("Please wait " + remainingSeconds + " seconds before requesting OTP again.", false);
             return;
         }
 
-        if (!DataStore.emailExists(userEmail)) {
-            setStatus("Email not found in our system.", false);
+        userContact = emailField.getText().trim();
+
+        if (userContact.isEmpty()) {
+            setStatus("Please enter your email or phone number.", false);
+            return;
+        }
+
+        if (!DataStore.contactExists(userContact)) {
+            setStatus("Email or phone number not found in our system.", false);
             return;
         }
 
         // Generate and "send" OTP
         generatedOTP = String.valueOf((int) (Math.random() * 9000) + 1000);
-        System.out.println("DEBUG OTP for " + userEmail + ": " + generatedOTP);
+        System.out.println("DEBUG OTP for " + userContact + ": " + generatedOTP);
 
         currentStep = 2;
-        setStatus("OTP sent to " + userEmail, true);
+        setStatus("OTP sent to " + userContact, true);
         updateUI();
+        startOtpCooldown();
+    }
+
+    private void startOtpCooldown() {
+        otpCooldownEndsAtMillis = System.currentTimeMillis() + (OTP_COOLDOWN_SECONDS * 1000L);
+
+        if (otpCooldownTimeline != null) {
+            otpCooldownTimeline.stop();
+        }
+
+        otpCooldownTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateSendOtpButtonState()));
+        otpCooldownTimeline.setCycleCount(Timeline.INDEFINITE);
+        otpCooldownTimeline.play();
+
+        updateSendOtpButtonState();
+    }
+
+    private void updateSendOtpButtonState() {
+        if (sendOtpButton == null) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        long remainingSeconds = Math.max(0, (otpCooldownEndsAtMillis - now + 999) / 1000);
+
+        if (remainingSeconds > 0) {
+            sendOtpButton.setDisable(true);
+            sendOtpButton.setText("Resend OTP (" + remainingSeconds + "s)");
+        } else {
+            sendOtpButton.setDisable(false);
+            sendOtpButton.setText("Send OTP");
+            if (otpCooldownTimeline != null) {
+                otpCooldownTimeline.stop();
+                otpCooldownTimeline = null;
+            }
+        }
     }
 
     @FXML
@@ -86,6 +165,11 @@ public class ForgotPasswordController {
 
     @FXML
     private void onResetPassword(ActionEvent event) {
+        if (currentStep < 3) {
+            setStatus("Please verify OTP first.", false);
+            return;
+        }
+
         String newPassword = newPasswordField.getText().trim();
         String confirmPassword = confirmPasswordField.getText().trim();
 
@@ -99,12 +183,11 @@ public class ForgotPasswordController {
             return;
         }
 
-        if (newPassword.length() < 6) {
-            setStatus("Password must be at least 6 characters.", false);
+        boolean updated = DataStore.updatePasswordByContact(userContact, newPassword);
+        if (!updated) {
+            setStatus("Could not reset password for that email/phone. Please try again.", false);
             return;
         }
-
-        DataStore.updatePassword(userEmail, newPassword);
         setStatus("Password reset successfully! Redirecting to login...", true);
 
         // Navigate back to login after 1.5 seconds
@@ -133,33 +216,23 @@ public class ForgotPasswordController {
     }
 
     private void updateUI() {
-        // Reset visibility
-        emailField.setVisible(false);
-        emailField.setManaged(false);
-        otpField.setVisible(false);
-        otpField.setManaged(false);
-        newPasswordField.setVisible(false);
-        newPasswordField.setManaged(false);
-        confirmPasswordField.setVisible(false);
-        confirmPasswordField.setManaged(false);
+        // Keep contact input visible across all steps so users can clearly see where OTP/password fields appear.
+        setStepVisible(emailStep, true);
+        setStepVisible(otpStep, false);
+        setStepVisible(passwordStep, false);
 
         switch (currentStep) {
             case 1:
                 stepLabel.setText("Reset Your Password");
-                emailField.setVisible(true);
-                emailField.setManaged(true);
                 break;
             case 2:
                 stepLabel.setText("Enter OTP");
-                otpField.setVisible(true);
-                otpField.setManaged(true);
+                setStepVisible(otpStep, true);
                 break;
             case 3:
                 stepLabel.setText("Set New Password");
-                newPasswordField.setVisible(true);
-                newPasswordField.setManaged(true);
-                confirmPasswordField.setVisible(true);
-                confirmPasswordField.setManaged(true);
+                setStepVisible(otpStep, true);
+                setStepVisible(passwordStep, true);
                 break;
         }
     }
@@ -170,7 +243,13 @@ public class ForgotPasswordController {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             Scene scene = new Scene(root);
             stage.setScene(scene);
+            if (!fxml.contains("forgot-password-view")) {
+                clearForgotWindowLock(stage);
+            }
             DataStore.applyWindowSize(stage);
+            if (fxml.contains("forgot-password-view")) {
+                applyForgotWindowLock(stage);
+            }
             stage.show();
         } catch (IOException e) {
             setStatus("Could not navigate.", false);
@@ -179,7 +258,65 @@ public class ForgotPasswordController {
     }
 
     private void setStatus(String text, boolean success) {
-        statusLabel.setText(text);
-        statusLabel.setStyle(success ? "-fx-text-fill: #7dff9b;" : "-fx-text-fill: #ff8a8a;");
+        if (success) {
+            statusLabel.setText(text);
+            statusLabel.setStyle("-fx-text-fill: #7dff9b;");
+            return;
+        }
+
+        // Error messages are shown via popup only, so clear inline status text.
+        statusLabel.setText("");
+        statusLabel.setStyle("-fx-text-fill: #ff8a8a;");
+
+        {
+            Stage ownerStage = resolveOwnerStage();
+            StatusPopupHelper.showStatusPopup(ownerStage, text, true);
+        }
+    }
+
+    private Stage resolveOwnerStage() {
+        if (themeToggle != null && themeToggle.getScene() != null
+                && themeToggle.getScene().getWindow() instanceof Stage stage) {
+            return stage;
+        }
+        if (statusLabel != null && statusLabel.getScene() != null
+                && statusLabel.getScene().getWindow() instanceof Stage stage) {
+            return stage;
+        }
+        return null;
+    }
+
+    private void applyForgotWindowLock(Stage stage) {
+        stage.setWidth(FORGOT_WINDOW_WIDTH);
+        stage.setHeight(FORGOT_WINDOW_HEIGHT);
+        // Lock width only, allow vertical resize above a minimum.
+        stage.setMinWidth(FORGOT_WINDOW_WIDTH);
+        stage.setMaxWidth(FORGOT_WINDOW_WIDTH);
+        stage.setMinHeight(FORGOT_WINDOW_HEIGHT);
+        stage.setMaxHeight(Double.MAX_VALUE);
+        stage.setResizable(true);
+
+        Platform.runLater(() -> {
+            stage.setMinWidth(FORGOT_WINDOW_WIDTH);
+            stage.setMaxWidth(FORGOT_WINDOW_WIDTH);
+            stage.setMinHeight(FORGOT_WINDOW_HEIGHT);
+            stage.setMaxHeight(Double.MAX_VALUE);
+            stage.setResizable(true);
+        });
+    }
+
+    private void clearForgotWindowLock(Stage stage) {
+        stage.setMinWidth(0);
+        stage.setMinHeight(0);
+        stage.setMaxWidth(Double.MAX_VALUE);
+        stage.setMaxHeight(Double.MAX_VALUE);
+        stage.setResizable(true);
+    }
+
+    private void setStepVisible(VBox step, boolean visible) {
+        if (step != null) {
+            step.setVisible(visible);
+            step.setManaged(visible);
+        }
     }
 }

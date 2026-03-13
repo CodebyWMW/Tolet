@@ -219,7 +219,16 @@
 .list-choice-box {
   -fx-background-color: #101827;
   -fx-border-color: #27344f;
-  -fx-text-fill: #f1f5f9;
+  -fx-text-fill: #ffffff;
+}
+
+.list-text-field,
+.list-text-area {
+  -fx-prompt-text-fill: #ffffff;
+}
+
+.list-choice-box > .label {
+  -fx-text-fill: #ffffff;
 }
 
 .list-text-field:focused,

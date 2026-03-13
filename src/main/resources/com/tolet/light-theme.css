@@ -150,9 +150,20 @@
 }
 
 /* Date of birth combo box displayed value color */
+.dob-combo {
+  -fx-background-color: #1e2731;
+  -fx-mark-color: #d4af37;
+}
+
+.dob-combo > .list-cell,
 .dob-combo .list-cell {
   -fx-background-color: #1e2731;
   -fx-text-fill: #d4af37;
+}
+
+.dob-combo > .list-cell .text,
+.dob-combo .list-cell .text {
+  -fx-fill: #d4af37;
 }
 
 .dob-combo .combo-box-popup .list-view {

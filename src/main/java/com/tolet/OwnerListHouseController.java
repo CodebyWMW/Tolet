@@ -156,21 +156,23 @@ public class OwnerListHouseController {
     }
 
     private void clearForm() {
-        shortDetailField.clear();
-        bedsField.clear();
-        bathsField.clear();
-        locationField.clear();
-        detailsArea.clear();
-        askingPriceField.clear();
-        contactField.clear();
+        clear(shortDetailField);
+        clear(bedsField);
+        clear(bathsField);
+        clear(locationField);
+        clear(detailsArea);
+        clear(askingPriceField);
+        clear(contactField);
 
-        tagSingleButton.setSelected(false);
-        tagFamilyButton.setSelected(false);
-        tagWorkspaceButton.setSelected(false);
-        gasCheck.setSelected(false);
-        waterCheck.setSelected(false);
-        currentCheck.setSelected(false);
-        availabilityChoice.getSelectionModel().selectFirst();
+        setSelected(tagSingleButton, false);
+        setSelected(tagFamilyButton, false);
+        setSelected(tagWorkspaceButton, false);
+        setSelected(gasCheck, false);
+        setSelected(waterCheck, false);
+        setSelected(currentCheck, false);
+        if (availabilityChoice != null) {
+            availabilityChoice.getSelectionModel().selectFirst();
+        }
 
         selectedImages.clear();
         refreshImageLabels();
@@ -348,6 +350,30 @@ public class OwnerListHouseController {
         return area == null || area.getText() == null ? "" : area.getText().trim();
     }
 
+    private void clear(TextField field) {
+        if (field != null) {
+            field.clear();
+        }
+    }
+
+    private void clear(TextArea area) {
+        if (area != null) {
+            area.clear();
+        }
+    }
+
+    private void setSelected(ToggleButton button, boolean selected) {
+        if (button != null) {
+            button.setSelected(selected);
+        }
+    }
+
+    private void setSelected(CheckBox checkBox, boolean selected) {
+        if (checkBox != null) {
+            checkBox.setSelected(selected);
+        }
+    }
+
     private void refreshImageLabels() {
         if (imageCountLabel != null) {
             imageCountLabel.setText(selectedImages.size() + "/" + MAX_IMAGES + " selected");
@@ -372,9 +398,29 @@ public class OwnerListHouseController {
     }
 
     private void setStatus(String message, boolean error) {
+        if (message == null || message.isBlank()) {
+            if (statusMessageLabel != null) {
+                statusMessageLabel.setText("");
+            }
+            return;
+        }
+
         if (statusMessageLabel != null) {
+            statusMessageLabel.setText("");
+        }
+
+        showStatusPopup(message, error);
+    }
+
+    private void showStatusPopup(String message, boolean error) {
+        Stage ownerStage = null;
+        if (themeToggle != null && themeToggle.getScene() != null) {
+            ownerStage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (!StatusPopupHelper.showStatusPopup(ownerStage, message, error) && statusMessageLabel != null) {
             statusMessageLabel.setText(message);
-            statusMessageLabel.setStyle(error ? "-fx-text-fill: #d92d20;" : "-fx-text-fill: #2256c7;");
+            statusMessageLabel.setStyle(error ? "-fx-text-fill: #f73122;" : "-fx-text-fill: #2256c7;");
         }
     }
 

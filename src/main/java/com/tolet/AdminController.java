@@ -522,6 +522,7 @@ public class AdminController {
     private void onLogout(ActionEvent event) throws IOException {
         if (showLogoutConfirmation()) {
             DataStore.currentUser = null;
+            DataStore.clearRememberedSession();
             switchToLogin(event);
         }
     }

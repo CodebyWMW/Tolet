@@ -17,8 +17,6 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.application.Platform;
 import javafx.stage.Stage;
-import javafx.animation.PauseTransition;
-import javafx.util.Duration;
 
 public class SignupPageController {
     private static final double SIGNUP_WINDOW_WIDTH = 400;
@@ -133,24 +131,18 @@ public class SignupPageController {
         boolean created = DataStore.registerUser(username, email, password, selectedRole, birthdate);
         if (created) {
             setStatus("Account created successfully. Redirecting to login...", true);
-            
-            // Add 2-3 second delay before navigating to login page
-            PauseTransition delay = new PauseTransition(Duration.seconds(2.5));
-            delay.setOnFinished(event -> {
-                try {
-                    Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml("login-view.fxml")));
-                    Stage stage = (Stage) statusLabel.getScene().getWindow();
-                    Scene scene = new Scene(root);
-                    stage.setScene(scene);
-                    clearSignupWindowLock(stage);
-                    DataStore.applyWindowSize(stage);
-                    stage.show();
-                } catch (IOException e) {
-                    setStatus("Could not open login page.", false);
-                    e.printStackTrace();
-                }
-            });
-            delay.play();
+            try {
+                Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml("login-view.fxml")));
+                Stage stage = (Stage) statusLabel.getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                clearSignupWindowLock(stage);
+                DataStore.applyWindowSize(stage);
+                stage.show();
+            } catch (IOException e) {
+                setStatus("Could not open login page.", false);
+                e.printStackTrace();
+            }
         } else {
             setStatus("Registration failed. Try another email/username.", false);
         }
@@ -191,8 +183,21 @@ public class SignupPageController {
     }
 
     private void setStatus(String text, boolean success) {
-        statusLabel.setText(text);
-        statusLabel.setStyle(success ? "-fx-text-fill: #7dff9b;" : "-fx-text-fill: #ff0000;");
+        if (statusLabel != null) {
+            statusLabel.setText("");
+        }
+
+        Stage ownerStage = null;
+        if (themeToggle != null && themeToggle.getScene() != null) {
+            ownerStage = (Stage) themeToggle.getScene().getWindow();
+        } else if (statusLabel != null && statusLabel.getScene() != null) {
+            ownerStage = (Stage) statusLabel.getScene().getWindow();
+        }
+
+        if (!StatusPopupHelper.showStatusPopup(ownerStage, text, !success) && statusLabel != null) {
+            statusLabel.setText(text);
+            statusLabel.setStyle(success ? "-fx-text-fill: #159a62;" : "-fx-text-fill: #d92d20;");
+        }
     }
 
     private void configureRoleButtons() {

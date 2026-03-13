@@ -282,6 +282,7 @@ public class TenantController {
     private void onLogout(javafx.event.ActionEvent event) throws IOException {
         if (showLogoutConfirmation()) {
             DataStore.currentUser = null;
+            DataStore.clearRememberedSession();
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             loadScene(stage, "login-view.fxml");
         }

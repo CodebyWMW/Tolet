@@ -583,8 +583,40 @@
   -fx-background-color: #ffffff;
 }
 
+.list-choice-box {
+  -fx-text-fill: #d4af37;
+}
+
+.list-choice-box > .label {
+  -fx-text-fill: #d4af37;
+}
+
+.list-choice-box .context-menu {
+  -fx-background-color: #1e2731;
+}
+
+.list-choice-box .menu-item > .label {
+  -fx-text-fill: #d4af37;
+}
+
+.list-text-field {
+  -fx-prompt-text-fill: #d4af37;
+}
+
 .list-text-area {
   -fx-font-size: 12px;
+  -fx-control-inner-background: #99a3b9;
+  -fx-text-fill: #d4af37;
+  -fx-prompt-text-fill: #d4af37;
+}
+
+.list-text-area .content {
+  -fx-background-color: #99a3b9;
+  -fx-text-fill: #d4af37;
+}
+
+.list-text-area:focused .content {
+  -fx-background-color: #99a3b9;
 }
 
 .upload-card {
