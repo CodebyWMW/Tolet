@@ -116,10 +116,7 @@ public class HelloController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml("signup-view.fxml")));
             Stage stage = (Stage) themeToggle.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            DataStore.applyWindowSize(stage);
-            stage.show();
+            switchSceneRoot(stage, root);
         } catch (IOException e) {
             showStatus("Could not open signup page.", true);
             e.printStackTrace();
@@ -131,10 +128,7 @@ public class HelloController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml("forgot-password-view.fxml")));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            DataStore.applyWindowSize(stage);
-            stage.show();
+            switchSceneRoot(stage, root);
         } catch (IOException e) {
             showStatus("Could not open password reset page.", true);
             e.printStackTrace();
@@ -169,10 +163,7 @@ public class HelloController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml("login-view.fxml")));
             Stage stage = (Stage) themeToggle.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            DataStore.applyWindowSize(stage);
-            stage.show();
+            switchSceneRoot(stage, root);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -223,9 +214,17 @@ public class HelloController {
         }
 
         Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml(fxmlFile)));
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        DataStore.applyWindowSize(stage);
+        switchSceneRoot(stage, root);
+    }
+
+    private void switchSceneRoot(Stage stage, Parent root) {
+        Scene scene = stage.getScene();
+        if (scene == null) {
+            stage.setScene(new Scene(root));
+        } else {
+            DataStore.prepareSceneForRootSwap(scene);
+            scene.setRoot(root);
+        }
         stage.show();
     }
 

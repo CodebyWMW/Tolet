@@ -134,10 +134,14 @@ public class SignupPageController {
             try {
                 Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml("login-view.fxml")));
                 Stage stage = (Stage) statusLabel.getScene().getWindow();
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
+                Scene scene = stage.getScene();
+                if (scene == null) {
+                    stage.setScene(new Scene(root));
+                } else {
+                    DataStore.prepareSceneForRootSwap(scene);
+                    scene.setRoot(root);
+                }
                 clearSignupWindowLock(stage);
-                DataStore.applyWindowSize(stage);
                 stage.show();
             } catch (IOException e) {
                 setStatus("Could not open login page.", false);
@@ -166,12 +170,16 @@ public class SignupPageController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(fxml));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
+            Scene scene = stage.getScene();
+            if (scene == null) {
+                stage.setScene(new Scene(root));
+            } else {
+                DataStore.prepareSceneForRootSwap(scene);
+                scene.setRoot(root);
+            }
             if (!fxml.contains("signup-view")) {
                 clearSignupWindowLock(stage);
             }
-            DataStore.applyWindowSize(stage);
             if (fxml.contains("signup-view")) {
                 applySignupWindowLock(stage);
             }

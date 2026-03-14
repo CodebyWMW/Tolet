@@ -92,6 +92,17 @@ public class DataStore {
         }
     }
 
+    public static void prepareSceneForRootSwap(Scene scene) {
+        if (scene == null) {
+            return;
+        }
+
+        var styleCss = DataStore.class.getResource("/com/tolet/style.css");
+        if (styleCss != null) {
+            scene.getStylesheets().remove(styleCss.toExternalForm());
+        }
+    }
+
     public static void applyWindowSize(Stage stage) {
         if (stage == null) {
             return;
@@ -328,7 +339,7 @@ public class DataStore {
                 && currentUser.getRole().toLowerCase().contains("owner")
                 && ownerId != null;
 
-        String query = "SELECT u.name AS tenant_name, h.location, r.request_date, r.move_in_date, h.rent, r.status "
+        String query = "SELECT r.id, u.name AS tenant_name, h.location, r.request_date, r.move_in_date, h.rent, r.status "
                 + "FROM rent_requests r "
                 + "JOIN users u ON r.tenant_id = u.id "
                 + "JOIN houses h ON r.house_id = h.id";
@@ -344,6 +355,7 @@ public class DataStore {
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.add(new BookingRequest(
+                    rs.getInt("id"),
                         rs.getString("tenant_name"),
                         rs.getString("location"),
                         parseDate(rs.getString("request_date")),

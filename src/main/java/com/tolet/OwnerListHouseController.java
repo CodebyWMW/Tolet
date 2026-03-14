@@ -38,6 +38,8 @@ public class OwnerListHouseController {
     @FXML
     private TextField bathsField;
     @FXML
+    private TextField areaField;
+    @FXML
     private TextField locationField;
     @FXML
     private TextArea detailsArea;
@@ -159,6 +161,7 @@ public class OwnerListHouseController {
         clear(shortDetailField);
         clear(bedsField);
         clear(bathsField);
+        clear(areaField);
         clear(locationField);
         clear(detailsArea);
         clear(askingPriceField);
@@ -198,18 +201,20 @@ public class OwnerListHouseController {
 
         int beds;
         int baths;
+        double areaSqft;
         double price;
         try {
             beds = Integer.parseInt(text(bedsField));
             baths = Integer.parseInt(text(bathsField));
+            areaSqft = Double.parseDouble(text(areaField));
             price = Double.parseDouble(text(askingPriceField));
         } catch (NumberFormatException e) {
-            setStatus("Beds, baths and asking price must be valid numbers.", true);
+            setStatus("Beds, baths, square feet and asking price must be valid numbers.", true);
             return;
         }
 
-        if (beds < 0 || baths < 0 || price <= 0) {
-            setStatus("Beds/baths cannot be negative and price must be greater than 0.", true);
+        if (beds < 0 || baths < 0 || areaSqft <= 0 || price <= 0) {
+            setStatus("Beds/baths cannot be negative, and square feet and price must be greater than 0.", true);
             return;
         }
 
@@ -222,8 +227,8 @@ public class OwnerListHouseController {
         String tags = buildTags();
         String type = resolvePrimaryType();
 
-        String insertHouse = "INSERT INTO houses (title, short_detail, location, details, tags, availability, type, bedrooms, bathrooms, gas_available, water_available, current_available, rent, contact_info, owner_id, image, approval_status, family_allowed, bachelor_allowed) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertHouse = "INSERT INTO houses (title, short_detail, location, details, tags, availability, type, bedrooms, bathrooms, area, gas_available, water_available, current_available, rent, contact_info, owner_id, image, approval_status, family_allowed, bachelor_allowed) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String insertImage = "INSERT INTO house_images (house_id, image_name, image_data, sort_order) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.connect()) {
@@ -240,16 +245,17 @@ public class OwnerListHouseController {
                     pstmt.setString(7, type);
                     pstmt.setInt(8, beds);
                     pstmt.setInt(9, baths);
-                    pstmt.setInt(10, gasCheck.isSelected() ? 1 : 0);
-                    pstmt.setInt(11, waterCheck.isSelected() ? 1 : 0);
-                    pstmt.setInt(12, currentCheck.isSelected() ? 1 : 0);
-                    pstmt.setDouble(13, price);
-                    pstmt.setString(14, contact);
-                    pstmt.setInt(15, ownerId);
-                    pstmt.setString(16, null);
-                    pstmt.setString(17, "pending");
-                    pstmt.setInt(18, tagFamilyButton.isSelected() ? 1 : 0);
-                    pstmt.setInt(19, tagSingleButton.isSelected() ? 1 : 0);
+                    pstmt.setDouble(10, areaSqft);
+                    pstmt.setInt(11, gasCheck.isSelected() ? 1 : 0);
+                    pstmt.setInt(12, waterCheck.isSelected() ? 1 : 0);
+                    pstmt.setInt(13, currentCheck.isSelected() ? 1 : 0);
+                    pstmt.setDouble(14, price);
+                    pstmt.setString(15, contact);
+                    pstmt.setInt(16, ownerId);
+                    pstmt.setString(17, null);
+                    pstmt.setString(18, "pending");
+                    pstmt.setInt(19, tagFamilyButton.isSelected() ? 1 : 0);
+                    pstmt.setInt(20, tagSingleButton.isSelected() ? 1 : 0);
                     pstmt.executeUpdate();
 
                     try (ResultSet keys = pstmt.getGeneratedKeys()) {
@@ -431,10 +437,12 @@ public class OwnerListHouseController {
 
         Parent root = FXMLLoader.load(getClass().getResource(
                 DataStore.resolveFxml(baseFxml)));
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        if (!wasFullScreen) {
-            DataStore.applyWindowSize(stage);
+        Scene scene = stage.getScene();
+        if (scene == null) {
+            stage.setScene(new Scene(root));
+        } else {
+            DataStore.prepareSceneForRootSwap(scene);
+            scene.setRoot(root);
         }
         stage.setMaximized(wasMaximized);
         stage.setFullScreen(wasFullScreen);

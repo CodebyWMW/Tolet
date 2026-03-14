@@ -9,18 +9,31 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -58,6 +71,68 @@ public class OwnerController {
     private VBox requestsContainer;
     @FXML
     private VBox listedHousesContainer;
+    @FXML
+    private VBox requestsPageRoot;
+    @FXML
+    private VBox acceptedTenantsPageRoot;
+    @FXML
+    private VBox propertiesPageRoot;
+    @FXML
+    private VBox propertiesCardsContainer;
+    @FXML
+    private Label propertyTitleLabel;
+    @FXML
+    private Label propertyLocationLabel;
+    @FXML
+    private Label propertyTypeLabel;
+    @FXML
+    private Label propertyPriceLabel;
+    @FXML
+    private Label propertySizeLabel;
+    @FXML
+    private Label propertyAvailabilityLabel;
+    @FXML
+    private Label propertyContactLabel;
+    @FXML
+    private Label propertyDetailsLabel;
+    @FXML
+    private ImageView propertyImage1;
+    @FXML
+    private ImageView propertyImage2;
+    @FXML
+    private ImageView propertyImage3;
+    @FXML
+    private VBox propertyRequestsContainer;
+    @FXML
+    private VBox analyticsPageRoot;
+    @FXML
+    private Label analyticsTotalPropertiesLabel;
+    @FXML
+    private Label analyticsTotalRequestsLabel;
+    @FXML
+    private Label analyticsApprovedRequestsLabel;
+    @FXML
+    private Label analyticsPendingRequestsLabel;
+    @FXML
+    private Label analyticsDeniedRequestsLabel;
+    @FXML
+    private Label analyticsAvgRentLabel;
+    @FXML
+    private Label analyticsEstimatedRevenueLabel;
+    @FXML
+    private Label analyticsApprovalRateLabel;
+    @FXML
+    private Label analyticsOccupancyRateLabel;
+    @FXML
+    private Label analyticsTopPropertyLabel;
+    @FXML
+    private Label analyticsLatestActivityLabel;
+    @FXML
+    private ProgressBar analyticsApprovalBar;
+    @FXML
+    private ProgressBar analyticsOccupancyBar;
+    @FXML
+    private LineChart<String, Number> analyticsRequestsTrendChart;
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy",
             Locale.ENGLISH);
@@ -73,6 +148,8 @@ public class OwnerController {
         populateKpis();
         populateRequests();
         populateListedHouses();
+        populatePropertiesPage();
+        populateAnalyticsPage();
     }
 
     private void populateProfile() {
@@ -217,24 +294,24 @@ public class OwnerController {
 
     private void populateKpis() {
         String ownerName = DataStore.currentUser != null ? DataStore.currentUser.getUsername() : null;
-        double income = 0;
         int houseCount = 0;
         for (House house : DataStore.getHouses()) {
             if (ownerName == null || ownerName.isBlank() || ownerName.equalsIgnoreCase(house.getOwnerName())) {
-                income += house.getRent();
                 houseCount++;
             }
         }
 
+        double income = 0;
         int pendingCount = 0;
         int approvedCount = 0;
         for (BookingRequest request : DataStore.getBookingRequests()) {
-            String status = request.getStatus();
-            if (status != null) {
-                if (status.equalsIgnoreCase("Pending"))
-                    pendingCount++;
-                if (status.equalsIgnoreCase("Approved"))
-                    approvedCount++;
+            String normalizedStatus = normalizeStatus(request.getStatus());
+            if ("Pending".equalsIgnoreCase(normalizedStatus)) {
+                pendingCount++;
+            }
+            if ("Approved".equalsIgnoreCase(normalizedStatus)) {
+                approvedCount++;
+                income += request.getMonthlyRent();
             }
         }
 
@@ -255,9 +332,57 @@ public class OwnerController {
         if (requestsContainer == null)
             return;
         requestsContainer.getChildren().clear();
-        for (BookingRequest request : DataStore.getBookingRequests()) {
-            requestsContainer.getChildren().add(buildRequestRow(request));
+
+        List<BookingRequest> source = DataStore.getBookingRequests();
+        if (isAcceptedTenantsPage()) {
+            List<BookingRequest> approvedOnly = new ArrayList<>();
+            for (BookingRequest request : source) {
+                if ("Approved".equalsIgnoreCase(normalizeStatus(request.getStatus()))) {
+                    approvedOnly.add(request);
+                }
+            }
+            source = approvedOnly;
         }
+
+        int shown = 0;
+        int maxRows = (isRequestsPage() || isAcceptedTenantsPage()) ? Integer.MAX_VALUE : 2;
+        for (BookingRequest request : source) {
+            if (shown >= maxRows) {
+                break;
+            }
+            if (isAcceptedTenantsPage()) {
+                requestsContainer.getChildren().add(buildAcceptedTenantRow(request));
+            } else {
+                requestsContainer.getChildren().add(buildRequestRow(request));
+            }
+            shown++;
+        }
+
+        if (shown == 0) {
+            HBox row = new HBox(16);
+            row.getStyleClass().add("table-row");
+            String emptyMessage = isAcceptedTenantsPage()
+                    ? "No approved tenants yet."
+                    : "No booking requests found.";
+            row.getChildren().add(buildCellLabel(emptyMessage));
+            requestsContainer.getChildren().add(row);
+        }
+    }
+
+    private boolean isRequestsPage() {
+        return requestsPageRoot != null;
+    }
+
+    private boolean isAcceptedTenantsPage() {
+        return acceptedTenantsPageRoot != null;
+    }
+
+    private boolean isPropertiesPage() {
+        return propertiesPageRoot != null;
+    }
+
+    private boolean isAnalyticsPage() {
+        return analyticsPageRoot != null;
     }
 
     private void populateListedHouses() {
@@ -285,13 +410,19 @@ public class OwnerController {
             pstmt.setInt(1, ownerId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 boolean hasRows = false;
+                int shown = 0;
+                int maxRows = isPropertiesPage() ? Integer.MAX_VALUE : 2;
                 while (rs.next()) {
+                    if (shown >= maxRows) {
+                        break;
+                    }
                     hasRows = true;
                     String title = rs.getString("title");
                     String location = rs.getString("location");
                     double rent = rs.getDouble("rent");
                     String status = rs.getString("approval_status");
                     listedHousesContainer.getChildren().add(buildListedHouseRow(title, location, rent, status));
+                    shown++;
                 }
                 if (!hasRows) {
                     listedHousesContainer.getChildren().add(buildEmptyListedRow("No houses listed yet."));
@@ -324,6 +455,559 @@ public class OwnerController {
             return -1;
         }
         return -1;
+    }
+
+    private static class HouseDetails {
+        private final int id;
+        private final String title;
+        private final String location;
+        private final String type;
+        private final double rent;
+        private final int bedrooms;
+        private final int bathrooms;
+        private final double area;
+        private final String details;
+        private final String availability;
+        private final String contactInfo;
+        private final String approvalStatus;
+
+        private HouseDetails(int id, String title, String location, String type, double rent,
+                int bedrooms, int bathrooms, double area, String details,
+                String availability, String contactInfo, String approvalStatus) {
+            this.id = id;
+            this.title = title;
+            this.location = location;
+            this.type = type;
+            this.rent = rent;
+            this.bedrooms = bedrooms;
+            this.bathrooms = bathrooms;
+            this.area = area;
+            this.details = details;
+            this.availability = availability;
+            this.contactInfo = contactInfo;
+            this.approvalStatus = approvalStatus;
+        }
+    }
+
+    private void populatePropertiesPage() {
+        if (propertiesCardsContainer == null) {
+            return;
+        }
+
+        propertiesCardsContainer.getChildren().clear();
+        if (propertyRequestsContainer != null) {
+            propertyRequestsContainer.getChildren().clear();
+        }
+
+        int ownerId = resolveCurrentOwnerId();
+        if (ownerId <= 0) {
+            propertiesCardsContainer.getChildren().add(buildCellLabel("No owner account found."));
+            return;
+        }
+
+        List<HouseDetails> houses = new ArrayList<>();
+        String query = "SELECT id, "
+                + "COALESCE(NULLIF(TRIM(title), ''), location, 'Untitled House') AS title, "
+                + "COALESCE(location, '-') AS location, "
+                + "COALESCE(type, '-') AS type, "
+                + "COALESCE(rent, 0) AS rent, "
+                + "COALESCE(bedrooms, 0) AS bedrooms, "
+                + "COALESCE(bathrooms, 0) AS bathrooms, "
+                + "COALESCE(area, 0.0) AS area, "
+                + "COALESCE(details, '-') AS details, "
+                + "COALESCE(availability, '-') AS availability, "
+                + "COALESCE(contact_info, '-') AS contact_info, "
+                + "COALESCE(approval_status, 'pending') AS approval_status "
+                + "FROM houses WHERE owner_id = ? ORDER BY id DESC";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, ownerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    houses.add(new HouseDetails(
+                            rs.getInt("id"),
+                            rs.getString("title"),
+                            rs.getString("location"),
+                            rs.getString("type"),
+                            rs.getDouble("rent"),
+                            rs.getInt("bedrooms"),
+                            rs.getInt("bathrooms"),
+                            rs.getDouble("area"),
+                            rs.getString("details"),
+                            rs.getString("availability"),
+                            rs.getString("contact_info"),
+                            rs.getString("approval_status")));
+                }
+            }
+        } catch (SQLException e) {
+            propertiesCardsContainer.getChildren().add(buildCellLabel("Could not load properties."));
+            return;
+        }
+
+        if (houses.isEmpty()) {
+            propertiesCardsContainer.getChildren().add(buildCellLabel("No houses listed yet."));
+            clearPropertyDetails();
+            return;
+        }
+
+        Button firstCard = null;
+        for (HouseDetails house : houses) {
+            Button card = buildPropertyCard(house);
+            propertiesCardsContainer.getChildren().add(card);
+            if (firstCard == null) {
+                firstCard = card;
+            }
+        }
+
+        if (firstCard != null) {
+            selectPropertyCard(firstCard);
+        }
+        showPropertyDetails(houses.get(0));
+    }
+
+    private Button buildPropertyCard(HouseDetails house) {
+        Button card = new Button();
+        card.getStyleClass().add("property-card");
+        card.setMaxWidth(Double.MAX_VALUE);
+        card.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+
+        VBox content = new VBox(4);
+        Label title = new Label(house.title == null ? "Untitled House" : house.title);
+        title.getStyleClass().add("card-title");
+
+        Label location = new Label(house.location == null ? "-" : house.location);
+        location.getStyleClass().add("card-location");
+
+        Label rent = new Label(formatRent(house.rent));
+        rent.getStyleClass().add("card-price");
+
+        Label status = new Label(normalizeListingStatus(house.approvalStatus));
+        status.getStyleClass().add("card-badge");
+
+        content.getChildren().addAll(title, location, rent, status);
+        card.setGraphic(content);
+        card.setOnAction(event -> {
+            selectPropertyCard(card);
+            showPropertyDetails(house);
+        });
+        return card;
+    }
+
+    private void selectPropertyCard(Button selectedCard) {
+        if (propertiesCardsContainer == null || selectedCard == null) {
+            return;
+        }
+
+        for (Node node : propertiesCardsContainer.getChildren()) {
+            if (node instanceof Button buttonCard) {
+                buttonCard.getStyleClass().remove("property-card-selected");
+            }
+        }
+
+        if (!selectedCard.getStyleClass().contains("property-card-selected")) {
+            selectedCard.getStyleClass().add("property-card-selected");
+        }
+    }
+
+    private void showPropertyDetails(HouseDetails house) {
+        if (house == null) {
+            clearPropertyDetails();
+            return;
+        }
+
+        if (propertyTitleLabel != null)
+            propertyTitleLabel.setText("Title: " + safeText(house.title));
+        if (propertyLocationLabel != null)
+            propertyLocationLabel.setText("Location: " + safeText(house.location));
+        if (propertyTypeLabel != null)
+            propertyTypeLabel.setText("Type: " + safeText(house.type));
+        if (propertyPriceLabel != null)
+            propertyPriceLabel.setText("Rent: " + formatRent(house.rent));
+        if (propertySizeLabel != null)
+            propertySizeLabel.setText("Size: " + house.bedrooms + " bed, " + house.bathrooms + " bath, "
+                    + String.format("%.0f", house.area) + " sqft");
+        if (propertyAvailabilityLabel != null)
+            propertyAvailabilityLabel.setText("Availability: " + safeText(house.availability));
+        if (propertyContactLabel != null)
+            propertyContactLabel.setText("Contact: " + safeText(house.contactInfo));
+        if (propertyDetailsLabel != null)
+            propertyDetailsLabel.setText("Details: " + safeText(house.details));
+        populatePropertyImages(house.id);
+
+        populateHouseRequests(house.id);
+    }
+
+    private void populatePropertyImages(int houseId) {
+        List<ImageView> slots = new ArrayList<>();
+        if (propertyImage1 != null)
+            slots.add(propertyImage1);
+        if (propertyImage2 != null)
+            slots.add(propertyImage2);
+        if (propertyImage3 != null)
+            slots.add(propertyImage3);
+
+        if (slots.isEmpty()) {
+            return;
+        }
+
+        for (ImageView slot : slots) {
+            slot.setImage(null);
+            updatePropertyImageSlotStyle(slot, false);
+        }
+
+        String sql = "SELECT image_data FROM house_images WHERE house_id = ? ORDER BY sort_order ASC, id ASC LIMIT 3";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, houseId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                int index = 0;
+                while (rs.next() && index < slots.size()) {
+                    byte[] bytes = rs.getBytes("image_data");
+                    if (bytes != null && bytes.length > 0) {
+                        Image image = new Image(new ByteArrayInputStream(bytes), 170, 130, true, true);
+                        ImageView slot = slots.get(index);
+                        slot.setImage(image);
+                        updatePropertyImageSlotStyle(slot, true);
+                    }
+                    index++;
+                }
+            }
+        } catch (SQLException e) {
+            // Keep placeholders empty if images cannot be loaded.
+        }
+    }
+
+    private void updatePropertyImageSlotStyle(ImageView imageView, boolean hasImage) {
+        if (imageView == null || imageView.getParent() == null) {
+            return;
+        }
+
+        if (imageView.getParent() instanceof javafx.scene.layout.StackPane slotPane) {
+            if (hasImage) {
+                if (!slotPane.getStyleClass().contains("property-detail-image-slot-has-image")) {
+                    slotPane.getStyleClass().add("property-detail-image-slot-has-image");
+                }
+            } else {
+                slotPane.getStyleClass().remove("property-detail-image-slot-has-image");
+            }
+        }
+    }
+
+    private void populateHouseRequests(int houseId) {
+        if (propertyRequestsContainer == null) {
+            return;
+        }
+
+        propertyRequestsContainer.getChildren().clear();
+
+        String query = "SELECT u.name AS tenant_name, r.request_date, r.move_in_date, r.status "
+                + "FROM rent_requests r "
+                + "JOIN users u ON u.id = r.tenant_id "
+                + "WHERE r.house_id = ? "
+                + "ORDER BY r.id DESC";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, houseId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                boolean hasRows = false;
+                while (rs.next()) {
+                    hasRows = true;
+                    propertyRequestsContainer.getChildren().add(buildPropertyRequestRow(
+                            rs.getString("tenant_name"),
+                            parseDate(rs.getString("request_date")),
+                            parseDate(rs.getString("move_in_date")),
+                            rs.getString("status")));
+                }
+                if (!hasRows) {
+                    HBox row = new HBox(16);
+                    row.getStyleClass().add("table-row");
+                    row.getChildren().add(buildWideMessageLabel("No tenant requests for this property."));
+                    propertyRequestsContainer.getChildren().add(row);
+                }
+            }
+        } catch (SQLException e) {
+            HBox row = new HBox(16);
+            row.getStyleClass().add("table-row");
+            row.getChildren().add(buildWideMessageLabel("Could not load tenant requests."));
+            propertyRequestsContainer.getChildren().add(row);
+        }
+    }
+
+    private HBox buildPropertyRequestRow(String tenantName, LocalDate requestDate, LocalDate moveInDate, String statusText) {
+        HBox row = new HBox(16);
+        row.getStyleClass().add("table-row");
+
+        Label tenant = buildCellLabel(tenantName);
+        Label request = buildCellLabel(formatDate(requestDate));
+        Label moveIn = buildCellLabel(formatDate(moveInDate));
+        Label status = new Label(normalizeStatus(statusText));
+        status.getStyleClass().add("status-pill");
+        status.getStyleClass().add(normalizeStatus(statusText).toLowerCase(Locale.ENGLISH));
+
+        row.getChildren().addAll(tenant, request, moveIn, status);
+        return row;
+    }
+
+    private void clearPropertyDetails() {
+        if (propertyTitleLabel != null)
+            propertyTitleLabel.setText("Title: -");
+        if (propertyLocationLabel != null)
+            propertyLocationLabel.setText("Location: -");
+        if (propertyTypeLabel != null)
+            propertyTypeLabel.setText("Type: -");
+        if (propertyPriceLabel != null)
+            propertyPriceLabel.setText("Rent: -");
+        if (propertySizeLabel != null)
+            propertySizeLabel.setText("Size: -");
+        if (propertyAvailabilityLabel != null)
+            propertyAvailabilityLabel.setText("Availability: -");
+        if (propertyContactLabel != null)
+            propertyContactLabel.setText("Contact: -");
+        if (propertyDetailsLabel != null)
+            propertyDetailsLabel.setText("Details: -");
+        if (propertyImage1 != null)
+            propertyImage1.setImage(null);
+        if (propertyImage2 != null)
+            propertyImage2.setImage(null);
+        if (propertyImage3 != null)
+            propertyImage3.setImage(null);
+        updatePropertyImageSlotStyle(propertyImage1, false);
+        updatePropertyImageSlotStyle(propertyImage2, false);
+        updatePropertyImageSlotStyle(propertyImage3, false);
+        if (propertyRequestsContainer != null)
+            propertyRequestsContainer.getChildren().clear();
+    }
+
+    private String safeText(String value) {
+        if (value == null || value.isBlank()) {
+            return "-";
+        }
+        return value;
+    }
+
+    private LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private void populateAnalyticsPage() {
+        if (analyticsPageRoot == null) {
+            return;
+        }
+
+        int ownerId = resolveCurrentOwnerId();
+        if (ownerId <= 0) {
+            setAnalyticsDefaults();
+            return;
+        }
+
+        int totalProperties = 0;
+        double avgRent = 0;
+        String propertiesQuery = "SELECT COUNT(*) AS total_properties, COALESCE(AVG(rent), 0) AS avg_rent "
+                + "FROM houses WHERE owner_id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(propertiesQuery)) {
+            pstmt.setInt(1, ownerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    totalProperties = rs.getInt("total_properties");
+                    avgRent = rs.getDouble("avg_rent");
+                }
+            }
+        } catch (SQLException e) {
+            setAnalyticsDefaults();
+            return;
+        }
+
+        int totalRequests = 0;
+        int approvedRequests = 0;
+        int pendingRequests = 0;
+        int deniedRequests = 0;
+        double estimatedRevenue = 0;
+        LocalDate latestDate = null;
+        String latestStatus = "-";
+        String latestTenant = "-";
+
+        String requestsQuery = "SELECT u.name AS tenant_name, r.request_date, r.status, h.rent "
+                + "FROM rent_requests r "
+                + "JOIN houses h ON h.id = r.house_id "
+                + "JOIN users u ON u.id = r.tenant_id "
+                + "WHERE h.owner_id = ? "
+                + "ORDER BY r.id DESC";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(requestsQuery)) {
+            pstmt.setInt(1, ownerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    totalRequests++;
+                    String normalized = normalizeStatus(rs.getString("status"));
+                    if ("Approved".equalsIgnoreCase(normalized)) {
+                        approvedRequests++;
+                        estimatedRevenue += rs.getDouble("rent");
+                    } else if ("Pending".equalsIgnoreCase(normalized)) {
+                        pendingRequests++;
+                    } else {
+                        deniedRequests++;
+                    }
+
+                    if (latestDate == null) {
+                        latestDate = parseDate(rs.getString("request_date"));
+                        latestStatus = normalized;
+                        latestTenant = rs.getString("tenant_name");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            setAnalyticsDefaults();
+            return;
+        }
+
+        String topProperty = "-";
+        String topPropertyQuery = "SELECT COALESCE(NULLIF(TRIM(h.title), ''), h.location, 'Untitled House') AS property_name, COUNT(*) AS req_count "
+                + "FROM rent_requests r "
+                + "JOIN houses h ON h.id = r.house_id "
+                + "WHERE h.owner_id = ? "
+                + "GROUP BY h.id "
+                + "ORDER BY req_count DESC, h.id DESC LIMIT 1";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(topPropertyQuery)) {
+            pstmt.setInt(1, ownerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    topProperty = rs.getString("property_name") + " (" + rs.getInt("req_count") + " requests)";
+                }
+            }
+        } catch (SQLException e) {
+            topProperty = "-";
+        }
+
+        double approvalRate = totalRequests > 0 ? (approvedRequests * 100.0) / totalRequests : 0;
+        double occupancyRate = totalProperties > 0 ? Math.min(100, (approvedRequests * 100.0) / totalProperties) : 0;
+
+        if (analyticsTotalPropertiesLabel != null)
+            analyticsTotalPropertiesLabel.setText(String.valueOf(totalProperties));
+        if (analyticsTotalRequestsLabel != null)
+            analyticsTotalRequestsLabel.setText(String.valueOf(totalRequests));
+        if (analyticsApprovedRequestsLabel != null)
+            analyticsApprovedRequestsLabel.setText(String.valueOf(approvedRequests));
+        if (analyticsPendingRequestsLabel != null)
+            analyticsPendingRequestsLabel.setText(String.valueOf(pendingRequests));
+        if (analyticsDeniedRequestsLabel != null)
+            analyticsDeniedRequestsLabel.setText(String.valueOf(deniedRequests));
+        if (analyticsAvgRentLabel != null)
+            analyticsAvgRentLabel.setText(formatRent(avgRent));
+        if (analyticsEstimatedRevenueLabel != null)
+            analyticsEstimatedRevenueLabel.setText(formatRent(estimatedRevenue));
+        if (analyticsApprovalRateLabel != null)
+            analyticsApprovalRateLabel.setText(String.format("%.0f%%", approvalRate));
+        if (analyticsOccupancyRateLabel != null)
+            analyticsOccupancyRateLabel.setText(String.format("%.0f%%", occupancyRate));
+        if (analyticsTopPropertyLabel != null)
+            analyticsTopPropertyLabel.setText(topProperty);
+        if (analyticsLatestActivityLabel != null) {
+            String dateText = latestDate == null ? "-" : formatDate(latestDate);
+            analyticsLatestActivityLabel.setText(latestTenant + " | " + latestStatus + " | " + dateText);
+        }
+
+        if (analyticsApprovalBar != null)
+            analyticsApprovalBar.setProgress(Math.max(0, Math.min(1, approvalRate / 100.0)));
+        if (analyticsOccupancyBar != null)
+            analyticsOccupancyBar.setProgress(Math.max(0, Math.min(1, occupancyRate / 100.0)));
+
+        populateAnalyticsTrendChart(ownerId);
+    }
+
+    private void setAnalyticsDefaults() {
+        if (analyticsTotalPropertiesLabel != null)
+            analyticsTotalPropertiesLabel.setText("0");
+        if (analyticsTotalRequestsLabel != null)
+            analyticsTotalRequestsLabel.setText("0");
+        if (analyticsApprovedRequestsLabel != null)
+            analyticsApprovedRequestsLabel.setText("0");
+        if (analyticsPendingRequestsLabel != null)
+            analyticsPendingRequestsLabel.setText("0");
+        if (analyticsDeniedRequestsLabel != null)
+            analyticsDeniedRequestsLabel.setText("0");
+        if (analyticsAvgRentLabel != null)
+            analyticsAvgRentLabel.setText("৳0");
+        if (analyticsEstimatedRevenueLabel != null)
+            analyticsEstimatedRevenueLabel.setText("৳0");
+        if (analyticsApprovalRateLabel != null)
+            analyticsApprovalRateLabel.setText("0%");
+        if (analyticsOccupancyRateLabel != null)
+            analyticsOccupancyRateLabel.setText("0%");
+        if (analyticsTopPropertyLabel != null)
+            analyticsTopPropertyLabel.setText("-");
+        if (analyticsLatestActivityLabel != null)
+            analyticsLatestActivityLabel.setText("-");
+        if (analyticsApprovalBar != null)
+            analyticsApprovalBar.setProgress(0);
+        if (analyticsOccupancyBar != null)
+            analyticsOccupancyBar.setProgress(0);
+        if (analyticsRequestsTrendChart != null)
+            analyticsRequestsTrendChart.getData().clear();
+    }
+
+    private void populateAnalyticsTrendChart(int ownerId) {
+        if (analyticsRequestsTrendChart == null) {
+            return;
+        }
+
+        analyticsRequestsTrendChart.getData().clear();
+        analyticsRequestsTrendChart.setLegendVisible(false);
+        analyticsRequestsTrendChart.setAnimated(false);
+        analyticsRequestsTrendChart.setCreateSymbols(true);
+
+        DateTimeFormatter yearMonthFormatter = DateTimeFormatter.ofPattern("yyyy-MM", Locale.ENGLISH);
+        DateTimeFormatter labelFormatter = DateTimeFormatter.ofPattern("MMM yy", Locale.ENGLISH);
+
+        Map<String, Integer> monthCounts = new LinkedHashMap<>();
+        Map<String, String> monthLabels = new LinkedHashMap<>();
+
+        LocalDate now = LocalDate.now().withDayOfMonth(1);
+        for (int i = 5; i >= 0; i--) {
+            LocalDate month = now.minusMonths(i);
+            String key = month.format(yearMonthFormatter);
+            monthCounts.put(key, 0);
+            monthLabels.put(key, month.format(labelFormatter));
+        }
+
+        String query = "SELECT strftime('%Y-%m', r.request_date) AS ym, COUNT(*) AS cnt "
+                + "FROM rent_requests r "
+                + "JOIN houses h ON h.id = r.house_id "
+                + "WHERE h.owner_id = ? AND r.request_date IS NOT NULL "
+                + "GROUP BY ym";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, ownerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String ym = rs.getString("ym");
+                    if (monthCounts.containsKey(ym)) {
+                        monthCounts.put(ym, rs.getInt("cnt"));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            // Keep zero-filled chart when query fails.
+        }
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        for (Map.Entry<String, Integer> entry : monthCounts.entrySet()) {
+            String label = monthLabels.get(entry.getKey());
+            series.getData().add(new XYChart.Data<>(label, entry.getValue()));
+        }
+
+        analyticsRequestsTrendChart.getData().add(series);
     }
 
     private HBox buildListedHouseRow(String title, String location, double rent, String approvalStatus) {
@@ -384,15 +1068,83 @@ public class OwnerController {
         Button deny = new Button("Deny");
         deny.getStyleClass().add("btn-deny");
 
+        String currentStatus = normalizeStatus(request.getStatus());
+        boolean alreadyFinal = "Approved".equalsIgnoreCase(currentStatus) || "Denied".equalsIgnoreCase(currentStatus);
+        if (alreadyFinal) {
+            approve.setDisable(true);
+            deny.setDisable(true);
+        }
+
+        approve.setOnAction(event -> {
+            if (updateRequestStatus(request.getId(), "Approved")) {
+                populateKpis();
+                populateRequests();
+            } else {
+                showNavigationError("Could not approve this request right now.");
+            }
+        });
+
+        deny.setOnAction(event -> {
+            if (updateRequestStatus(request.getId(), "Denied")) {
+                populateKpis();
+                populateRequests();
+            } else {
+                showNavigationError("Could not deny this request right now.");
+            }
+        });
+
         HBox actions = new HBox(8, approve, deny);
 
         row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status, actions);
         return row;
     }
 
+    private HBox buildAcceptedTenantRow(BookingRequest request) {
+        HBox row = new HBox(16);
+        row.getStyleClass().add("table-row");
+
+        Label tenant = buildCellLabel(request.getTenantName());
+        Label property = buildCellLabel(request.getProperty());
+        Label requestDate = buildCellLabel(formatDate(request.getRequestDate()));
+        Label moveInDate = buildCellLabel(formatDate(request.getMoveInDate()));
+        Label rent = buildCellLabel(formatRent(request.getMonthlyRent()));
+
+        Label status = new Label("Approved");
+        status.getStyleClass().add("status-pill");
+        status.getStyleClass().add("approved");
+
+        row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status);
+        return row;
+    }
+
+    private boolean updateRequestStatus(int requestId, String newStatus) {
+        if (requestId <= 0 || newStatus == null || newStatus.isBlank()) {
+            return false;
+        }
+
+        String query = "UPDATE rent_requests SET status = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, newStatus);
+            pstmt.setInt(2, requestId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
     private Label buildCellLabel(String text) {
         Label label = new Label(text == null ? "" : text);
         label.getStyleClass().add("table-text");
+        return label;
+    }
+
+    private Label buildWideMessageLabel(String text) {
+        Label label = buildCellLabel(text);
+        label.setWrapText(true);
+        label.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        label.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(label, Priority.ALWAYS);
         return label;
     }
 
@@ -468,16 +1220,128 @@ public class OwnerController {
             boolean wasFullScreen = stage.isFullScreen();
 
             Parent root = FXMLLoader.load(viewUrl);
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            if (!wasFullScreen) {
-                DataStore.applyWindowSize(stage);
+            Scene scene = stage.getScene();
+            if (scene == null) {
+                stage.setScene(new Scene(root));
+            } else {
+                DataStore.prepareSceneForRootSwap(scene);
+                scene.setRoot(root);
             }
             stage.setMaximized(wasMaximized);
             stage.setFullScreen(wasFullScreen);
             stage.show();
         } catch (IOException e) {
             showNavigationError("Failed to open List House page: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onOpenTenants(ActionEvent event) {
+        onOpenAcceptedTenants(event);
+    }
+
+    @FXML
+    private void onOpenAcceptedTenants(ActionEvent event) {
+        Stage stage = null;
+        if (event != null && event.getSource() instanceof Node) {
+            stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        } else if (themeToggle != null && themeToggle.getScene() != null) {
+            stage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (stage == null) {
+            showNavigationError("Unable to locate the current window for navigation.");
+            return;
+        }
+
+        try {
+            loadScene(stage, "owner-accepted-tenants.fxml");
+        } catch (IOException e) {
+            showNavigationError("Failed to open Tenants page: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onOpenRequests(ActionEvent event) {
+        Stage stage = null;
+        if (event != null && event.getSource() instanceof Node) {
+            stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        } else if (themeToggle != null && themeToggle.getScene() != null) {
+            stage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (stage == null) {
+            showNavigationError("Unable to locate the current window for navigation.");
+            return;
+        }
+
+        try {
+            loadScene(stage, "owner-tenants.fxml");
+        } catch (IOException e) {
+            showNavigationError("Failed to open Requests page: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onOpenProperties(ActionEvent event) {
+        Stage stage = null;
+        if (event != null && event.getSource() instanceof Node) {
+            stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        } else if (themeToggle != null && themeToggle.getScene() != null) {
+            stage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (stage == null) {
+            showNavigationError("Unable to locate the current window for navigation.");
+            return;
+        }
+
+        try {
+            loadScene(stage, "owner-properties.fxml");
+        } catch (IOException e) {
+            showNavigationError("Failed to open Properties page: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onOpenAnalytics(ActionEvent event) {
+        Stage stage = null;
+        if (event != null && event.getSource() instanceof Node) {
+            stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        } else if (themeToggle != null && themeToggle.getScene() != null) {
+            stage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (stage == null) {
+            showNavigationError("Unable to locate the current window for navigation.");
+            return;
+        }
+
+        try {
+            loadScene(stage, "owner-analytics.fxml");
+        } catch (IOException e) {
+            showNavigationError("Failed to open Analytics page: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onOpenDashboard(ActionEvent event) {
+        Stage stage = null;
+        if (event != null && event.getSource() instanceof Node) {
+            stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        } else if (themeToggle != null && themeToggle.getScene() != null) {
+            stage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (stage == null) {
+            showNavigationError("Unable to locate the current window for navigation.");
+            return;
+        }
+
+        try {
+            loadScene(stage, "owner-view.fxml");
+        } catch (IOException e) {
+            showNavigationError("Failed to open Dashboard page: " + e.getMessage());
         }
     }
 
@@ -493,13 +1357,23 @@ public class OwnerController {
         try {
             AtomicBoolean confirmed = new AtomicBoolean(false);
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("logout-popup.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(DataStore.resolveFxml("logout-popup.fxml")));
             Parent root = loader.load();
 
             Stage popupStage = new Stage();
-            popupStage.initStyle(StageStyle.UNDECORATED);
+            popupStage.initStyle(StageStyle.TRANSPARENT);
             popupStage.initModality(Modality.APPLICATION_MODAL);
-            popupStage.setScene(new Scene(root));
+
+            javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+            clip.setArcWidth(40);
+            clip.setArcHeight(40);
+            clip.widthProperty().bind(root.layoutBoundsProperty().map(bounds -> bounds.getWidth()));
+            clip.heightProperty().bind(root.layoutBoundsProperty().map(bounds -> bounds.getHeight()));
+            root.setClip(clip);
+
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            popupStage.setScene(scene);
 
             // Make window draggable
             final double[] xOffset = { 0 };
@@ -547,7 +1421,17 @@ public class OwnerController {
         DataStore.darkMode = themeToggle.isSelected();
         try {
             Stage stage = (Stage) themeToggle.getScene().getWindow();
-            loadScene(stage, "owner-view.fxml");
+            if (isRequestsPage()) {
+                loadScene(stage, "owner-tenants.fxml");
+            } else if (isAcceptedTenantsPage()) {
+                loadScene(stage, "owner-accepted-tenants.fxml");
+            } else if (isPropertiesPage()) {
+                loadScene(stage, "owner-properties.fxml");
+            } else if (isAnalyticsPage()) {
+                loadScene(stage, "owner-analytics.fxml");
+            } else {
+                loadScene(stage, "owner-view.fxml");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -560,10 +1444,12 @@ public class OwnerController {
 
         Parent root = FXMLLoader.load(getClass().getResource(
                 DataStore.resolveFxml(baseFxml)));
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        if (!wasFullScreen) {
-            DataStore.applyWindowSize(stage);
+        Scene scene = stage.getScene();
+        if (scene == null) {
+            stage.setScene(new Scene(root));
+        } else {
+            DataStore.prepareSceneForRootSwap(scene);
+            scene.setRoot(root);
         }
         stage.setMaximized(wasMaximized);
         stage.setFullScreen(wasFullScreen);

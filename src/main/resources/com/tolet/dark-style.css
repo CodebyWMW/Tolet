@@ -100,27 +100,27 @@
 }
 
 .table-row {
-  -fx-background-color: #0b1220;
-  -fx-border-color: #1f2a44;
+  -fx-background-color: #39ac4d;
+  -fx-border-color: #39ac4d;
 }
 
 .table-text {
-  -fx-text-fill: #e5e7eb;
+  -fx-text-fill: #ffffff;
 }
 
 .status-pill.pending {
-  -fx-background-color: #3a2a0a;
-  -fx-text-fill: #fbbf24;
+  -fx-background-color: #ffee00;
+  -fx-text-fill: #000000;
 }
 
 .status-pill.approved {
-  -fx-background-color: #0b2e1a;
-  -fx-text-fill: #34d399;
+  -fx-background-color: #8aff6f;
+  -fx-text-fill: #000000;
 }
 
 .status-pill.denied {
-  -fx-background-color: #3b0d0d;
-  -fx-text-fill: #f87171;
+  -fx-background-color: #ff0404;
+  -fx-text-fill: #000000;
 }
 
 /* Tenant cards/filters */
@@ -137,25 +137,125 @@
 }
 
 .property-card {
-  -fx-background-color: #111827;
+  -fx-background-color: #39ac4d;
   -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.45), 12, 0, 0, 6);
+  -fx-padding: 16 18 16 18;
+  -fx-cursor: hand;
+  -fx-border-color: transparent;
+  -fx-border-radius: 12;
+}
+
+.button.property-card {
+  -fx-background-color: #39ac4d;
+  -fx-text-fill: #ffffff;
+  -fx-border-color: transparent;
+  -fx-border-radius: 12;
+}
+
+.property-card:hover {
+  -fx-background-color: #49bc5d;
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.55), 16, 0, 0, 8);
+}
+
+.button.property-card:hover {
+  -fx-background-color: #49bc5d;
+}
+
+.property-card:pressed {
+  -fx-background-color: #2e933f;
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 4, 0, 0, 1);
+  -fx-border-color: #236f30;
+}
+
+.button.property-card:pressed {
+  -fx-background-color: #2e933f;
+  -fx-border-color: #236f30;
+}
+
+.property-card-selected,
+.property-card-selected:hover {
+  -fx-background-color: #2a8339;
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.62), 18, 0, 0, 8);
+  -fx-border-color: #1f622b;
+}
+
+.button.property-card.property-card-selected,
+.button.property-card.property-card-selected:hover {
+  -fx-background-color: #2a8339;
+  -fx-border-color: #1f622b;
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.62), 18, 0, 0, 8);
+}
+
+.property-card-selected:pressed {
+  -fx-background-color: #246f31;
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.28), 5, 0, 0, 2);
+  -fx-border-color: #1b5225;
+}
+
+.button.property-card.property-card-selected:pressed {
+  -fx-background-color: #246f31;
+  -fx-border-color: #1b5225;
 }
 
 .card-title {
   -fx-text-fill: #f9fafb;
 }
 
+.property-card .card-title {
+  -fx-text-fill: #ffffff;
+}
+
 .card-location {
   -fx-text-fill: #9ca3af;
+}
+
+.property-card .card-location {
+  -fx-text-fill: #e8fff5;
 }
 
 .card-price {
   -fx-text-fill: #60a5fa;
 }
 
+.property-card .card-price {
+  -fx-text-fill: #ffffff;
+}
+
 .card-badge {
   -fx-background-color: #1e3a8a;
   -fx-text-fill: #bfdbfe;
+}
+
+.property-card .card-badge {
+  -fx-background-color: #1e3a8a;
+  -fx-text-fill: #bfdbfe;
+}
+
+.property-detail-images {
+  -fx-alignment: TOP_RIGHT;
+}
+
+.property-detail-image-slot {
+  -fx-min-width: 170;
+  -fx-pref-width: 170;
+  -fx-max-width: 170;
+  -fx-min-height: 130;
+  -fx-pref-height: 130;
+  -fx-max-height: 130;
+  -fx-background-color: transparent;
+  -fx-border-color: transparent;
+  -fx-border-width: 0;
+  -fx-background-radius: 8;
+  -fx-border-radius: 8;
+  -fx-effect: null;
+}
+
+.property-detail-image-slot-has-image {
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.52), 18, 0, 0, 6);
+}
+
+.property-detail-image {
+  -fx-background-radius: 6;
 }
 
 .status-card {
@@ -179,6 +279,76 @@
 
 .theme-switch:selected .switch-knob {
   -fx-background-color: #60a5fa;
+}
+
+/* Analytics chart dark mode styling */
+.chart {
+  -fx-background-color: transparent;
+}
+
+.chart-plot-background {
+  -fx-background-color: #39ac4d;
+}
+
+.chart-horizontal-grid-lines,
+.chart-vertical-grid-lines {
+  -fx-stroke: #474743;
+}
+
+.axis {
+  -fx-tick-label-fill: #ffffff;
+}
+
+.axis-label {
+  -fx-text-fill: #ffffff;
+}
+
+.chart-series-line {
+  -fx-stroke: #ff7547;
+  -fx-stroke-width: 2px;
+}
+
+.chart-line-symbol {
+  -fx-background-color: #ff7547, #39ac4d;
+}
+
+.axis .tick-label {
+  -fx-fill: #ffffff;
+}
+
+.axis .axis-label {
+  -fx-text-fill: #ffffff;
+}
+
+.progress-bar > .track {
+  -fx-background-color: #39ac4d;
+}
+
+.progress-bar .track {
+  -fx-background-color: #39ac4d;
+}
+
+.progress-bar > .bar {
+  -fx-background-color: #ff7547;
+}
+
+/* Force dark-mode analytics green surfaces */
+#analyticsPageRoot .chart-plot-background,
+#analyticsPageRoot .chart-content {
+  -fx-background-color: #39ac4d;
+}
+
+#analyticsPageRoot .chart-line-symbol {
+  -fx-background-color: #ff7547, #39ac4d;
+}
+
+#analyticsPageRoot .progress-bar {
+  -fx-control-inner-background: #39ac4d;
+}
+
+#analyticsPageRoot .progress-bar .track,
+#analyticsPageRoot .progress-bar > .track {
+  -fx-background-color: #39ac4d;
 }
 
 .list-house-cta {

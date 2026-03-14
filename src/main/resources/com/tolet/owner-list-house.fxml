@@ -50,9 +50,13 @@
                             <Label style="-fx-text-fill: #ffffff;" styleClass="field-label" text="Number of Baths" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                             <TextField fx:id="bedsField" promptText="3" style="-fx-background-color: #1e2731; -fx-text-fill: #d4af37;" styleClass="list-text-field" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                             <TextField fx:id="bathsField" promptText="2" style="-fx-background-color: #1e2731; -fx-text-fill: #d4af37;" styleClass="list-text-field" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                     <Label style="-fx-text-fill: #ffffff;" styleClass="field-label" text="Square Feet" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="2" />
+                                     <TextField fx:id="areaField" promptText="1200" style="-fx-background-color: #1e2731; -fx-text-fill: #d4af37;" styleClass="list-text-field" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="3" />
                      <rowConstraints>
                         <RowConstraints />
                         <RowConstraints />
+                                <RowConstraints />
+                                <RowConstraints />
                      </rowConstraints>
                         </GridPane>
 
@@ -60,7 +64,7 @@
                         <TextField fx:id="locationField" promptText="Area, Road, City" style="-fx-background-color: #1e2731; -fx-text-fill: #d4af37;" styleClass="list-text-field" />
 
                         <Label style="-fx-text-fill: #ffffff;" styleClass="field-label" text="Details About the House" />
-                        <TextArea fx:id="detailsArea" prefRowCount="5" promptText="Lift, Generator, Balcony, Tiles, Nearby Market ..." styleClass="list-text-area" wrapText="true" />
+                        <TextArea fx:id="detailsArea" prefRowCount="5" promptText="Lift, Generator, Balcony, Tiles, Nearby Market ..." style="-fx-background-color: #1e2731; -fx-text-fill: #d4af37;" styleClass="list-text-area" wrapText="true" />
                     </VBox>
 
                     <VBox spacing="14" style="-fx-background-color: #1d3b8b;" styleClass="list-house-panel" HBox.hgrow="ALWAYS">

@@ -12,11 +12,11 @@
             </VBox>
 
             <VBox spacing="6">
-                <Button layoutX="10.0" layoutY="39.0" prefHeight="35.0" prefWidth="204.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Dashboard" />
-                <Button prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Tenants" />
-                <Button prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Properties" />
-                <Button prefHeight="35.0" prefWidth="207.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Requests" />
-                <Button prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Analytics" />
+                <Button layoutX="10.0" layoutY="39.0" prefHeight="35.0" prefWidth="204.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37; -fx-border-radius: 10;" styleClass="nav-button" text="Dashboard" />
+                <Button onAction="#onOpenAcceptedTenants" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Tenants" />
+                <Button onAction="#onOpenProperties" prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Properties" />
+                <Button onAction="#onOpenRequests" prefHeight="35.0" prefWidth="207.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Requests" />
+                <Button onAction="#onOpenAnalytics" prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Analytics" />
                 <Button onAction="#onOpenListHouse" prefHeight="42.0" prefWidth="320.0" styleClass="list-house-cta" text="+ List New House" />
             </VBox>
 
@@ -113,7 +113,11 @@
                 -->
 
                 <VBox maxHeight="1000.0" prefHeight="187.0" prefWidth="643.0" spacing="12" styleClass="panel">
-                    <Label styleClass="panel-title" text="Tenant Booking Requests" />
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label styleClass="panel-title" text="Tenant Booking Requests" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button onAction="#onOpenRequests" prefHeight="30.0" prefWidth="88.0" styleClass="ghost-button" text="See All" />
+                    </HBox>
                     <VBox spacing="8" styleClass="table">
                         <HBox spacing="16" styleClass="table-header">
                             <Label styleClass="table-title" text="Tenant Name" />
@@ -130,7 +134,11 @@
                 </VBox>
 
                 <VBox maxHeight="1000.0" prefHeight="187.0" prefWidth="643.0" spacing="12" styleClass="panel">
-                    <Label styleClass="panel-title" text="Your Listed Houses" />
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label styleClass="panel-title" text="Your Listed Houses" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button onAction="#onOpenProperties" prefHeight="30.0" prefWidth="88.0" styleClass="ghost-button" text="See All" />
+                    </HBox>
                     <VBox spacing="8" styleClass="table">
                         <HBox spacing="16" styleClass="table-header">
                             <Label styleClass="table-title" text="Title" />

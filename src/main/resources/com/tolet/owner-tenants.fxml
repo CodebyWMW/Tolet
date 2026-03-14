@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="600" prefWidth="900" style="-fx-background-color: #99a3b4;" styleClass="owner-root" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.OwnerController">
+    <left>
+        <VBox maxWidth="250.0" prefHeight="600.0" prefWidth="163.0" spacing="18" styleClass="sidebar">
+            <VBox spacing="4" styleClass="brand-block">
+                <Label prefHeight="23.0" prefWidth="158.0" styleClass="brand-title" text="RentalPro" />
+                <Label prefHeight="14.0" prefWidth="183.0" styleClass="brand-subtitle" text="Owner Dashboard" />
+            </VBox>
+
+            <VBox spacing="6">
+                <Button onAction="#onOpenDashboard" prefHeight="35.0" prefWidth="204.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Dashboard" />
+                <Button onAction="#onOpenAcceptedTenants" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Tenants" />
+                <Button onAction="#onOpenProperties" prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Properties" />
+                <Button onAction="#onOpenRequests" prefHeight="35.0" prefWidth="207.0" style="-fx-background-color: #233142; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37; -fx-border-radius: 10;" styleClass="nav-button" text="Requests" />
+                <Button onAction="#onOpenAnalytics" prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Analytics" />
+                <Button onAction="#onOpenListHouse" prefHeight="42.0" prefWidth="320.0" styleClass="list-house-cta" text="+ List New House" />
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS" />
+
+            <VBox maxWidth="278.0" prefHeight="182.0" prefWidth="278.0" spacing="6" style="-fx-background-color: #1F2933;" styleClass="profile-card">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label fx:id="profileNameLabel" prefHeight="27.0" prefWidth="197.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-name" text="Owner" />
+                </HBox>
+                <Label fx:id="profileVerificationLabel" prefHeight="20.0" prefWidth="215.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Status - Unverified" />
+                <Label fx:id="profileRoleLabel" prefHeight="20.0" prefWidth="215.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Role - Owner" />
+                <Label fx:id="profileEmailLabel" prefHeight="20.0" prefWidth="189.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Email: -" />
+                <Label fx:id="profilePhoneLabel" prefHeight="20.0" prefWidth="241.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Phone: -" />
+                <Button onAction="#onLogout" prefHeight="30.0" prefWidth="217.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37;" styleClass="ghost-button" text="Logout" />
+            </VBox>
+        </VBox>
+    </left>
+
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: #99a3b4;" styleClass="content-scroll">
+            <VBox fx:id="requestsPageRoot" prefHeight="1080.0" prefWidth="691.0" spacing="22" style="-fx-background-color: #99a3b4;" styleClass="content-root">
+                <HBox alignment="TOP_RIGHT">
+                    <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
+                        <graphic>
+                            <Region styleClass="switch-knob" />
+                        </graphic>
+                    </ToggleButton>
+                </HBox>
+
+                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #1F2933;" styleClass="top-bar">
+                    <VBox spacing="4">
+                        <Label style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="page-title" text="Requests" />
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Label fx:id="dateLabel" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="date-pill" text="" />
+                </HBox>
+
+                <VBox prefWidth="643.0" spacing="12" styleClass="panel">
+                    <Label styleClass="panel-title" text="All Tenant Booking Requests" />
+                    <VBox spacing="8" styleClass="table">
+                        <HBox spacing="16" styleClass="table-header">
+                            <Label styleClass="table-title" text="Tenant Name" />
+                            <Label styleClass="table-title" text="Property" />
+                            <Label styleClass="table-title" text="Request Date" />
+                            <Label styleClass="table-title" text="Move-in Date" />
+                            <Label styleClass="table-title" text="Monthly Rent" />
+                            <Label styleClass="table-title" text="Status" />
+                            <Label styleClass="table-title" text="Actions" />
+                        </HBox>
+                        <VBox fx:id="requestsContainer" spacing="8" />
+                    </VBox>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

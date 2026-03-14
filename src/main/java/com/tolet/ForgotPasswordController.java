@@ -241,12 +241,16 @@ public class ForgotPasswordController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(fxml));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
+            Scene scene = stage.getScene();
+            if (scene == null) {
+                stage.setScene(new Scene(root));
+            } else {
+                DataStore.prepareSceneForRootSwap(scene);
+                scene.setRoot(root);
+            }
             if (!fxml.contains("forgot-password-view")) {
                 clearForgotWindowLock(stage);
             }
-            DataStore.applyWindowSize(stage);
             if (fxml.contains("forgot-password-view")) {
                 applyForgotWindowLock(stage);
             }

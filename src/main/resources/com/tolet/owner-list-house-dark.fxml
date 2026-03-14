@@ -57,9 +57,13 @@
                             <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Number of Baths" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                             <TextField fx:id="bedsField" promptText="3" styleClass="list-text-field" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                             <TextField fx:id="bathsField" promptText="2" styleClass="list-text-field" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                     <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Square Feet" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="2" />
+                                     <TextField fx:id="areaField" promptText="1200" styleClass="list-text-field" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="3" />
                      <rowConstraints>
                         <RowConstraints />
                         <RowConstraints />
+                                <RowConstraints />
+                                <RowConstraints />
                      </rowConstraints>
                         </GridPane>
 

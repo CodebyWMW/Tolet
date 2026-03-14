@@ -3,6 +3,7 @@ package com.tolet;
 import java.time.LocalDate;
 
 public class BookingRequest {
+    private final int id;
     private final String tenantName;
     private final String property;
     private final LocalDate requestDate;
@@ -11,18 +12,24 @@ public class BookingRequest {
     private final String status;
 
     public BookingRequest(
+            int id,
             String tenantName,
             String property,
             LocalDate requestDate,
             LocalDate moveInDate,
             double monthlyRent,
             String status) {
+        this.id = id;
         this.tenantName = tenantName;
         this.property = property;
         this.requestDate = requestDate;
         this.moveInDate = moveInDate;
         this.monthlyRent = monthlyRent;
         this.status = status;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getTenantName() {

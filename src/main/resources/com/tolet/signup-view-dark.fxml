@@ -19,8 +19,8 @@
         </ToggleButton>
     </HBox>
 
-    <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-background: transparent;" vbarPolicy="NEVER" VBox.vgrow="ALWAYS">
-    <VBox fillWidth="true" maxWidth="560" spacing="10" style="-fx-padding: 10 6 10 6;">
+    <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-background: transparent; -fx-control-inner-background: transparent;" vbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+    <VBox fillWidth="true" maxWidth="560" spacing="10" style="-fx-padding: 10 6 10 6; -fx-background-color: transparent;">
           <Label style="-fx-text-fill: #f3f5fb; -fx-font-size: 13; -fx-font-weight: 800;" text="Create Account" />
 
         <Label alignment="BOTTOM_LEFT" prefHeight="40.0" style="-fx-text-fill: #f3f5fb; -fx-font-size: 10;" text="Email/ Phone Number" />

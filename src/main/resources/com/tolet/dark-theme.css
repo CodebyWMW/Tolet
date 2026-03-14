@@ -333,6 +333,18 @@
   -fx-background-color: linear-gradient(to right, #ff7a42, #ff9a66);
 }
 
+/* Owner dashboard: keep regular row text white, but status pills use black text. */
+.owner-root .table-row .table-text {
+  -fx-text-fill: #ffffff;
+}
+
+.owner-root .table-row .status-pill,
+.owner-root .table-row .status-pill.pending,
+.owner-root .table-row .status-pill.approved,
+.owner-root .table-row .status-pill.denied {
+  -fx-text-fill: #000000;
+}
+
 .account-type-combo .combo-box-popup .list-cell:hover,
 .account-type-combo .combo-box-popup .list-cell:filled:selected {
   -fx-background-color: #f95f2f;

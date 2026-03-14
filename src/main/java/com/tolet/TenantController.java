@@ -292,13 +292,23 @@ public class TenantController {
         try {
             AtomicBoolean confirmed = new AtomicBoolean(false);
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("logout-popup.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(DataStore.resolveFxml("logout-popup.fxml")));
             Parent root = loader.load();
 
             Stage popupStage = new Stage();
-            popupStage.initStyle(StageStyle.UNDECORATED);
+            popupStage.initStyle(StageStyle.TRANSPARENT);
             popupStage.initModality(Modality.APPLICATION_MODAL);
-            popupStage.setScene(new Scene(root));
+
+            Rectangle clip = new Rectangle();
+            clip.setArcWidth(40);
+            clip.setArcHeight(40);
+            clip.widthProperty().bind(root.layoutBoundsProperty().map(bounds -> bounds.getWidth()));
+            clip.heightProperty().bind(root.layoutBoundsProperty().map(bounds -> bounds.getHeight()));
+            root.setClip(clip);
+
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            popupStage.setScene(scene);
 
             // Make window draggable
             final double[] xOffset = { 0 };
@@ -350,9 +360,13 @@ public class TenantController {
     private void loadScene(Stage stage, String baseFxml) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource(
                 DataStore.resolveFxml(baseFxml)));
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
-        DataStore.applyWindowSize(stage);
+        Scene scene = stage.getScene();
+        if (scene == null) {
+            stage.setScene(new Scene(root));
+        } else {
+            DataStore.prepareSceneForRootSwap(scene);
+            scene.setRoot(root);
+        }
         stage.show();
     }
 }
