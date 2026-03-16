@@ -4,6 +4,7 @@ public class House {
 
     private int id;
     private int ownerId;
+    private String ownerPublicId;
     private String location;
 
     private boolean familyAllowed;
@@ -68,6 +69,21 @@ public class House {
 
     public void setOwnerId(int ownerId) {
         this.ownerId = ownerId;
+    }
+
+    public String getOwnerPublicId() {
+        return ownerPublicId;
+    }
+
+    public void setOwnerPublicId(String ownerPublicId) {
+        this.ownerPublicId = ownerPublicId;
+    }
+
+    public String getOwnerDisplayId() {
+        if (ownerPublicId != null && !ownerPublicId.isBlank()) {
+            return ownerPublicId;
+        }
+        return String.valueOf(ownerId);
     }
 
     public String getLocation() {

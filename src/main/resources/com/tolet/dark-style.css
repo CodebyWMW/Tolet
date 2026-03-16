@@ -108,6 +108,23 @@
   -fx-text-fill: #ffffff;
 }
 
+/* Dark mode table selection text behavior */
+.table-view .table-cell {
+  -fx-text-fill: #ffffff;
+}
+
+.table-view .table-row-cell .text {
+  -fx-fill: #ffffff;
+}
+
+.table-view .table-row-cell:selected .table-cell {
+  -fx-text-fill: #9ca3af;
+}
+
+.table-view .table-row-cell:selected .text {
+  -fx-fill: #9ca3af;
+}
+
 .status-pill.pending {
   -fx-background-color: #ffee00;
   -fx-text-fill: #000000;

@@ -563,11 +563,12 @@ public class DataStore {
     }
 
     public static boolean registerUser(String name, String email, String password, String role, String birthdate) {
-        String query = "INSERT INTO users (name, email, password, role, phone, birthdate) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO users (name, email, password, role, phone, birthdate, public_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
             String trimmedName = name == null ? "" : name.trim();
             String trimmedEmail = email == null ? "" : email.trim();
+            String publicId = generateNextPublicId(conn, role);
             pstmt.setString(1, trimmedName);
             pstmt.setString(3, password);
             pstmt.setString(4, role);
@@ -584,11 +585,61 @@ public class DataStore {
                 pstmt.setString(5, null);
                 pstmt.setString(6, birthdate);
             }
+            pstmt.setString(7, publicId);
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {
             return false;
         }
+    }
+
+    private static String generateNextPublicId(Connection conn, String role) throws SQLException {
+        String prefix = mapRolePrefix(role);
+
+        String likePattern = prefix + "%";
+        String sql = "SELECT public_id FROM users WHERE public_id LIKE ?";
+        int maxSequence = 0;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, likePattern);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String existing = rs.getString("public_id");
+                    if (existing == null || !existing.startsWith(prefix) || existing.length() <= prefix.length()) {
+                        continue;
+                    }
+                    String suffix = existing.substring(prefix.length());
+                    try {
+                        int seq = Integer.parseInt(suffix);
+                        if (seq > maxSequence) {
+                            maxSequence = seq;
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // Ignore malformed historical values and keep scanning.
+                    }
+                }
+            }
+        }
+
+        return prefix + String.format("%03d", maxSequence + 1);
+    }
+
+    private static String mapRolePrefix(String role) {
+        if (role == null) {
+            return "user";
+        }
+
+        String normalized = role.trim().toLowerCase();
+        if (normalized.equals("tenant") || normalized.equals("varatia")) {
+            return "Varatia";
+        }
+        if (normalized.equals("owner")
+                || normalized.equals("house owner")
+                || normalized.equals("bariwala")
+                || normalized.equals("landlord")) {
+            return "Bariwala";
+        }
+        return "user";
     }
 
     public static boolean emailExists(String email) {

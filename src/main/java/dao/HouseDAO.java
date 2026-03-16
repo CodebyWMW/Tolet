@@ -20,6 +20,7 @@ public class HouseDAO {
 
         house.setId(safeInt(rs, "id", 0));
         house.setOwnerId(safeInt(rs, "owner_id", 0));
+        house.setOwnerPublicId(safeString(rs, "owner_public_id", ""));
         house.setLocation(safeString(rs, "location", "-"));
         house.setFamilyAllowed(safeInt(rs, "family_allowed", 0) == 1);
         house.setBachelorAllowed(safeInt(rs, "bachelor_allowed", 0) == 1);
@@ -86,7 +87,10 @@ public class HouseDAO {
     // =============================
     public List<House> getAllListingsForAdmin() {
         List<House> houses = new ArrayList<>();
-        String sql = "SELECT * FROM houses ORDER BY id DESC";
+        String sql = "SELECT h.*, u.public_id AS owner_public_id "
+            + "FROM houses h "
+            + "LEFT JOIN users u ON u.id = h.owner_id "
+            + "ORDER BY h.id DESC";
 
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql);

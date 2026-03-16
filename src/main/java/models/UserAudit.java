@@ -2,6 +2,7 @@ package models;
 
 public class UserAudit {
     private final int userId;
+    private final String publicId;
     private final String name;
     private final String email;
     private final String phone;
@@ -9,9 +10,10 @@ public class UserAudit {
     private final String deletedAt;
     private final String deletedBy;
 
-    public UserAudit(int userId, String name, String email, String phone, String role, String deletedAt,
+    public UserAudit(int userId, String publicId, String name, String email, String phone, String role, String deletedAt,
             String deletedBy) {
         this.userId = userId;
+        this.publicId = publicId;
         this.name = name;
         this.email = email;
         this.phone = phone;
@@ -22,6 +24,10 @@ public class UserAudit {
 
     public int getUserId() {
         return userId;
+    }
+
+    public String getPublicId() {
+        return publicId;
     }
 
     public String getName() {

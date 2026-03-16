@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
     password TEXT NOT NULL,
     role TEXT NOT NULL,
     birthdate TEXT,
-    verified INTEGER DEFAULT 0
+    verified INTEGER DEFAULT 0,
+    public_id TEXT UNIQUE
 );
 
 -- HOUSES TABLE
@@ -35,6 +36,7 @@ CREATE TABLE IF NOT EXISTS bookings (
 CREATE TABLE IF NOT EXISTS users_audit (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
+    public_id TEXT,
     name TEXT,
     email TEXT,
     phone TEXT,

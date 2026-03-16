@@ -1,10 +1,13 @@
 package database;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TableCreator {
@@ -17,7 +20,8 @@ public class TableCreator {
                                 + "password TEXT,"
                                 + "role TEXT,"
                                 + "birthdate TEXT,"
-                                + "verified INTEGER DEFAULT 0)";
+                                + "verified INTEGER DEFAULT 0,"
+                                + "public_id TEXT UNIQUE)";
 
         // Updated houses table with new columns matching DataStore expectations
         String houseTable = "CREATE TABLE IF NOT EXISTS houses (" 
@@ -53,6 +57,7 @@ public class TableCreator {
         String userAuditTable = "CREATE TABLE IF NOT EXISTS users_audit ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "user_id INTEGER,"
+                + "public_id TEXT,"
                 + "name TEXT,"
                 + "email TEXT,"
                 + "phone TEXT,"
@@ -72,11 +77,12 @@ public class TableCreator {
         try (Connection conn = DatabaseConnection.connect();
                 Statement stmt = conn.createStatement()) {
             stmt.execute(userTable);
-                        ensureUserSchema(stmt);
+                        ensureUserSchema(conn, stmt);
             stmt.execute(houseTable);
                         ensureHouseSchema(stmt);
             stmt.execute(requestTable);
             stmt.execute(userAuditTable);
+                        ensureUserAuditSchema(stmt);
                         stmt.execute(houseImagesTable);
                         stmt.execute("CREATE INDEX IF NOT EXISTS idx_house_images_house_id ON house_images(house_id)");
         } catch (SQLException e) {
@@ -84,17 +90,27 @@ public class TableCreator {
         }
     }
 
-        private static void ensureUserSchema(Statement stmt) throws SQLException {
+        private static void ensureUserSchema(Connection conn, Statement stmt) throws SQLException {
                 Set<String> columns = getColumns(stmt, "users");
 
                 addColumnIfMissing(stmt, columns, "users", "email", "email TEXT");
                 addColumnIfMissing(stmt, columns, "users", "phone", "phone TEXT");
                 addColumnIfMissing(stmt, columns, "users", "birthdate", "birthdate TEXT");
                 addColumnIfMissing(stmt, columns, "users", "verified", "verified INTEGER DEFAULT 0");
+                addColumnIfMissing(stmt, columns, "users", "public_id", "public_id TEXT");
+
+                backfillPublicUserIds(conn);
+                normalizeLegacyPublicUserPrefixes(conn);
 
                 stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_name_unique ON users(name COLLATE NOCASE)");
                 stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users(email COLLATE NOCASE)");
                 stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_unique ON users(phone)");
+                stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_public_id_unique ON users(public_id)");
+        }
+
+        private static void ensureUserAuditSchema(Statement stmt) throws SQLException {
+                Set<String> columns = getColumns(stmt, "users_audit");
+                addColumnIfMissing(stmt, columns, "users_audit", "public_id", "public_id TEXT");
         }
 
         private static void ensureHouseSchema(Statement stmt) throws SQLException {
@@ -143,5 +159,102 @@ public class TableCreator {
                         stmt.execute("ALTER TABLE " + tableName + " ADD COLUMN " + definition);
                         columns.add(columnName.toLowerCase());
                 }
+        }
+
+        private static void backfillPublicUserIds(Connection conn) throws SQLException {
+                String readSql = "SELECT id, role FROM users WHERE public_id IS NULL OR TRIM(public_id) = '' ORDER BY id ASC";
+                try (PreparedStatement readStmt = conn.prepareStatement(readSql);
+                                ResultSet rs = readStmt.executeQuery()) {
+                        while (rs.next()) {
+                                int userId = rs.getInt("id");
+                                String role = rs.getString("role");
+                                String nextPublicId = generateNextPublicId(conn, role);
+
+                                try (PreparedStatement updateStmt = conn
+                                                .prepareStatement("UPDATE users SET public_id = ? WHERE id = ?")) {
+                                        updateStmt.setString(1, nextPublicId);
+                                        updateStmt.setInt(2, userId);
+                                        updateStmt.executeUpdate();
+                                }
+                        }
+                }
+        }
+
+        private static String generateNextPublicId(Connection conn, String role) throws SQLException {
+                String prefix = mapRolePrefix(role);
+
+                int maxSequence = 0;
+                String sql = "SELECT public_id FROM users WHERE public_id LIKE ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setString(1, prefix + "%");
+                        try (ResultSet rs = ps.executeQuery()) {
+                                while (rs.next()) {
+                                        String existing = rs.getString("public_id");
+                                        if (existing == null || !existing.startsWith(prefix)
+                                                        || existing.length() <= prefix.length()) {
+                                                continue;
+                                        }
+                                        String suffix = existing.substring(prefix.length());
+                                        try {
+                                                int seq = Integer.parseInt(suffix);
+                                                if (seq > maxSequence) {
+                                                        maxSequence = seq;
+                                                }
+                                        } catch (NumberFormatException ignored) {
+                                                // Skip malformed IDs and continue.
+                                        }
+                                }
+                        }
+                }
+
+                return prefix + String.format("%03d", maxSequence + 1);
+        }
+
+        private static void normalizeLegacyPublicUserPrefixes(Connection conn) throws SQLException {
+                String sql = "SELECT id, role, public_id FROM users WHERE public_id LIKE 'user%' "
+                                + "AND lower(trim(COALESCE(role, ''))) IN ('owner', 'house owner', 'bariwala', 'landlord', 'tenant', 'varatia') "
+                                + "ORDER BY id ASC";
+                List<Integer> userIdsToNormalize = new ArrayList<>();
+                List<String> rolesToNormalize = new ArrayList<>();
+
+                try (PreparedStatement ps = conn.prepareStatement(sql);
+                                ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                                String role = rs.getString("role");
+                                userIdsToNormalize.add(rs.getInt("id"));
+                                rolesToNormalize.add(role);
+                        }
+                }
+
+                for (int i = 0; i < userIdsToNormalize.size(); i++) {
+                        int userId = userIdsToNormalize.get(i);
+                        String role = rolesToNormalize.get(i);
+                        String nextPublicId = generateNextPublicId(conn, role);
+
+                        try (PreparedStatement updateStmt = conn
+                                        .prepareStatement("UPDATE users SET public_id = ? WHERE id = ?")) {
+                                updateStmt.setString(1, nextPublicId);
+                                updateStmt.setInt(2, userId);
+                                updateStmt.executeUpdate();
+                        }
+                }
+        }
+
+        private static String mapRolePrefix(String role) {
+                if (role == null) {
+                        return "user";
+                }
+
+                String normalized = role.trim().toLowerCase();
+                if (normalized.equals("tenant") || normalized.equals("varatia")) {
+                        return "Varatia";
+                }
+                if (normalized.equals("owner")
+                                || normalized.equals("house owner")
+                                || normalized.equals("bariwala")
+                                || normalized.equals("landlord")) {
+                        return "Bariwala";
+                }
+                return "user";
         }
 }

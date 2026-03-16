@@ -1,3 +1,4 @@
+
 package com.tolet;
 
 import java.io.IOException;
@@ -34,6 +35,57 @@ import models.User;
 import models.UserAudit;
 
 public class AdminController {
+    @FXML
+    private javafx.scene.shape.Rectangle refreshFillRect;
+    private final javafx.scene.shape.Rectangle refreshFillClip = new javafx.scene.shape.Rectangle();
+    @FXML
+    private Button refreshStatsButton;
+
+    @FXML
+    private void onRefreshStatisticsAnimated() {
+        if (refreshStatsButton == null || refreshFillRect == null) {
+            loadStatistics();
+            return;
+        }
+
+        double buttonWidth = refreshStatsButton.getWidth();
+        double buttonHeight = refreshStatsButton.getHeight();
+        if (buttonWidth <= 0 || buttonHeight <= 0) {
+            loadStatistics();
+            return;
+        }
+
+        refreshFillRect.setWidth(buttonWidth);
+        refreshFillRect.setHeight(buttonHeight);
+        refreshFillRect.setArcWidth(12);
+        refreshFillRect.setArcHeight(12);
+        refreshFillRect.setOpacity(0.34);
+
+        refreshFillClip.setWidth(0);
+        refreshFillClip.setHeight(buttonHeight);
+        refreshFillClip.setArcWidth(12);
+        refreshFillClip.setArcHeight(12);
+        refreshFillRect.setClip(refreshFillClip);
+
+        javafx.animation.KeyFrame fillStart = new javafx.animation.KeyFrame(
+                javafx.util.Duration.ZERO,
+                new javafx.animation.KeyValue(refreshFillClip.widthProperty(), 0));
+        javafx.animation.KeyFrame fillEnd = new javafx.animation.KeyFrame(
+                javafx.util.Duration.millis(520),
+                new javafx.animation.KeyValue(refreshFillClip.widthProperty(), buttonWidth));
+        javafx.animation.Timeline fillTimeline = new javafx.animation.Timeline(fillStart, fillEnd);
+
+        fillTimeline.setOnFinished(e -> {
+            loadStatistics();
+            javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(
+                    javafx.util.Duration.millis(260), refreshFillRect);
+            fade.setFromValue(0.34);
+            fade.setToValue(0);
+            fade.setOnFinished(done -> refreshFillRect.setClip(null));
+            fade.play();
+        });
+        fillTimeline.play();
+    }
     @FXML
     private ToggleButton themeToggle;
     @FXML
@@ -156,6 +208,7 @@ public class AdminController {
 
         userDAO = new UserDAO();
         houseDAO = new HouseDAO();
+        userDAO.normalizeExistingOwnerAndTenantPublicIds();
 
         // Populate combo boxes
         roleFilterCombo.getItems().addAll("All", "owner", "tenant");
@@ -174,7 +227,7 @@ public class AdminController {
     }
 
     private void setupUserManagement() {
-        userIdCol.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getId())));
+        userIdCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDisplayId()));
         userNameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getName()));
         userEmailCol.setCellValueFactory(data -> {
             String email = data.getValue().getEmail();
@@ -262,7 +315,7 @@ public class AdminController {
         });
         houseLocationCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getLocation()));
         houseOwnerIdCol
-                .setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getOwnerId())));
+            .setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getOwnerDisplayId()));
         houseFeaturesCol.setCellValueFactory(data -> {
             House h = data.getValue();
             StringBuilder features = new StringBuilder();
@@ -329,7 +382,7 @@ public class AdminController {
     }
 
     private void setupTenantVerification() {
-        tenantIdCol.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getId())));
+        tenantIdCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDisplayId()));
         tenantNameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getName()));
         tenantEmailCol.setCellValueFactory(data -> {
             String email = data.getValue().getEmail();
@@ -346,13 +399,24 @@ public class AdminController {
 
         tenantActionsCol.setCellFactory(param -> new TableCell<>() {
             private final Button verifyBtn = new Button("Verify Tenant");
+            private final Button rejectBtn = new Button("Reject Tenant");
+            private final HBox buttons = new HBox(8, verifyBtn, rejectBtn);
 
             {
+                buttons.setAlignment(Pos.CENTER);
                 verifyBtn.setStyle(
                         "-fx-background-color: #10b981; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 6 12;");
+                rejectBtn.setStyle(
+                        "-fx-background-color: #ef4444; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 6 12;");
+
                 verifyBtn.setOnAction(e -> {
                     User tenant = getTableView().getItems().get(getIndex());
                     handleUserVerification(tenant, true);
+                });
+
+                rejectBtn.setOnAction(e -> {
+                    User tenant = getTableView().getItems().get(getIndex());
+                    handleUserVerification(tenant, false);
                 });
             }
 
@@ -364,7 +428,8 @@ public class AdminController {
                 } else {
                     User tenant = getTableView().getItems().get(getIndex());
                     verifyBtn.setDisable(tenant.isVerified());
-                    setGraphic(verifyBtn);
+                    rejectBtn.setDisable(!tenant.isVerified());
+                    setGraphic(buttons);
                 }
             }
         });
@@ -372,7 +437,13 @@ public class AdminController {
 
     private void setupAuditLog() {
         auditUserIdCol.setCellValueFactory(
-                data -> new SimpleStringProperty(String.valueOf(data.getValue().getUserId())));
+                data -> {
+                    String publicId = data.getValue().getPublicId();
+                    if (publicId != null && !publicId.isBlank()) {
+                        return new SimpleStringProperty(publicId);
+                    }
+                    return new SimpleStringProperty(String.valueOf(data.getValue().getUserId()));
+                });
         auditNameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getName()));
         auditEmailCol.setCellValueFactory(data -> {
             String email = data.getValue().getEmail();
@@ -388,6 +459,7 @@ public class AdminController {
     }
 
     private void loadAllData() {
+        userDAO.normalizeExistingOwnerAndTenantPublicIds();
         List<User> users = userDAO.getAllUsers();
         allUsers = FXCollections.observableArrayList(users);
         usersTable.setItems(allUsers);
@@ -402,28 +474,52 @@ public class AdminController {
     }
 
     private void loadAuditLog() {
-        // TODO: Implement getAuditLog() method in UserDAO
-        auditTable.setItems(FXCollections.observableArrayList());
+        List<UserAudit> auditEntries = userDAO.getAuditLog();
+        auditTable.setItems(FXCollections.observableArrayList(auditEntries));
     }
 
     private void loadTenants() {
         List<User> users = userDAO.getAllUsers();
-        List<User> tenants = users.stream().filter(u -> "tenant".equals(u.getRole())).toList();
+        List<User> tenants = users.stream()
+            .filter(u -> "tenant".equals(normalizeRoleFilter(u.getRole())))
+            .toList();
         tenantsTable.setItems(FXCollections.observableArrayList(tenants));
         long unverified = tenants.stream().filter(t -> !t.isVerified()).count();
         unverifiedCountLabel.setText("Unverified: " + unverified);
     }
 
     private void filterUsers() {
-        String filter = roleFilterCombo.getValue();
-        if (filter == null || filter.equals("All")) {
+        String filter = normalizeRoleFilter(roleFilterCombo.getValue());
+        if (filter == null || filter.equals("all")) {
             usersTable.setItems(allUsers);
             userCountLabel.setText("Total Users: " + allUsers.size());
         } else {
-            ObservableList<User> filtered = allUsers.filtered(u -> u.getRole().equals(filter));
+            ObservableList<User> filtered = allUsers
+                    .filtered(u -> normalizeRoleFilter(u.getRole()).equals(filter));
             usersTable.setItems(filtered);
             userCountLabel.setText("Total Users: " + filtered.size());
         }
+    }
+
+    private String normalizeRoleFilter(String role) {
+        if (role == null || role.isBlank()) {
+            return "all";
+        }
+
+        String normalized = role.trim().toLowerCase();
+        if (normalized.equals("owner")
+                || normalized.equals("house owner")
+                || normalized.equals("bariwala")
+                || normalized.equals("landlord")) {
+            return "owner";
+        }
+        if (normalized.equals("tenant") || normalized.equals("varatia")) {
+            return "tenant";
+        }
+        if (normalized.equals("all")) {
+            return "all";
+        }
+        return normalized;
     }
 
     private void filterHouses() {
@@ -450,12 +546,11 @@ public class AdminController {
     private void handleUserVerification(User user, boolean verify) {
         boolean success = userDAO.updateUserVerification(user.getId(), verify);
         if (success) {
-            showAlert("Success", verify ? "User verified successfully!" : "User unverified!",
-                    Alert.AlertType.INFORMATION);
+            showStatusMessage(verify ? "User verified successfully!" : "User unverified!", false);
             loadAllData();
             loadStatistics();
         } else {
-            showAlert("Error", "Failed to update user verification status.", Alert.AlertType.ERROR);
+            showStatusMessage("Failed to update user verification status.", true);
         }
     }
 
@@ -472,11 +567,11 @@ public class AdminController {
         String deletedBy = DataStore.currentUser != null ? DataStore.currentUser.getUsername() : "System";
         boolean success = userDAO.deleteUserWithAudit(user.getId(), deletedBy);
         if (success) {
-            showAlert("Success", "User deleted permanently.", Alert.AlertType.INFORMATION);
+            showStatusMessage("User deleted permanently.", false);
             loadAllData();
             loadStatistics();
         } else {
-            showAlert("Error", "Failed to delete user.", Alert.AlertType.ERROR);
+            showStatusMessage("Failed to delete user.", true);
         }
     }
 
@@ -484,11 +579,11 @@ public class AdminController {
         boolean success = houseDAO.updateHouseStatus(house.getId(), status);
         if (success) {
             String message = status.equals("approved") ? "House listing approved!" : "House listing rejected!";
-            showAlert("Success", message, Alert.AlertType.INFORMATION);
+            showStatusMessage(message, false);
             loadAllData();
             loadStatistics();
         } else {
-            showAlert("Error", "Failed to update house status.", Alert.AlertType.ERROR);
+            showStatusMessage("Failed to update house status.", true);
         }
     }
 
@@ -510,12 +605,25 @@ public class AdminController {
         statsUnverifiedLabel.setText(String.valueOf(unverified));
     }
 
-    private void showAlert(String title, String content, Alert.AlertType type) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+    private void showStatusMessage(String content, boolean error) {
+        Stage ownerStage = getOwnerStage();
+        if (!StatusPopupHelper.showStatusPopup(ownerStage, content, error)) {
+            Alert fallbackAlert = new Alert(error ? Alert.AlertType.ERROR : Alert.AlertType.INFORMATION);
+            fallbackAlert.setTitle(error ? "Error" : "Success");
+            fallbackAlert.setHeaderText(null);
+            fallbackAlert.setContentText(content);
+            fallbackAlert.showAndWait();
+        }
+    }
+
+    private Stage getOwnerStage() {
+        if (adminNameLabel != null && adminNameLabel.getScene() != null) {
+            return (Stage) adminNameLabel.getScene().getWindow();
+        }
+        if (usersTable != null && usersTable.getScene() != null) {
+            return (Stage) usersTable.getScene().getWindow();
+        }
+        return null;
     }
 
     @FXML

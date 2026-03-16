@@ -7,6 +7,7 @@ public class User {
     private String email;
     private String password;
     private String role;
+    private String publicId;
     private String phone;
     private boolean verified;
     private String birthdate;
@@ -63,6 +64,10 @@ public class User {
         return role;
     }
 
+    public String getPublicId() {
+        return publicId;
+    }
+
     public String getPhone() {
         return phone;
     }
@@ -92,6 +97,10 @@ public class User {
         this.role = role;
     }
 
+    public void setPublicId(String publicId) {
+        this.publicId = publicId;
+    }
+
     public void setPhone(String phone) {
         this.phone = phone;
     }
@@ -106,5 +115,12 @@ public class User {
 
     public void setBirthdate(String birthdate) {
         this.birthdate = birthdate;
+    }
+
+    public String getDisplayId() {
+        if (publicId != null && !publicId.isBlank()) {
+            return publicId;
+        }
+        return String.valueOf(id);
     }
 }
