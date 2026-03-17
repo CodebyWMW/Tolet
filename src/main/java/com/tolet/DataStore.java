@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 public class DataStore {
     public static User currentUser;
     public static boolean darkMode = false;
+    public static int selectedHouseId = -1;
     private static Double lastWindowWidth;
     private static Double lastWindowHeight;
     private static Double lastWindowX;

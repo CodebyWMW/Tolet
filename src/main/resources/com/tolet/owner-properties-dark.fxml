@@ -68,7 +68,11 @@
                 </VBox>
 
                 <VBox spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
-                    <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Property Details" />
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Property Details" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button onAction="#onOpenHouseProfile" styleClass="ghost-button" text="Edit" />
+                    </HBox>
                     <HBox spacing="14">
                         <VBox spacing="6" HBox.hgrow="ALWAYS">
                             <Label fx:id="propertyTitleLabel" style="-fx-text-fill: #e8fff5;" text="Title: -" />

@@ -489,6 +489,8 @@ public class OwnerController {
         }
     }
 
+    private HouseDetails selectedHouse;
+
     private void populatePropertiesPage() {
         if (propertiesCardsContainer == null) {
             return;
@@ -547,6 +549,7 @@ public class OwnerController {
 
         if (houses.isEmpty()) {
             propertiesCardsContainer.getChildren().add(buildCellLabel("No houses listed yet."));
+            selectedHouse = null;
             clearPropertyDetails();
             return;
         }
@@ -612,9 +615,12 @@ public class OwnerController {
 
     private void showPropertyDetails(HouseDetails house) {
         if (house == null) {
+            selectedHouse = null;
             clearPropertyDetails();
             return;
         }
+
+        selectedHouse = house;
 
         if (propertyTitleLabel != null)
             propertyTitleLabel.setText("Title: " + safeText(house.title));
@@ -1300,6 +1306,34 @@ public class OwnerController {
             loadScene(stage, "owner-properties.fxml");
         } catch (IOException e) {
             showNavigationError("Failed to open Properties page: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onOpenHouseProfile(ActionEvent event) {
+        if (selectedHouse == null || selectedHouse.id <= 0) {
+            showNavigationError("Select a property card first to manage it.");
+            return;
+        }
+
+        DataStore.selectedHouseId = selectedHouse.id;
+
+        Stage stage = null;
+        if (event != null && event.getSource() instanceof Node) {
+            stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        } else if (themeToggle != null && themeToggle.getScene() != null) {
+            stage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (stage == null) {
+            showNavigationError("Unable to locate the current window for navigation.");
+            return;
+        }
+
+        try {
+            loadScene(stage, "owner-house-profile.fxml");
+        } catch (IOException e) {
+            showNavigationError("Failed to open House Profile page: " + e.getMessage());
         }
     }
 

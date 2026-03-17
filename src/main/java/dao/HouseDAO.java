@@ -228,4 +228,83 @@ public class HouseDAO {
 
         return null;
     }
+
+    // =============================
+    // OWNER: Update House Details
+    // =============================
+    public boolean updateHouseDetails(int houseId, int ownerId, String title, String shortDetail, String location,
+            String details, String tags, String availability, String type, int bedrooms, int bathrooms, double area,
+            boolean gasAvailable, boolean waterAvailable, boolean currentAvailable, double rent, String contactInfo,
+            boolean familyAllowed, boolean bachelorAllowed) {
+        String sql = "UPDATE houses SET title = ?, short_detail = ?, location = ?, details = ?, tags = ?, availability = ?, "
+                + "type = ?, bedrooms = ?, bathrooms = ?, area = ?, gas_available = ?, water_available = ?, current_available = ?, "
+                + "rent = ?, contact_info = ?, family_allowed = ?, bachelor_allowed = ? "
+                + "WHERE id = ? AND owner_id = ?";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, title);
+            pstmt.setString(2, shortDetail);
+            pstmt.setString(3, location);
+            pstmt.setString(4, details);
+            pstmt.setString(5, tags);
+            pstmt.setString(6, availability);
+            pstmt.setString(7, type);
+            pstmt.setInt(8, bedrooms);
+            pstmt.setInt(9, bathrooms);
+            pstmt.setDouble(10, area);
+            pstmt.setInt(11, gasAvailable ? 1 : 0);
+            pstmt.setInt(12, waterAvailable ? 1 : 0);
+            pstmt.setInt(13, currentAvailable ? 1 : 0);
+            pstmt.setDouble(14, rent);
+            pstmt.setString(15, contactInfo);
+            pstmt.setInt(16, familyAllowed ? 1 : 0);
+            pstmt.setInt(17, bachelorAllowed ? 1 : 0);
+            pstmt.setInt(18, houseId);
+            pstmt.setInt(19, ownerId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    // =============================
+    // OWNER: Delete House Listing
+    // =============================
+    public boolean deleteHouseById(int houseId, int ownerId) {
+        String deleteRequests = "DELETE FROM rent_requests WHERE house_id = ?";
+        String deleteImages = "DELETE FROM house_images WHERE house_id = ?";
+        String deleteHouse = "DELETE FROM houses WHERE id = ? AND owner_id = ?";
+
+        try (Connection conn = DatabaseConnection.connect()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement requestsStmt = conn.prepareStatement(deleteRequests);
+                    PreparedStatement imagesStmt = conn.prepareStatement(deleteImages);
+                    PreparedStatement houseStmt = conn.prepareStatement(deleteHouse)) {
+                requestsStmt.setInt(1, houseId);
+                requestsStmt.executeUpdate();
+
+                imagesStmt.setInt(1, houseId);
+                imagesStmt.executeUpdate();
+
+                houseStmt.setInt(1, houseId);
+                houseStmt.setInt(2, ownerId);
+                int updated = houseStmt.executeUpdate();
+
+                conn.commit();
+                return updated > 0;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="720.0" prefWidth="1024.0" styleClass="list-house-root" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.OwnerHouseProfileController">
+    <stylesheets>
+        <URL value="@style.css" />
+        <URL value="@dark-style.css" />
+        <URL value="@dark-theme.css" />
+    </stylesheets>
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #30302e;" styleClass="top-bar" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="14" left="20" right="20" top="14" />
+            </padding>
+            <Button onAction="#onBackToProperties" style="-fx-background-color: #39ac4d; -fx-text-fill: #000000;" styleClass="ghost-button" text="← Back to Properties" />
+            <Region HBox.hgrow="ALWAYS" />
+            <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
+                <graphic>
+                    <Region styleClass="switch-knob" />
+                </graphic>
+            </ToggleButton>
+        </HBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="list-house-scroll">
+            <VBox style="-fx-background-color: #30302e;" styleClass="list-house-content">
+                <VBox style="-fx-background-color: #39ac4d;" styleClass="list-house-hero">
+                    <Label style="-fx-text-fill: #000000;" styleClass="list-house-title" text="House Profile" />
+                    <Label style="-fx-text-fill: #000000;" styleClass="list-house-subtitle" text="Review your listing, update details, or remove the property." wrapText="true" />
+                </VBox>
+
+                <HBox spacing="16">
+                    <VBox spacing="14" style="-fx-background-color: #39ac4d;" styleClass="list-house-panel" HBox.hgrow="ALWAYS">
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="House Images (max 3)" />
+                        <HBox spacing="10" styleClass="property-detail-images">
+                            <StackPane styleClass="property-detail-image-slot">
+                                <ImageView fx:id="profileImage1" fitHeight="130.0" fitWidth="170.0" pickOnBounds="true" preserveRatio="true" styleClass="property-detail-image" />
+                            </StackPane>
+                            <StackPane styleClass="property-detail-image-slot">
+                                <ImageView fx:id="profileImage2" fitHeight="130.0" fitWidth="170.0" pickOnBounds="true" preserveRatio="true" styleClass="property-detail-image" />
+                            </StackPane>
+                            <StackPane styleClass="property-detail-image-slot">
+                                <ImageView fx:id="profileImage3" fitHeight="130.0" fitWidth="170.0" pickOnBounds="true" preserveRatio="true" styleClass="property-detail-image" />
+                            </StackPane>
+                        </HBox>
+                        <VBox spacing="10" style="-fx-background-color: #30302e;" styleClass="upload-card">
+                            <Button onAction="#onUploadHouseImages" style="-fx-text-fill: #ffffff; -fx-background-color: #f91852;" styleClass="primary-action" text="Replace Images" />
+                            <Label fx:id="imageCountLabel" style="-fx-text-fill: #ffffff;" styleClass="upload-caption" text="0/3 selected" />
+                            <Label fx:id="imageListLabel" style="-fx-text-fill: #ffffff;" styleClass="upload-list" text="No images uploaded" wrapText="true" />
+                        </VBox>
+
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Listing Status" />
+                        <Label fx:id="listingStatusLabel" style="-fx-text-fill: #ffffff;" text="Status: -" />
+
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="House Short Detail" />
+                        <TextField fx:id="shortDetailField" promptText="e.g. 3 Bed apartment in Uttara" styleClass="list-text-field" />
+
+                        <GridPane hgap="12" vgap="10">
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
+                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
+                            </columnConstraints>
+
+                            <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Number of Beds" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Number of Baths" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <TextField fx:id="bedsField" promptText="3" styleClass="list-text-field" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                            <TextField fx:id="bathsField" promptText="2" styleClass="list-text-field" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                            <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Square Feet" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="2" />
+                            <TextField fx:id="areaField" promptText="1200" styleClass="list-text-field" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="3" />
+                            <rowConstraints>
+                                <RowConstraints />
+                                <RowConstraints />
+                                <RowConstraints />
+                                <RowConstraints />
+                            </rowConstraints>
+                        </GridPane>
+
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Location" />
+                        <TextField fx:id="locationField" promptText="Area, Road, City" styleClass="list-text-field" />
+
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Details About the House" />
+                        <TextArea fx:id="detailsArea" prefRowCount="5" promptText="Lift, generator, tiles, balcony, nearby market..." styleClass="list-text-area" wrapText="true" />
+                    </VBox>
+
+                    <VBox spacing="14" style="-fx-background-color: #39ac4d;" styleClass="list-house-panel" HBox.hgrow="ALWAYS">
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Tags" />
+                        <HBox spacing="8">
+                            <ToggleButton fx:id="tagSingleButton" style="-fx-text-fill: #ffffff;" styleClass="tag-chip" text="Single" />
+                            <ToggleButton fx:id="tagFamilyButton" style="-fx-text-fill: #ffffff;" styleClass="tag-chip" text="Family" />
+                            <ToggleButton fx:id="tagWorkspaceButton" style="-fx-text-fill: #ffffff;" styleClass="tag-chip" text="Workspace/Office" />
+                        </HBox>
+
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Availability" />
+                        <ChoiceBox fx:id="availabilityChoice" styleClass="list-choice-box" />
+
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Utilities" />
+                        <HBox spacing="16">
+                            <CheckBox fx:id="gasCheck" style="-fx-text-fill: #000000;" styleClass="utility-check" text="Gas" />
+                            <CheckBox fx:id="waterCheck" style="-fx-text-fill: #000000;" styleClass="utility-check" text="Water" />
+                            <CheckBox fx:id="currentCheck" style="-fx-text-fill: #000000;" styleClass="utility-check" text="Current" />
+                        </HBox>
+
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Asking Price (BDT / month)" />
+                        <TextField fx:id="askingPriceField" promptText="25000" styleClass="list-text-field" />
+
+                        <Label style="-fx-text-fill: #000000;" styleClass="field-label" text="Owner Contact / Details" />
+                        <TextField fx:id="contactField" promptText="Phone or email" styleClass="list-text-field" />
+
+                        <Region VBox.vgrow="ALWAYS" />
+                        <Label fx:id="statusMessageLabel" styleClass="form-message" text="" wrapText="true" />
+                        <HBox alignment="CENTER_RIGHT" spacing="10">
+                            <Button onAction="#onResetChanges" style="-fx-text-fill: #ffffff;" styleClass="ghost-button" text="Reset" />
+                            <Button onAction="#onSaveUpdates" styleClass="primary-action" text="Save Updates" />
+                            <Button onAction="#onDeleteListing" style="-fx-background-color: #f91852; -fx-text-fill: #ffffff;" styleClass="ghost-button" text="Delete" />
+                        </HBox>
+                    </VBox>
+                </HBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

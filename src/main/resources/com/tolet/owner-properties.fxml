@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.image.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
 <BorderPane prefHeight="600" prefWidth="900" style="-fx-background-color: #99a3b4;" styleClass="owner-root" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.OwnerController">
@@ -61,7 +61,11 @@
                 </VBox>
 
                 <VBox spacing="12" styleClass="panel">
-                    <Label styleClass="panel-title" text="Property Details" />
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label styleClass="panel-title" text="Property Details" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button onAction="#onOpenHouseProfile" styleClass="ghost-button" text="Edit" />
+                    </HBox>
                     <HBox spacing="14">
                         <VBox spacing="6" HBox.hgrow="ALWAYS">
                             <Label fx:id="propertyTitleLabel" style="-fx-text-fill: #D4AF37;" text="Title: -" />
