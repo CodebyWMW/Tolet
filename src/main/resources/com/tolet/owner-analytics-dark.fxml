@@ -15,7 +15,7 @@
     <left>
         <VBox maxWidth="250.0" prefHeight="600.0" prefWidth="163.0" spacing="18" style="-fx-background-color: #474743;" styleClass="sidebar">
             <VBox spacing="4" styleClass="brand-block">
-                <Label prefHeight="23.0" prefWidth="158.0" style="-fx-text-fill: #ff7547;" styleClass="brand-title" text="RentalPro" />
+                <Label prefHeight="23.0" prefWidth="158.0" style="-fx-text-fill: #ff7547;" styleClass="brand-title" text="To-•Let" />
                 <Label prefHeight="14.0" prefWidth="183.0" style="-fx-text-fill: #faa387;" styleClass="brand-subtitle" text="Owner Dashboard" />
             </VBox>
 

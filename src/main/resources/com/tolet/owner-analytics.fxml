@@ -8,7 +8,7 @@
     <left>
         <VBox maxWidth="250.0" prefHeight="600.0" prefWidth="163.0" spacing="18" styleClass="sidebar">
             <VBox spacing="4" styleClass="brand-block">
-                <Label prefHeight="23.0" prefWidth="158.0" styleClass="brand-title" text="RentalPro" />
+                <Label prefHeight="23.0" prefWidth="158.0" styleClass="brand-title" text="To-•Let" />
                 <Label prefHeight="14.0" prefWidth="183.0" styleClass="brand-subtitle" text="Owner Dashboard" />
             </VBox>
 
