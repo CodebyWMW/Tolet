@@ -104,6 +104,8 @@ public class OwnerController {
     @FXML
     private VBox propertyRequestsContainer;
     @FXML
+    private VBox propertyReviewsContainer;
+    @FXML
     private VBox analyticsPageRoot;
     @FXML
     private Label analyticsTotalPropertiesLabel;
@@ -642,6 +644,7 @@ public class OwnerController {
         populatePropertyImages(house.id);
 
         populateHouseRequests(house.id);
+        populateHouseReviews(house.id);
     }
 
     private void populatePropertyImages(int houseId) {
@@ -741,6 +744,60 @@ public class OwnerController {
         }
     }
 
+    private void populateHouseReviews(int houseId) {
+        if (propertyReviewsContainer == null) {
+            return;
+        }
+
+        propertyReviewsContainer.getChildren().clear();
+
+        String query = "SELECT u.name AS tenant_name, hr.review_text, hr.status, "
+                + "COALESCE(hr.updated_at, hr.created_at) AS review_date "
+                + "FROM house_reviews hr "
+                + "JOIN users u ON u.id = hr.tenant_id "
+                + "WHERE hr.house_id = ? "
+                + "AND lower(trim(COALESCE(hr.status, 'submitted'))) = 'submitted' "
+                + "ORDER BY COALESCE(hr.updated_at, hr.created_at) DESC, hr.id DESC";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, houseId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                boolean hasRows = false;
+                while (rs.next()) {
+                    hasRows = true;
+                    propertyReviewsContainer.getChildren().add(buildReviewRow(
+                            rs.getString("tenant_name"),
+                            rs.getString("review_date"),
+                            rs.getString("review_text")));
+                }
+                if (!hasRows) {
+                    HBox row = new HBox(16);
+                    row.getStyleClass().add("table-row");
+                    row.getChildren().add(buildWideMessageLabel("No submitted reviews for this property yet."));
+                    propertyReviewsContainer.getChildren().add(row);
+                }
+            }
+        } catch (SQLException e) {
+            HBox row = new HBox(16);
+            row.getStyleClass().add("table-row");
+            row.getChildren().add(buildWideMessageLabel("Could not load reviews."));
+            propertyReviewsContainer.getChildren().add(row);
+        }
+    }
+
+    private HBox buildReviewRow(String tenantName, String reviewDate, String reviewText) {
+        HBox row = new HBox(16);
+        row.getStyleClass().add("table-row");
+
+        Label tenant = buildCellLabel(tenantName == null || tenantName.isBlank() ? "Tenant" : tenantName);
+        Label date = buildCellLabel(reviewDate == null || reviewDate.isBlank() ? "-" : reviewDate);
+        Label text = buildWideMessageLabel(reviewText == null || reviewText.isBlank() ? "-" : reviewText);
+
+        row.getChildren().addAll(tenant, date, text);
+        return row;
+    }
+
     private HBox buildPropertyRequestRow(String tenantName, LocalDate requestDate, LocalDate moveInDate, String statusText) {
         HBox row = new HBox(16);
         row.getStyleClass().add("table-row");
@@ -784,6 +841,8 @@ public class OwnerController {
         updatePropertyImageSlotStyle(propertyImage3, false);
         if (propertyRequestsContainer != null)
             propertyRequestsContainer.getChildren().clear();
+        if (propertyReviewsContainer != null)
+            propertyReviewsContainer.getChildren().clear();
     }
 
     private String safeText(String value) {
@@ -1128,11 +1187,15 @@ public class OwnerController {
             return false;
         }
 
-        String query = "UPDATE rent_requests SET status = ? WHERE id = ?";
+        String query = "UPDATE rent_requests SET status = ?, accepted_at = CASE "
+                + "WHEN lower(?) = 'approved' THEN ? ELSE accepted_at END "
+                + "WHERE id = ?";
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, newStatus);
-            pstmt.setInt(2, requestId);
+            pstmt.setString(2, newStatus);
+            pstmt.setString(3, LocalDate.now().toString());
+            pstmt.setInt(4, requestId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             return false;

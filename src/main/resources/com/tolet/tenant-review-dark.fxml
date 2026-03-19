@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="pageRoot" prefHeight="600" prefWidth="900" style="-fx-background-color: #262627;" styleClass="owner-root" userData="tenant-review.fxml" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.TenantController">
+    <stylesheets>
+        <URL value="@style.css" />
+        <URL value="@dark-style.css" />
+        <URL value="@dark-theme.css" />
+    </stylesheets>
+
+    <left>
+        <VBox maxWidth="250.0" prefHeight="600.0" prefWidth="163.0" spacing="18" style="-fx-background-color: #474743;" styleClass="sidebar">
+            <padding>
+                <Insets bottom="20" left="16" right="16" top="24" />
+            </padding>
+
+            <VBox spacing="4" styleClass="brand-block">
+                <Label style="-fx-text-fill: #ff7547;" styleClass="brand-title" text="To-•Let" />
+                <Label style="-fx-text-fill: #faa387;" styleClass="brand-subtitle" text="Tenant Dashboard" />
+            </VBox>
+
+            <VBox spacing="6">
+                <Button fx:id="navDashboardButton" onAction="#onOpenDashboard" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Dashboard" />
+                <Button fx:id="navSearchButton" onAction="#onOpenSearch" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Search" />
+                <Button fx:id="navWishlistButton" onAction="#onOpenWishlist" prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Wishlist" />
+                <Button fx:id="navReviewButton" onAction="#onOpenReview" prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #262624; -fx-background-radius: 10; -fx-text-fill: #ff7547; -fx-border-color: #ff7547; -fx-border-radius: 10;" styleClass="nav-button" text="Review" />
+            </VBox>
+
+            <Region style="-fx-background-color: #474743;" VBox.vgrow="ALWAYS" />
+
+            <VBox maxWidth="215.0" prefHeight="182.0" prefWidth="215.0" spacing="6" style="-fx-background-color: #262624;" styleClass="profile-card">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label fx:id="profileNameLabel" style="-fx-text-fill: #ff7547;" styleClass="profile-name" text="Tenant" />
+                </HBox>
+                <Label fx:id="profileVerificationLabel" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Status - Active" />
+                <Label fx:id="profileRoleLabel" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Role - Tenant" />
+                <Label fx:id="profileEmailLabel" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Email: -" />
+                <Label fx:id="profilePhoneLabel" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Phone: -" />
+                <Button onAction="#onLogout" prefHeight="34.0" prefWidth="264.0" style="-fx-background-color: #474743; -fx-text-fill: #e8fff5; -fx-border-color: #e8fff5;" styleClass="ghost-button" text="Logout" />
+            </VBox>
+        </VBox>
+    </left>
+
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: #262624;" styleClass="content-scroll">
+            <VBox maxHeight="2000.0" prefHeight="1080.0" prefWidth="691.0" spacing="22" style="-fx-background-color: #262624;" styleClass="content-root">
+                <HBox alignment="TOP_RIGHT">
+                    <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" style="-fx-background-color: #99a3b4;" styleClass="theme-switch">
+                        <graphic>
+                            <Region style="-fx-background-color: #5700d2;" styleClass="switch-knob" />
+                        </graphic>
+                    </ToggleButton>
+                </HBox>
+
+                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #30302e;" styleClass="top-bar">
+                    <VBox spacing="4">
+                        <Label style="-fx-background-color: #30302e; -fx-text-fill: #ff7547;" styleClass="page-title" text="Review" />
+                        <Label style="-fx-text-fill: #e8fff5;" styleClass="page-subtitle" text="Share your experience" />
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS" />
+                </HBox>
+
+                <VBox spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
+                    <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Leave a Review" />
+                    <Label style="-fx-text-fill: #e8fff5;" styleClass="page-subtitle" text="Tell others about the property and the owner response." />
+                    <Label style="-fx-text-fill: #e8fff5;" styleClass="page-subtitle" text="Select House" />
+                    <ComboBox fx:id="reviewHouseSelector" prefWidth="620.0"
+                        promptText="Choose a house to review"
+                        style="-fx-background-color: #1f2933; -fx-border-color: #2d3748; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: #e5e7eb;" />
+                    <Label style="-fx-text-fill: #e8fff5;" styleClass="page-subtitle" text="Only houses approved for you at least 1 month ago appear here." />
+                    <TextArea fx:id="reviewTextArea" prefHeight="140" style="-fx-background-color: #1f2933; -fx-text-fill: #e5e7eb; -fx-border-color: #2d3748; -fx-border-radius: 10; -fx-background-radius: 10;" wrapText="true" />
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Button onAction="#onSubmitReview" styleClass="btn-primary" text="Submit Review" />
+                        <Button onAction="#onSaveDraft" styleClass="ghost-button" text="Save Draft" />
+                    </HBox>
+                </VBox>
+
+                <VBox spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
+                    <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Recent Reviews" />
+                    <FlowPane fx:id="reviewsContainer" hgap="12" vgap="12" />
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>
+

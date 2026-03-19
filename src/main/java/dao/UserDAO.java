@@ -184,6 +184,10 @@ public boolean updateUserVerification(int userId, boolean verified) {
                         auditStmt.setString(7, deletedBy);
                         auditStmt.executeUpdate();
 
+                        if (isOwnerRole(role)) {
+                            deleteOwnerListings(conn, userId);
+                        }
+
                         deleteStmt.setInt(1, userId);
                         int deletedRows = deleteStmt.executeUpdate();
 
@@ -323,21 +327,75 @@ public boolean updateUserVerification(int userId, boolean verified) {
 
     // ================= DELETE USER =================
     public boolean deleteUserById(int userId) {
+        String selectRoleSql = "SELECT role FROM users WHERE id = ?";
+        String deleteUserSql = "DELETE FROM users WHERE id = ?";
 
-        String sql = "DELETE FROM users WHERE id = ?";
+        try (Connection conn = DatabaseConnection.connect()) {
+            conn.setAutoCommit(false);
 
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            String role = null;
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectRoleSql)) {
+                selectStmt.setInt(1, userId);
+                try (ResultSet rs = selectStmt.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        return false;
+                    }
+                    role = rs.getString("role");
+                }
+            }
 
-            pstmt.setInt(1, userId);
+            if (isOwnerRole(role)) {
+                deleteOwnerListings(conn, userId);
+            }
 
-            int rows = pstmt.executeUpdate();
-            return rows > 0;
+            try (PreparedStatement deleteStmt = conn.prepareStatement(deleteUserSql)) {
+                deleteStmt.setInt(1, userId);
+                int rows = deleteStmt.executeUpdate();
+                if (rows > 0) {
+                    conn.commit();
+                    return true;
+                }
+            }
+
+            conn.rollback();
+            return false;
 
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private void deleteOwnerListings(Connection conn, int ownerId) throws SQLException {
+        String deleteRequestsSql = "DELETE FROM rent_requests WHERE house_id IN (SELECT id FROM houses WHERE owner_id = ?)";
+        String deleteImagesSql = "DELETE FROM house_images WHERE house_id IN (SELECT id FROM houses WHERE owner_id = ?)";
+        String deleteHousesSql = "DELETE FROM houses WHERE owner_id = ?";
+
+        try (PreparedStatement deleteRequestsStmt = conn.prepareStatement(deleteRequestsSql);
+                PreparedStatement deleteImagesStmt = conn.prepareStatement(deleteImagesSql);
+                PreparedStatement deleteHousesStmt = conn.prepareStatement(deleteHousesSql)) {
+            deleteRequestsStmt.setInt(1, ownerId);
+            deleteRequestsStmt.executeUpdate();
+
+            deleteImagesStmt.setInt(1, ownerId);
+            deleteImagesStmt.executeUpdate();
+
+            deleteHousesStmt.setInt(1, ownerId);
+            deleteHousesStmt.executeUpdate();
+        }
+    }
+
+    private boolean isOwnerRole(String role) {
+        if (role == null) {
+            return false;
+        }
+
+        String normalized = role.trim().toLowerCase();
+        return normalized.equals("owner")
+                || normalized.equals("house owner")
+                || normalized.equals("bariwala")
+                || normalized.equals("landlord");
     }
 
     public int normalizeExistingOwnerAndTenantPublicIds() {

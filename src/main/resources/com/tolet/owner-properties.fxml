@@ -100,8 +100,19 @@
                         </HBox>
                         <VBox fx:id="propertyRequestsContainer" spacing="8" />
                     </VBox>
+
+                    <Label prefHeight="18.0" prefWidth="597.0" styleClass="panel-title" text="Tenant Reviews For This House" />
+                    <VBox spacing="8" styleClass="table">
+                        <HBox spacing="16" styleClass="table-header">
+                            <Label styleClass="table-title" text="Tenant" />
+                            <Label styleClass="table-title" text="Date" />
+                            <Label styleClass="table-title" text="Review" />
+                        </HBox>
+                        <VBox fx:id="propertyReviewsContainer" spacing="8" />
+                    </VBox>
                 </VBox>
             </VBox>
         </ScrollPane>
     </center>
 </BorderPane>
+

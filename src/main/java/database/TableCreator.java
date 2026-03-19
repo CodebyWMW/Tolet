@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -50,9 +51,22 @@ public class TableCreator {
                 + "tenant_id INTEGER,"
                 + "request_date TEXT,"
                 + "move_in_date TEXT,"
+                + "accepted_at TEXT,"
                 + "status TEXT,"
                 + "FOREIGN KEY(house_id) REFERENCES houses(id),"
                 + "FOREIGN KEY(tenant_id) REFERENCES users(id))";
+
+        String reviewsTable = "CREATE TABLE IF NOT EXISTS house_reviews ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "house_id INTEGER NOT NULL,"
+                + "tenant_id INTEGER NOT NULL,"
+                + "review_text TEXT NOT NULL,"
+                + "status TEXT DEFAULT 'submitted',"
+                + "created_at TEXT DEFAULT CURRENT_DATE,"
+                + "updated_at TEXT DEFAULT CURRENT_DATE,"
+                + "FOREIGN KEY(house_id) REFERENCES houses(id) ON DELETE CASCADE,"
+                + "FOREIGN KEY(tenant_id) REFERENCES users(id) ON DELETE CASCADE,"
+                + "UNIQUE(house_id, tenant_id))";
 
         String userAuditTable = "CREATE TABLE IF NOT EXISTS users_audit ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -81,14 +95,39 @@ public class TableCreator {
             stmt.execute(houseTable);
                         ensureHouseSchema(stmt);
             stmt.execute(requestTable);
+                                                ensureRentRequestSchema(stmt);
             stmt.execute(userAuditTable);
                         ensureUserAuditSchema(stmt);
                         stmt.execute(houseImagesTable);
+                                                stmt.execute(reviewsTable);
+                                                stmt.execute("CREATE INDEX IF NOT EXISTS idx_house_reviews_house_id ON house_reviews(house_id)");
+                                                stmt.execute("CREATE INDEX IF NOT EXISTS idx_house_reviews_tenant_id ON house_reviews(tenant_id)");
                         stmt.execute("CREATE INDEX IF NOT EXISTS idx_house_images_house_id ON house_images(house_id)");
+                        cleanupOrphanOwnerListings(conn);
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
+        private static void cleanupOrphanOwnerListings(Connection conn) throws SQLException {
+                String deleteRequestsSql = "DELETE FROM rent_requests "
+                                + "WHERE house_id IN (SELECT h.id FROM houses h "
+                                + "LEFT JOIN users u ON u.id = h.owner_id WHERE u.id IS NULL)";
+                String deleteImagesSql = "DELETE FROM house_images "
+                                + "WHERE house_id IN (SELECT h.id FROM houses h "
+                                + "LEFT JOIN users u ON u.id = h.owner_id WHERE u.id IS NULL)";
+                String deleteHousesSql = "DELETE FROM houses "
+                                + "WHERE id IN (SELECT h.id FROM houses h "
+                                + "LEFT JOIN users u ON u.id = h.owner_id WHERE u.id IS NULL)";
+
+                try (PreparedStatement deleteRequestsStmt = conn.prepareStatement(deleteRequestsSql);
+                                PreparedStatement deleteImagesStmt = conn.prepareStatement(deleteImagesSql);
+                                PreparedStatement deleteHousesStmt = conn.prepareStatement(deleteHousesSql)) {
+                        deleteRequestsStmt.executeUpdate();
+                        deleteImagesStmt.executeUpdate();
+                        deleteHousesStmt.executeUpdate();
+                }
+        }
 
         private static void ensureUserSchema(Connection conn, Statement stmt) throws SQLException {
                 Set<String> columns = getColumns(stmt, "users");
@@ -141,6 +180,17 @@ public class TableCreator {
                 addColumnIfMissing(stmt, columns, "houses", "water_available", "water_available INTEGER DEFAULT 0");
                 addColumnIfMissing(stmt, columns, "houses", "current_available", "current_available INTEGER DEFAULT 0");
                 addColumnIfMissing(stmt, columns, "houses", "contact_info", "contact_info TEXT");
+        }
+
+        private static void ensureRentRequestSchema(Statement stmt) throws SQLException {
+                Set<String> columns = getColumns(stmt, "rent_requests");
+                addColumnIfMissing(stmt, columns, "rent_requests", "accepted_at", "accepted_at TEXT");
+
+                // Backfill accepted_at for legacy approved rows where timestamp is missing.
+                stmt.execute("UPDATE rent_requests SET accepted_at = COALESCE(NULLIF(TRIM(request_date), ''), '"
+                                + LocalDate.now() + "') "
+                                + "WHERE lower(trim(COALESCE(status, ''))) = 'approved' "
+                                + "AND (accepted_at IS NULL OR TRIM(accepted_at) = '')");
         }
 
         private static Set<String> getColumns(Statement stmt, String tableName) throws SQLException {

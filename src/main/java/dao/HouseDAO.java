@@ -65,7 +65,9 @@ public class HouseDAO {
     // =============================
     public List<House> getAllHouses() {
         List<House> houses = new ArrayList<>();
-        String sql = "SELECT * FROM houses WHERE approval_status = 'approved'";
+        String sql = "SELECT h.* FROM houses h "
+            + "JOIN users u ON u.id = h.owner_id "
+            + "WHERE h.approval_status = 'approved'";
 
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -89,7 +91,7 @@ public class HouseDAO {
         List<House> houses = new ArrayList<>();
         String sql = "SELECT h.*, u.public_id AS owner_public_id "
             + "FROM houses h "
-            + "LEFT JOIN users u ON u.id = h.owner_id "
+            + "JOIN users u ON u.id = h.owner_id "
             + "ORDER BY h.id DESC";
 
         try (Connection conn = DatabaseConnection.connect();
@@ -166,7 +168,11 @@ public class HouseDAO {
     // =============================
     public List<House> getHousesByStatus(String status) {
         List<House> houses = new ArrayList<>();
-        String sql = "SELECT * FROM houses WHERE approval_status = ? ORDER BY id DESC";
+        String sql = "SELECT h.*, u.public_id AS owner_public_id "
+            + "FROM houses h "
+            + "JOIN users u ON u.id = h.owner_id "
+            + "WHERE h.approval_status = ? "
+            + "ORDER BY h.id DESC";
 
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

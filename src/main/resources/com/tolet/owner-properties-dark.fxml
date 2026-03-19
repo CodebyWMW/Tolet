@@ -16,6 +16,7 @@
         <VBox maxWidth="250.0" prefHeight="600.0" prefWidth="163.0" spacing="18" style="-fx-background-color: #474743;" styleClass="sidebar">
             <VBox spacing="4" styleClass="brand-block">
                 <Label prefHeight="23.0" prefWidth="158.0" style="-fx-text-fill: #ff7547;" styleClass="brand-title" text="RentalPro" />
+                <Label prefHeight="23.0" prefWidth="158.0" style="-fx-text-fill: #ff7547;" styleClass="brand-title" text="To-•Let" />
                 <Label prefHeight="14.0" prefWidth="183.0" style="-fx-text-fill: #faa387;" styleClass="brand-subtitle" text="Owner Dashboard" />
             </VBox>
 
@@ -107,8 +108,19 @@
                         </HBox>
                         <VBox fx:id="propertyRequestsContainer" spacing="8" />
                     </VBox>
+
+                    <Label prefHeight="18.0" prefWidth="594.0" style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Tenant Reviews For This House" />
+                    <VBox spacing="8" styleClass="table">
+                        <HBox spacing="16" style="-fx-background-color: #30302e;" styleClass="table-header">
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Tenant" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Date" />
+                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Review" />
+                        </HBox>
+                        <VBox fx:id="propertyReviewsContainer" spacing="8" />
+                    </VBox>
                 </VBox>
             </VBox>
         </ScrollPane>
     </center>
 </BorderPane>
+

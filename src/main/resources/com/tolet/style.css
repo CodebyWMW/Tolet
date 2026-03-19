@@ -29,7 +29,7 @@
   -fx-background-color: #99a3b4;
   -fx-background-radius: 12;
   -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 10, 0, 0, 4);
-  -fx-padding: 16 18 16 18;
+  -fx-padding: 0;
   -fx-cursor: hand;
   -fx-border-color: transparent;
   -fx-border-radius: 12;
@@ -120,6 +120,23 @@
 /* Owner Dashboard */
 .owner-root {
   -fx-background-color: #1f2933;
+}
+
+/* Tenant light mode overrides */
+.tenant-root,
+.tenant-root.owner-root {
+  -fx-background-color: #99a3b9;
+}
+
+.tenant-root .scroll-pane,
+.tenant-root .scroll-pane > .viewport,
+.tenant-root .content-scroll,
+.tenant-root .content-root,
+.tenant-root .top-bar,
+.tenant-root .panel,
+.tenant-root .table-header,
+.tenant-root .table-row {
+  -fx-background-color: #99a3b9;
 }
 
 .sidebar {
@@ -765,4 +782,18 @@
 
 .primary-action:hover {
   -fx-background-color: linear-gradient(to right, #0a62d9, #1888d8);
+}
+
+/* Tenant light mode overrides (placed last to win cascade) */
+.tenant-root,
+.tenant-root.owner-root,
+.tenant-root .content-scroll,
+.tenant-root .content-root,
+.tenant-root .top-bar,
+.tenant-root .panel,
+.tenant-root .table-header,
+.tenant-root .table-row,
+.tenant-root .scroll-pane,
+.tenant-root .scroll-pane > .viewport {
+  -fx-background-color: #99a3b9;
 }

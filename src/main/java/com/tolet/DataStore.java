@@ -304,7 +304,8 @@ public class DataStore {
     public static ObservableList<House> getHouses() {
         ObservableList<House> list = FXCollections.observableArrayList();
         String query = "SELECT h.location, h.type, h.rent, h.image, h.bedrooms, h.bathrooms, h.area, u.name " +
-                "FROM houses h JOIN users u ON h.owner_id = u.id";
+                "FROM houses h JOIN users u ON h.owner_id = u.id " +
+                "WHERE COALESCE(h.approval_status, 'pending') = 'approved'";
 
         try (Connection conn = DatabaseConnection.connect();
                 Statement stmt = conn.createStatement();
