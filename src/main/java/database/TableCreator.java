@@ -68,6 +68,15 @@ public class TableCreator {
                 + "FOREIGN KEY(tenant_id) REFERENCES users(id) ON DELETE CASCADE,"
                 + "UNIQUE(house_id, tenant_id))";
 
+        String wishlistTable = "CREATE TABLE IF NOT EXISTS tenant_wishlist ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "tenant_id INTEGER NOT NULL,"
+                + "house_id INTEGER NOT NULL,"
+                + "created_at TEXT DEFAULT CURRENT_DATE,"
+                + "FOREIGN KEY(tenant_id) REFERENCES users(id) ON DELETE CASCADE,"
+                + "FOREIGN KEY(house_id) REFERENCES houses(id) ON DELETE CASCADE,"
+                + "UNIQUE(tenant_id, house_id))";
+
         String userAuditTable = "CREATE TABLE IF NOT EXISTS users_audit ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + "user_id INTEGER,"
@@ -78,6 +87,20 @@ public class TableCreator {
                 + "role TEXT,"
                 + "deleted_at TEXT,"
                 + "deleted_by TEXT)";
+
+        String notificationsTable = "CREATE TABLE IF NOT EXISTS notifications ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "user_id INTEGER NOT NULL,"
+                + "house_id INTEGER,"
+                + "tenant_id INTEGER,"
+                + "title TEXT NOT NULL,"
+                + "message TEXT NOT NULL,"
+                + "type TEXT DEFAULT 'info',"
+                + "read INTEGER DEFAULT 0,"
+                + "created_at TEXT DEFAULT CURRENT_TIMESTAMP,"
+                + "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,"
+                + "FOREIGN KEY(house_id) REFERENCES houses(id) ON DELETE CASCADE,"
+                + "FOREIGN KEY(tenant_id) REFERENCES users(id) ON DELETE CASCADE)";
 
                 String houseImagesTable = "CREATE TABLE IF NOT EXISTS house_images ("
                                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -98,10 +121,13 @@ public class TableCreator {
                                                 ensureRentRequestSchema(stmt);
             stmt.execute(userAuditTable);
                         ensureUserAuditSchema(stmt);
+            stmt.execute(notificationsTable);
                         stmt.execute(houseImagesTable);
                                                 stmt.execute(reviewsTable);
+                        stmt.execute(wishlistTable);
                                                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_house_reviews_house_id ON house_reviews(house_id)");
                                                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_house_reviews_tenant_id ON house_reviews(tenant_id)");
+                        stmt.execute("CREATE INDEX IF NOT EXISTS idx_tenant_wishlist_tenant_id ON tenant_wishlist(tenant_id)");
                         stmt.execute("CREATE INDEX IF NOT EXISTS idx_house_images_house_id ON house_images(house_id)");
                         cleanupOrphanOwnerListings(conn);
         } catch (SQLException e) {

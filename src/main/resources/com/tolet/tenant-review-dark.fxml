@@ -25,14 +25,14 @@
 
             <VBox spacing="6">
                 <Button fx:id="navDashboardButton" onAction="#onOpenDashboard" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Dashboard" />
-                <Button fx:id="navSearchButton" onAction="#onOpenSearch" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Search" />
+                <Button fx:id="navSearchButton" onAction="#onOpenSearch" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Properties" />
                 <Button fx:id="navWishlistButton" onAction="#onOpenWishlist" prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Wishlist" />
                 <Button fx:id="navReviewButton" onAction="#onOpenReview" prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #262624; -fx-background-radius: 10; -fx-text-fill: #ff7547; -fx-border-color: #ff7547; -fx-border-radius: 10;" styleClass="nav-button" text="Review" />
             </VBox>
 
             <Region style="-fx-background-color: #474743;" VBox.vgrow="ALWAYS" />
 
-            <VBox maxWidth="215.0" prefHeight="182.0" prefWidth="215.0" spacing="6" style="-fx-background-color: #262624;" styleClass="profile-card">
+            <VBox maxWidth="215.0" prefWidth="215.0" spacing="10" style="-fx-background-color: #262624;" styleClass="profile-card">
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <Label fx:id="profileNameLabel" style="-fx-text-fill: #ff7547;" styleClass="profile-name" text="Tenant" />
                 </HBox>

@@ -101,6 +101,11 @@
                         <VBox fx:id="propertyRequestsContainer" spacing="8" />
                     </VBox>
 
+                    <Label prefHeight="18.0" prefWidth="597.0" styleClass="panel-title" text="Notifications" />
+                    <VBox spacing="8" styleClass="table">
+                        <VBox fx:id="propertyNotificationsContainer" spacing="8" />
+                    </VBox>
+
                     <Label prefHeight="18.0" prefWidth="597.0" styleClass="panel-title" text="Tenant Reviews For This House" />
                     <VBox spacing="8" styleClass="table">
                         <HBox spacing="16" styleClass="table-header">

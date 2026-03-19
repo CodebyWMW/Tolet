@@ -25,14 +25,14 @@
 
             <VBox spacing="6">
                 <Button fx:id="navDashboardButton" onAction="#onOpenDashboard" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-background-radius: 10; -fx-text-fill: #ff7547; -fx-border-color: #ff7547; -fx-border-radius: 10;" styleClass="nav-button" text="Dashboard" />
-                <Button fx:id="navSearchButton" onAction="#onOpenSearch" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Search" />
+                <Button fx:id="navSearchButton" onAction="#onOpenSearch" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Properties" />
                 <Button fx:id="navWishlistButton" onAction="#onOpenWishlist" prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Wishlist" />
                 <Button fx:id="navReviewButton" onAction="#onOpenReview" prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #262624; -fx-text-fill: #ff7547;" styleClass="nav-button" text="Review" />
             </VBox>
 
             <Region style="-fx-background-color: #474743;" VBox.vgrow="ALWAYS" />
 
-            <VBox maxWidth="215.0" prefHeight="182.0" prefWidth="215.0" spacing="6" style="-fx-background-color: #262624;" styleClass="profile-card">
+            <VBox maxWidth="215.0" prefWidth="215.0" spacing="10" style="-fx-background-color: #262624;" styleClass="profile-card">
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <Label fx:id="profileNameLabel" style="-fx-text-fill: #ff7547;" styleClass="profile-name" text="Tenant" />
                 </HBox>
@@ -66,37 +66,27 @@
 
                 <HBox spacing="16" styleClass="kpi-row">
                     <VBox spacing="6" style="-fx-background-color: #30302e;" styleClass="kpi-card">
-                        <Label style="-fx-text-fill: #ff7547;" styleClass="kpi-title" text="Active Searches" />
-                        <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label style="-fx-text-fill: #e8fff5;" styleClass="kpi-value" text="5" />
-                            <Region styleClass="kpi-icon kpi-icon-green" />
-                        </HBox>
-                    </VBox>
-                    <VBox spacing="6" style="-fx-background-color: #30302e;" styleClass="kpi-card">
                         <Label style="-fx-text-fill: #ff7547;" styleClass="kpi-title" text="Saved Homes" />
                         <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label style="-fx-text-fill: #e8fff5;" styleClass="kpi-value" text="0" />
+                            <Label fx:id="savedHomesLabel" style="-fx-text-fill: #e8fff5;" styleClass="kpi-value" text="0" />
                             <Region styleClass="kpi-icon kpi-icon-blue" />
                         </HBox>
                     </VBox>
                     <VBox spacing="6" style="-fx-background-color: #30302e;" styleClass="kpi-card">
                         <Label style="-fx-text-fill: #ff7547;" styleClass="kpi-title" text="Booked Requests" />
                         <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label style="-fx-text-fill: #e8fff5;" styleClass="kpi-value" text="0" />
+                            <Label fx:id="bookedRequestsLabel" style="-fx-text-fill: #e8fff5;" styleClass="kpi-value" text="0" />
                             <Region styleClass="kpi-icon kpi-icon-orange" />
                         </HBox>
                     </VBox>
+                    <VBox spacing="6" style="-fx-background-color: #30302e;" styleClass="kpi-card">
+                        <Label style="-fx-text-fill: #ff7547;" styleClass="kpi-title" text="Listed Houses" />
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label fx:id="listedHousesLabel" style="-fx-text-fill: #e8fff5;" styleClass="kpi-value" text="0" />
+                            <Region styleClass="kpi-icon kpi-icon-blue" />
+                        </HBox>
+                    </VBox>
                 </HBox>
-
-                <VBox spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
-                    <HBox alignment="CENTER_LEFT" spacing="12">
-                        <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Find Your Next Home" />
-                    </HBox>
-                    <HBox alignment="CENTER_LEFT" style="-fx-background-color: #39ac4d; -fx-background-radius: 12; -fx-border-color: #2e933f; -fx-border-radius: 12; -fx-padding: 12;">
-                        <TextField fx:id="searchField" promptText="Search by location, property type, or features..." style="-fx-background-color: transparent; -fx-text-fill: #000000; -fx-prompt-text-fill: #000000;" HBox.hgrow="ALWAYS" />
-                    </HBox>
-                    <FlowPane fx:id="filterContainer" hgap="8" vgap="8" />
-                </VBox>
 
                 <HBox fx:id="bookingStatusCard" alignment="CENTER_LEFT" managed="false" spacing="12" styleClass="status-card" visible="false">
                     <VBox spacing="2">
@@ -105,11 +95,20 @@
                     </VBox>
                 </HBox>
 
+                <VBox fx:id="currentRentedHouseContainer" maxHeight="1000.0" prefHeight="260.0" prefWidth="643.0" spacing="12" style="-fx-background-color: #30302e;" styleClass="panel" managed="false" visible="false">
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Your Current Rented House" />
+                        <Region HBox.hgrow="ALWAYS" />
+                    </HBox>
+                    <Separator />
+                    <FlowPane fx:id="currentRentedHouseGrid" hgap="24" prefWrapLength="1000" vgap="24" />
+                </VBox>
+
                 <VBox maxHeight="1000.0" prefHeight="260.0" prefWidth="643.0" spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
                     <HBox alignment="CENTER_LEFT" spacing="12">
                         <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Available Properties" />
                         <Region HBox.hgrow="ALWAYS" />
-                        <Label fx:id="totalCountLabel" style="-fx-text-fill: #faa387;" styleClass="table-title" text="0 properties" />
+                        <Button onAction="#onOpenSearch" style="-fx-background-color: #474743; -fx-text-fill: #e8fff5; -fx-border-color: #e8fff5;" styleClass="ghost-button" text="See More" />
                     </HBox>
                     <Separator />
                     <FlowPane fx:id="propertiesGrid" hgap="24" prefWrapLength="1000" vgap="24" />

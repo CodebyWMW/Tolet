@@ -21,6 +21,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -1132,6 +1133,8 @@ public class OwnerController {
         approve.getStyleClass().add("btn-approve");
         Button deny = new Button("Deny");
         deny.getStyleClass().add("btn-deny");
+        Button delete = new Button("Delete");
+        delete.getStyleClass().add("btn-deny");
 
         String currentStatus = normalizeStatus(request.getStatus());
         boolean alreadyFinal = "Approved".equalsIgnoreCase(currentStatus) || "Denied".equalsIgnoreCase(currentStatus);
@@ -1142,23 +1145,47 @@ public class OwnerController {
 
         approve.setOnAction(event -> {
             if (updateRequestStatus(request.getId(), "Approved")) {
+                showStatusPopup("Success", "Request approved for\n" + request.getTenantName() + ".", "OK");
                 populateKpis();
                 populateRequests();
             } else {
-                showNavigationError("Could not approve this request right now.");
+                showStatusPopup("Error", "Could not approve this request.\nPlease try again.", "OK");
             }
         });
 
         deny.setOnAction(event -> {
-            if (updateRequestStatus(request.getId(), "Denied")) {
+            if (deleteRequest(request.getId())) {
+                // Create notification for tenant
+                String notifyMessage = "Your rental request for " + request.getProperty() + " has been denied.";
+                int houseId = getHouseIdFromRequest(request.getId());
+                DataStore.createNotification(request.getTenantId(), houseId, request.getTenantId(), "Request Denied", notifyMessage, "denial");
+                
+                showStatusPopup("Success", "Request denied and tenant notified.", "OK");
                 populateKpis();
                 populateRequests();
             } else {
-                showNavigationError("Could not deny this request right now.");
+                showStatusPopup("Error", "Could not deny this request.\nPlease try again.", "OK");
             }
         });
 
-        HBox actions = new HBox(8, approve, deny);
+        delete.setOnAction(event -> {
+            if (deleteRequest(request.getId())) {
+                // Create notification for tenant only if it was approved
+                if ("Approved".equalsIgnoreCase(currentStatus)) {
+                    String notifyMessage = "Your rental agreement for " + request.getProperty() + " has been removed.";
+                    int houseId = getHouseIdFromRequest(request.getId());
+                    DataStore.createNotification(request.getTenantId(), houseId, request.getTenantId(), "Rental Removed", notifyMessage, "removal");
+                }
+                
+                showStatusPopup("Success", "Request deleted.", "OK");
+                populateKpis();
+                populateRequests();
+            } else {
+                showStatusPopup("Error", "Could not delete this request.\nPlease try again.", "OK");
+            }
+        });
+
+        HBox actions = new HBox(8, approve, deny, delete);
 
         row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status, actions);
         return row;
@@ -1178,7 +1205,22 @@ public class OwnerController {
         status.getStyleClass().add("status-pill");
         status.getStyleClass().add("approved");
 
-        row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status);
+        Button delete = new Button("Delete");
+        delete.getStyleClass().add("btn-deny");
+
+        delete.setOnAction(event -> {
+            if (deleteRequest(request.getId())) {
+                showStatusPopup("Success", "Rental agreement removed.", "OK");
+                populateKpis();
+                populateRequests();
+            } else {
+                showStatusPopup("Error", "Could not delete this rental.\nPlease try again.", "OK");
+            }
+        });
+
+        HBox actions = new HBox(8, delete);
+
+        row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status, actions);
         return row;
     }
 
@@ -1200,6 +1242,40 @@ public class OwnerController {
         } catch (SQLException e) {
             return false;
         }
+    }
+
+    private boolean deleteRequest(int requestId) {
+        if (requestId <= 0) {
+            return false;
+        }
+
+        String query = "DELETE FROM rent_requests WHERE id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, requestId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    private int getHouseIdFromRequest(int requestId) {
+        if (requestId <= 0) {
+            return -1;
+        }
+
+        String query = "SELECT house_id FROM rent_requests WHERE id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, requestId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("house_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     private Label buildCellLabel(String text) {
@@ -1448,6 +1524,79 @@ public class OwnerController {
         alert.setHeaderText("Could not open List New House page");
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    private void showStatusPopup(String title, String message, String okButtonText) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(DataStore.resolveFxml("status-popup.fxml")));
+            Parent root = loader.load();
+
+            Stage popupStage = new Stage();
+            popupStage.initStyle(StageStyle.TRANSPARENT);
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+
+            Rectangle clip = new Rectangle();
+            clip.setArcWidth(40);
+            clip.setArcHeight(40);
+            clip.widthProperty().bind(root.layoutBoundsProperty().map(bounds -> bounds.getWidth()));
+            clip.heightProperty().bind(root.layoutBoundsProperty().map(bounds -> bounds.getHeight()));
+            root.setClip(clip);
+
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            popupStage.setScene(scene);
+
+            // Make window draggable
+            final double[] xOffset = { 0 };
+            final double[] yOffset = { 0 };
+
+            root.setOnMousePressed(event -> {
+                xOffset[0] = event.getSceneX();
+                yOffset[0] = event.getSceneY();
+            });
+
+            root.setOnMouseDragged(event -> {
+                popupStage.setX(event.getScreenX() - xOffset[0]);
+                popupStage.setY(event.getScreenY() - yOffset[0]);
+            });
+
+            // Set popup content
+            Label popupTitleLabel = (Label) root.lookup("#popupTitleLabel");
+            Label popupMessageLabel = (Label) root.lookup("#popupMessageLabel");
+            Label popupIconLabel = (Label) root.lookup("#popupIconLabel");
+            Button popupOkButton = (Button) root.lookup("#popupOkButton");
+            Button popupCancelButton = (Button) root.lookup("#popupCancelButton");
+
+            if (popupTitleLabel != null) {
+                popupTitleLabel.setText(title);
+            }
+            if (popupMessageLabel != null) {
+                popupMessageLabel.setText(message);
+            }
+            if (popupOkButton != null) {
+                popupOkButton.setText(okButtonText);
+                popupOkButton.setOnAction(e -> popupStage.close());
+            }
+            if (popupCancelButton != null) {
+                popupCancelButton.setVisible(false);
+            }
+            if (popupIconLabel != null) {
+                if ("Success".equals(title)) {
+                    popupIconLabel.setText("✓");
+                    popupIconLabel.setStyle("-fx-background-color: #d4f4dd; -fx-text-fill: #0f9548; -fx-font-size: 22; -fx-font-weight: 800; -fx-alignment: center; -fx-min-width: 40; -fx-min-height: 40; -fx-max-width: 40; -fx-max-height: 40; -fx-background-radius: 999;");
+                } else if ("Error".equals(title)) {
+                    popupIconLabel.setText("✕");
+                    popupIconLabel.setStyle("-fx-background-color: #ffd4d0; -fx-text-fill: #d32f2f; -fx-font-size: 22; -fx-font-weight: 800; -fx-alignment: center; -fx-min-width: 40; -fx-min-height: 40; -fx-max-width: 40; -fx-max-height: 40; -fx-background-radius: 999;");
+                } else {
+                    popupIconLabel.setText("!");
+                    popupIconLabel.setStyle("-fx-background-color: #fff4d4; -fx-text-fill: #f9a825; -fx-font-size: 22; -fx-font-weight: 800; -fx-alignment: center; -fx-min-width: 40; -fx-min-height: 40; -fx-max-width: 40; -fx-max-height: 40; -fx-background-radius: 999;");
+                }
+            }
+
+            popupStage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private boolean showLogoutConfirmation() {

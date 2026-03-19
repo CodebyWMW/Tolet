@@ -303,7 +303,7 @@ public class DataStore {
 
     public static ObservableList<House> getHouses() {
         ObservableList<House> list = FXCollections.observableArrayList();
-        String query = "SELECT h.location, h.type, h.rent, h.image, h.bedrooms, h.bathrooms, h.area, u.name " +
+        String query = "SELECT h.id, h.title, h.location, h.type, h.rent, h.image, h.bedrooms, h.bathrooms, h.area, u.name " +
                 "FROM houses h JOIN users u ON h.owner_id = u.id " +
                 "WHERE COALESCE(h.approval_status, 'pending') = 'approved'";
 
@@ -315,6 +315,8 @@ public class DataStore {
             int rowCount = 0;
             while (rs.next()) {
                 list.add(new House(
+                        rs.getInt("id"),
+                    rs.getString("title"),
                         rs.getString("location"),
                         rs.getString("type"),
                         rs.getDouble("rent"),
@@ -341,13 +343,16 @@ public class DataStore {
                 && currentUser.getRole().toLowerCase().contains("owner")
                 && ownerId != null;
 
-        String query = "SELECT r.id, u.name AS tenant_name, h.location, r.request_date, r.move_in_date, h.rent, r.status "
+        String query = "SELECT r.id, r.tenant_id, u.name AS tenant_name, h.location, r.request_date, r.move_in_date, h.rent, r.status "
                 + "FROM rent_requests r "
                 + "JOIN users u ON r.tenant_id = u.id "
-                + "JOIN houses h ON r.house_id = h.id";
-        if (filterOwner) {
-            query += " WHERE h.owner_id = ?";
-        }
+                + "JOIN houses h ON r.house_id = h.id "
+                + "WHERE r.id IN ("
+                + "  SELECT MAX(rr.id) FROM rent_requests rr "
+                + "  JOIN houses hh ON rr.house_id = hh.id "
+                + (filterOwner ? "  WHERE hh.owner_id = ? " : "  WHERE 1=1 ")
+                + "  GROUP BY rr.house_id, rr.tenant_id"
+                + ")";
 
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -358,6 +363,7 @@ public class DataStore {
             while (rs.next()) {
                 list.add(new BookingRequest(
                     rs.getInt("id"),
+                    rs.getInt("tenant_id"),
                         rs.getString("tenant_name"),
                         rs.getString("location"),
                         parseDate(rs.getString("request_date")),
@@ -707,6 +713,64 @@ public class DataStore {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public static boolean createNotification(int userId, String title, String message, String type) {
+        return createNotification(userId, -1, -1, title, message, type);
+    }
+
+    public static boolean createNotification(int userId, int houseId, int tenantId, String title, String message, String type) {
+        String query = "INSERT INTO notifications (user_id, house_id, tenant_id, title, message, type, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, houseId > 0 ? houseId : 0);
+            pstmt.setInt(3, tenantId > 0 ? tenantId : 0);
+            pstmt.setString(4, title);
+            pstmt.setString(5, message);
+            pstmt.setString(6, type);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static ObservableList<Map<String, String>> getOwnerNotifications(int ownerId) {
+        ObservableList<Map<String, String>> list = FXCollections.observableArrayList();
+        String query = "SELECT n.id, n.house_id, n.tenant_id, n.title, n.message, n.type, n.created_at, t.name AS tenant_name, h.location "
+                + "FROM notifications n "
+                + "LEFT JOIN users t ON n.tenant_id = t.id "
+                + "LEFT JOIN houses h ON n.house_id = h.id "
+                + "WHERE n.user_id = ? AND n.id IN ("
+                + "  SELECT MAX(nn.id) FROM notifications nn "
+                + "  WHERE nn.user_id = ? "
+                + "  GROUP BY nn.house_id, nn.tenant_id"
+                + ") "
+                + "ORDER BY n.created_at DESC";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, ownerId);
+            pstmt.setInt(2, ownerId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Map<String, String> notification = new HashMap<>();
+                notification.put("id", String.valueOf(rs.getInt("id")));
+                notification.put("house_id", String.valueOf(rs.getInt("house_id")));
+                notification.put("tenant_id", String.valueOf(rs.getInt("tenant_id")));
+                notification.put("title", rs.getString("title"));
+                notification.put("message", rs.getString("message"));
+                notification.put("type", rs.getString("type"));
+                notification.put("created_at", rs.getString("created_at"));
+                notification.put("tenant_name", rs.getString("tenant_name"));
+                notification.put("location", rs.getString("location"));
+                list.add(notification);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 
     private static Integer findUserIdByContact(String contact) {

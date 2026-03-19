@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public class BookingRequest {
     private final int id;
+    private final int tenantId;
     private final String tenantName;
     private final String property;
     private final LocalDate requestDate;
@@ -13,6 +14,7 @@ public class BookingRequest {
 
     public BookingRequest(
             int id,
+            int tenantId,
             String tenantName,
             String property,
             LocalDate requestDate,
@@ -20,6 +22,7 @@ public class BookingRequest {
             double monthlyRent,
             String status) {
         this.id = id;
+        this.tenantId = tenantId;
         this.tenantName = tenantName;
         this.property = property;
         this.requestDate = requestDate;
@@ -30,6 +33,10 @@ public class BookingRequest {
 
     public int getId() {
         return id;
+    }
+
+    public int getTenantId() {
+        return tenantId;
     }
 
     public String getTenantName() {
