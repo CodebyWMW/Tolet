@@ -69,6 +69,47 @@
   -fx-border-color: #0066ff;
 }
 
+.button.btn-approve {
+  -fx-background-color: #16a34a;
+  -fx-text-fill: #ffffff;
+  -fx-border-color: #16a34a;
+  -fx-font-weight: 700;
+}
+
+.button.btn-approve:hover {
+  -fx-background-color: #15803d;
+  -fx-border-color: #15803d;
+}
+
+.button.btn-deny {
+  -fx-background-color: #f59e0b;
+  -fx-text-fill: #ffffff;
+  -fx-border-color: #f59e0b;
+  -fx-font-weight: 700;
+}
+
+.button.btn-deny:hover {
+  -fx-background-color: #d97706;
+  -fx-border-color: #d97706;
+}
+
+.button.btn-delete {
+  -fx-background-color: #dc2626;
+  -fx-text-fill: #ffffff;
+  -fx-border-color: #dc2626;
+  -fx-font-weight: 700;
+}
+
+.button.btn-delete:hover {
+  -fx-background-color: #b91c1c;
+  -fx-border-color: #b91c1c;
+}
+
+.button.btn-delete:pressed {
+  -fx-background-color: #991b1b;
+  -fx-border-color: #991b1b;
+}
+
 /* --- TOGGLE BUTTON --- */
 .toggle-button {
   -fx-background-color: #2c2c2c;

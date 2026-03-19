@@ -11,6 +11,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.chart.LineChart;
@@ -1128,13 +1129,17 @@ public class OwnerController {
         Label status = new Label(normalizeStatus(request.getStatus()));
         status.getStyleClass().add("status-pill");
         status.getStyleClass().add(normalizeStatus(request.getStatus()).toLowerCase(Locale.ENGLISH));
+        applyStatusPillSizing(status);
 
         Button approve = new Button("Approve");
         approve.getStyleClass().add("btn-approve");
+        applyActionButtonSizing(approve);
         Button deny = new Button("Deny");
         deny.getStyleClass().add("btn-deny");
+        applyActionButtonSizing(deny);
         Button delete = new Button("Delete");
-        delete.getStyleClass().add("btn-deny");
+        delete.getStyleClass().add("btn-delete");
+        applyActionButtonSizing(delete);
 
         String currentStatus = normalizeStatus(request.getStatus());
         boolean alreadyFinal = "Approved".equalsIgnoreCase(currentStatus) || "Denied".equalsIgnoreCase(currentStatus);
@@ -1204,9 +1209,11 @@ public class OwnerController {
         Label status = new Label("Approved");
         status.getStyleClass().add("status-pill");
         status.getStyleClass().add("approved");
+        applyStatusPillSizing(status);
 
         Button delete = new Button("Delete");
-        delete.getStyleClass().add("btn-deny");
+        delete.getStyleClass().add("btn-delete");
+        applyActionButtonSizing(delete);
 
         delete.setOnAction(event -> {
             if (deleteRequest(request.getId())) {
@@ -1282,6 +1289,19 @@ public class OwnerController {
         Label label = new Label(text == null ? "" : text);
         label.getStyleClass().add("table-text");
         return label;
+    }
+
+    private void applyActionButtonSizing(Button button) {
+        button.setMinWidth(92);
+        button.setPrefWidth(92);
+        button.setTextOverrun(OverrunStyle.CLIP);
+    }
+
+    private void applyStatusPillSizing(Label statusLabel) {
+        statusLabel.setMinWidth(Region.USE_PREF_SIZE);
+        statusLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        statusLabel.setMaxWidth(Region.USE_PREF_SIZE);
+        statusLabel.setWrapText(false);
     }
 
     private Label buildWideMessageLabel(String text) {

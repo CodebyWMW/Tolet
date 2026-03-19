@@ -407,15 +407,45 @@
 .btn-approve {
   -fx-background-color: #16a34a;
   -fx-text-fill: white;
+  -fx-font-weight: 700;
   -fx-background-radius: 8;
 }
 
+.btn-approve:hover {
+  -fx-background-color: #15803d;
+}
+
 .btn-deny {
-  -fx-background-color: white;
-  -fx-text-fill: #ef4444;
-  -fx-border-color: #fecaca;
+  -fx-background-color: #f59e0b;
+  -fx-text-fill: white;
+  -fx-font-weight: 700;
+  -fx-border-color: #f59e0b;
   -fx-border-radius: 8;
   -fx-background-radius: 8;
+}
+
+.btn-deny:hover {
+  -fx-background-color: #d97706;
+  -fx-border-color: #d97706;
+}
+
+.btn-delete {
+  -fx-background-color: #dc2626;
+  -fx-text-fill: white;
+  -fx-font-weight: 700;
+  -fx-border-color: #dc2626;
+  -fx-border-radius: 8;
+  -fx-background-radius: 8;
+}
+
+.btn-delete:hover {
+  -fx-background-color: #b91c1c;
+  -fx-border-color: #b91c1c;
+}
+
+.btn-delete:pressed {
+  -fx-background-color: #991b1b;
+  -fx-border-color: #991b1b;
 }
 
 /* Theme switch (shared) */
