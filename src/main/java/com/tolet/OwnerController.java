@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -45,6 +46,14 @@ import java.sql.SQLException;
 import database.DatabaseConnection;
 
 public class OwnerController {
+    private static final double REQUEST_COL_TENANT = 110;
+    private static final double REQUEST_COL_DATE = 110;
+    private static final double REQUEST_COL_MOVE_IN = 110;
+    private static final double REQUEST_COL_RENT = 100;
+    private static final double REQUEST_COL_STATUS = 100;
+    private static final double REQUEST_COL_ACTIONS = 90;
+    private static final double REQUEST_GAP_RENT_TO_STATUS = 18;
+    private static final double REQUEST_GAP_STATUS_TO_ACTIONS = 18;
     @FXML
     private ToggleButton themeToggle;
     @FXML
@@ -346,6 +355,10 @@ public class OwnerController {
                 }
             }
             source = approvedOnly;
+        }
+
+        if (!isAcceptedTenantsPage()) {
+            requestsContainer.getChildren().add(buildRequestsHeaderRow());
         }
 
         int shown = 0;
@@ -1104,20 +1117,26 @@ public class OwnerController {
     }
 
     private HBox buildRequestRow(BookingRequest request) {
-        HBox row = new HBox(16);
+        HBox row = new HBox(12);
         row.getStyleClass().add("table-row");
         row.setFillHeight(false);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setMaxWidth(Double.MAX_VALUE);
 
-        Label tenant = buildCellLabel(request.getTenantName());
-        Label property = buildCellLabel(request.getProperty());
-        Label requestDate = buildCellLabel(formatDate(request.getRequestDate()));
-        Label moveInDate = buildCellLabel(formatDate(request.getMoveInDate()));
-        Label rent = buildCellLabel(formatRent(request.getMonthlyRent()));
+        Label tenant = buildRequestCellLabel(request.getTenantName(), REQUEST_COL_TENANT, false);
+        Label property = buildRequestCellLabel(request.getProperty(), 0, true);
+        Label requestDate = buildRequestCellLabel(formatDate(request.getRequestDate()), REQUEST_COL_DATE, false);
+        Label moveInDate = buildRequestCellLabel(formatDate(request.getMoveInDate()), REQUEST_COL_MOVE_IN, false);
+        Label rent = buildRequestCellLabel(formatRent(request.getMonthlyRent()), REQUEST_COL_RENT, false);
+        Region rentToStatusGap = buildColumnGap(REQUEST_GAP_RENT_TO_STATUS);
 
         Label status = new Label(normalizeStatus(request.getStatus()));
         status.getStyleClass().add("status-pill");
         status.getStyleClass().add(normalizeStatus(request.getStatus()).toLowerCase(Locale.ENGLISH));
         applyRequestStatusColumnSizing(status);
+        Region statusToActionsGap = buildColumnGap(REQUEST_GAP_STATUS_TO_ACTIONS);
+        Region pushActionsRight = new Region();
+        HBox.setHgrow(pushActionsRight, Priority.ALWAYS);
 
         Button approve = new Button("Approve");
         approve.getStyleClass().add("btn-approve");
@@ -1161,27 +1180,105 @@ public class OwnerController {
         });
 
         VBox actions = new VBox(8, approve, delete);
+        actions.setAlignment(Pos.CENTER_RIGHT);
         applyRequestActionsColumnSizing(actions);
 
-        row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status, actions);
+        row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, rentToStatusGap, status,
+            statusToActionsGap, pushActionsRight, actions);
         return row;
     }
 
+    private HBox buildRequestsHeaderRow() {
+        HBox header = new HBox(12);
+        header.getStyleClass().add("table-header");
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setMaxWidth(Double.MAX_VALUE);
+
+        Label tenant = buildRequestHeaderLabel("Tenant Name", REQUEST_COL_TENANT, false);
+        Label property = buildRequestHeaderLabel("Property", 0, true);
+        Label requestDate = buildRequestHeaderLabel("Request Date", REQUEST_COL_DATE, false);
+        Label moveInDate = buildRequestHeaderLabel("Move-in Date", REQUEST_COL_MOVE_IN, false);
+        Label rent = buildRequestHeaderLabel("Monthly Rent", REQUEST_COL_RENT, false);
+        Region rentToStatusGap = buildColumnGap(REQUEST_GAP_RENT_TO_STATUS);
+        Label status = buildRequestHeaderLabel("Status", REQUEST_COL_STATUS, false);
+        Region statusToActionsGap = buildColumnGap(REQUEST_GAP_STATUS_TO_ACTIONS);
+        Region pushActionsRight = new Region();
+        HBox.setHgrow(pushActionsRight, Priority.ALWAYS);
+        Label actions = buildRequestHeaderLabel("Actions", REQUEST_COL_ACTIONS, false);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        header.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, rentToStatusGap, status,
+            statusToActionsGap, pushActionsRight, actions);
+        return header;
+    }
+
+    private Region buildColumnGap(double width) {
+        Region spacer = new Region();
+        spacer.setMinWidth(width);
+        spacer.setPrefWidth(width);
+        spacer.setMaxWidth(width);
+        return spacer;
+    }
+
+    private Label buildRequestHeaderLabel(String text, double width, boolean flexible) {
+        Label label = new Label(text == null ? "" : text);
+        label.getStyleClass().add("table-title");
+        applyRequestColumnSizing(label, width, flexible);
+        return label;
+    }
+
+    private Label buildRequestCellLabel(String text, double width, boolean flexible) {
+        Label label = buildCellLabel(text);
+        if (flexible) {
+            label.setWrapText(true);
+            label.setTextOverrun(OverrunStyle.CLIP);
+            label.setMaxHeight(Double.MAX_VALUE);
+            label.setContentDisplay(ContentDisplay.TEXT_ONLY);
+        } else {
+            label.setTextOverrun(OverrunStyle.ELLIPSIS);
+        }
+        applyRequestColumnSizing(label, width, flexible);
+        return label;
+    }
+
+    private void applyRequestColumnSizing(Label label, double width, boolean flexible) {
+        if (label == null) {
+            return;
+        }
+
+        if (flexible) {
+            label.setMinWidth(120);
+            label.setPrefWidth(200);
+            label.setMaxWidth(220);
+            return;
+        }
+
+        label.setMinWidth(width);
+        label.setPrefWidth(width);
+        label.setMaxWidth(width);
+    }
+
     private HBox buildAcceptedTenantRow(BookingRequest request) {
-        HBox row = new HBox(16);
+        HBox row = new HBox(12);
         row.getStyleClass().add("table-row");
         row.setFillHeight(false);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setMaxWidth(Double.MAX_VALUE);
 
-        Label tenant = buildCellLabel(request.getTenantName());
-        Label property = buildCellLabel(request.getProperty());
-        Label requestDate = buildCellLabel(formatDate(request.getRequestDate()));
-        Label moveInDate = buildCellLabel(formatDate(request.getMoveInDate()));
-        Label rent = buildCellLabel(formatRent(request.getMonthlyRent()));
+        Label tenant = buildRequestCellLabel(request.getTenantName(), REQUEST_COL_TENANT, false);
+        Label property = buildRequestCellLabel(request.getProperty(), 0, true);
+        Label requestDate = buildRequestCellLabel(formatDate(request.getRequestDate()), REQUEST_COL_DATE, false);
+        Label moveInDate = buildRequestCellLabel(formatDate(request.getMoveInDate()), REQUEST_COL_MOVE_IN, false);
+        Label rent = buildRequestCellLabel(formatRent(request.getMonthlyRent()), REQUEST_COL_RENT, false);
+        Region rentToStatusGap = buildColumnGap(REQUEST_GAP_RENT_TO_STATUS);
 
         Label status = new Label("Approved");
         status.getStyleClass().add("status-pill");
         status.getStyleClass().add("approved");
         applyRequestStatusColumnSizing(status);
+        Region statusToActionsGap = buildColumnGap(REQUEST_GAP_STATUS_TO_ACTIONS);
+        Region pushActionsRight = new Region();
+        HBox.setHgrow(pushActionsRight, Priority.ALWAYS);
 
         Button delete = new Button("Delete");
         delete.getStyleClass().add("btn-delete");
@@ -1198,9 +1295,11 @@ public class OwnerController {
         });
 
         HBox actions = new HBox(8, delete);
+        actions.setAlignment(Pos.CENTER_RIGHT);
         applyRequestActionsColumnSizing(actions);
 
-        row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status, actions);
+        row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, rentToStatusGap, status,
+            statusToActionsGap, pushActionsRight, actions);
         return row;
     }
 
@@ -1265,8 +1364,8 @@ public class OwnerController {
     }
 
     private void applyActionButtonSizing(Button button) {
-        button.setMinWidth(92);
-        button.setPrefWidth(92);
+        button.setMinWidth(90);
+        button.setPrefWidth(90);
         button.setTextOverrun(OverrunStyle.CLIP);
     }
 
@@ -1294,9 +1393,9 @@ public class OwnerController {
         if (statusLabel == null) {
             return;
         }
-        statusLabel.setMinWidth(120);
-        statusLabel.setPrefWidth(120);
-        statusLabel.setMaxWidth(120);
+        statusLabel.setMinWidth(REQUEST_COL_STATUS);
+        statusLabel.setPrefWidth(REQUEST_COL_STATUS);
+        statusLabel.setMaxWidth(REQUEST_COL_STATUS);
         statusLabel.setWrapText(false);
     }
 
@@ -1304,9 +1403,9 @@ public class OwnerController {
         if (actionsContainer == null) {
             return;
         }
-        actionsContainer.setMinWidth(192);
-        actionsContainer.setPrefWidth(192);
-        actionsContainer.setMaxWidth(192);
+        actionsContainer.setMinWidth(REQUEST_COL_ACTIONS);
+        actionsContainer.setPrefWidth(REQUEST_COL_ACTIONS);
+        actionsContainer.setMaxWidth(REQUEST_COL_ACTIONS);
     }
 
     private Label buildWideMessageLabel(String text) {

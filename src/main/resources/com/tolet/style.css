@@ -383,6 +383,11 @@
   -fx-pref-width: 120;
 }
 
+.request-table .table-title,
+.request-table .table-text {
+  -fx-pref-width: -1;
+}
+
 .status-pill {
   -fx-background-radius: 20;
   -fx-padding: 4 10 4 10;

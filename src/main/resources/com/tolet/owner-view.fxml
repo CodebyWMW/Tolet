@@ -118,17 +118,7 @@
                         <Region HBox.hgrow="ALWAYS" />
                         <Button onAction="#onOpenRequests" prefHeight="30.0" prefWidth="88.0" styleClass="ghost-button" text="See All" />
                     </HBox>
-                    <VBox spacing="8" styleClass="table">
-                        <HBox spacing="16" styleClass="table-header">
-                            <Label maxWidth="80.0" styleClass="table-title" text="Name" />
-                            <Label maxWidth="200.0" prefHeight="14.0" prefWidth="94.0" styleClass="table-title" text="     Property" />
-                            <Label styleClass="table-title" text="Request Date" />
-                            <Label styleClass="table-title" text="Move-in Date" />
-                            <Label styleClass="table-title" text="Monthly Rent" />
-                            <Label styleClass="table-title" text="Status" />
-                            <Label prefWidth="192.0" styleClass="table-title" text="Actions" />
-                        </HBox>
-
+                    <VBox spacing="8" styleClass="table request-table">
                         <VBox fx:id="requestsContainer" spacing="8" />
                     </VBox>
                 </VBox>

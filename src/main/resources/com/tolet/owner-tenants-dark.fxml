@@ -63,16 +63,7 @@
 
                 <VBox prefWidth="643.0" spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
                     <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="All Tenant Booking Requests" />
-                    <VBox spacing="8" styleClass="table">
-                        <HBox spacing="16" style="-fx-background-color: #30302e;" styleClass="table-header">
-                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Tenant Name" />
-                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Property" />
-                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Request Date" />
-                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Move-in Date" />
-                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Monthly Rent" />
-                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Status" />
-                            <Label prefWidth="192.0" style="-fx-text-fill: #faa387;" styleClass="table-title" text="Actions" />
-                        </HBox>
+                    <VBox spacing="8" styleClass="table request-table">
                         <VBox fx:id="requestsContainer" spacing="8" />
                     </VBox>
                 </VBox>

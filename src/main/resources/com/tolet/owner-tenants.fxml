@@ -56,16 +56,7 @@
 
                 <VBox prefWidth="643.0" spacing="12" styleClass="panel">
                     <Label styleClass="panel-title" text="All Tenant Booking Requests" />
-                    <VBox spacing="8" styleClass="table">
-                        <HBox spacing="16" styleClass="table-header">
-                            <Label styleClass="table-title" text="Tenant Name" />
-                            <Label styleClass="table-title" text="Property" />
-                            <Label styleClass="table-title" text="Request Date" />
-                            <Label styleClass="table-title" text="Move-in Date" />
-                            <Label styleClass="table-title" text="Monthly Rent" />
-                            <Label styleClass="table-title" text="Status" />
-                            <Label prefWidth="192.0" styleClass="table-title" text="Actions" />
-                        </HBox>
+                    <VBox spacing="8" styleClass="table request-table">
                         <VBox fx:id="requestsContainer" spacing="8" />
                     </VBox>
                 </VBox>
