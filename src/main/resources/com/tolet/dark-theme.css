@@ -81,16 +81,9 @@
   -fx-border-color: #15803d;
 }
 
-.button.btn-deny {
-  -fx-background-color: #f59e0b;
-  -fx-text-fill: #ffffff;
-  -fx-border-color: #f59e0b;
-  -fx-font-weight: 700;
-}
-
-.button.btn-deny:hover {
-  -fx-background-color: #d97706;
-  -fx-border-color: #d97706;
+.button.btn-approve.decision-selected {
+  -fx-background-color: #14532d;
+  -fx-border-color: #14532d;
 }
 
 .button.btn-delete {

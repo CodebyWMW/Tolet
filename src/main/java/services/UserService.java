@@ -35,7 +35,7 @@ public class UserService {
             return false;
         }
 
-        if (valueExists("SELECT 1 FROM users WHERE name = ? COLLATE NOCASE", username)) {
+        if (valueExists("SELECT 1 FROM users WHERE name = ? COLLATE BINARY", username)) {
             lastErrorMessage = "Username already exists.";
             return false;
         }

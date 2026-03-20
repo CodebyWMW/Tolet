@@ -57,36 +57,21 @@
                     <Region HBox.hgrow="ALWAYS" />
                 </HBox>
 
-                <HBox spacing="16" styleClass="kpi-row">
-                    <VBox spacing="6" style="-fx-background-color: #1F2933;" styleClass="kpi-card">
-                        <Label style="-fx-text-fill: #D4AF37;" styleClass="kpi-title" text="Saved Homes" />
-                        <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label fx:id="savedHomesLabel" style="-fx-text-fill: #D4AF37;" styleClass="kpi-value" text="0" />
-                            <Region styleClass="kpi-icon kpi-icon-blue" />
-                        </HBox>
-                    </VBox>
-                    <VBox spacing="6" style="-fx-background-color: #1F2933;" styleClass="kpi-card">
-                        <Label style="-fx-text-fill: #D4AF37;" styleClass="kpi-title" text="Booked Requests" />
-                        <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label fx:id="bookedRequestsLabel" style="-fx-text-fill: #D4AF37;" styleClass="kpi-value" text="0" />
-                            <Region styleClass="kpi-icon kpi-icon-orange" />
-                        </HBox>
-                    </VBox>
-                    <VBox spacing="6" style="-fx-background-color: #1F2933;" styleClass="kpi-card">
-                        <Label style="-fx-text-fill: #D4AF37;" styleClass="kpi-title" text="Listed Houses" />
-                        <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label fx:id="listedHousesLabel" style="-fx-text-fill: #D4AF37;" styleClass="kpi-value" text="0" />
-                            <Region styleClass="kpi-icon kpi-icon-blue" />
-                        </HBox>
-                    </VBox>
-                </HBox>
-
                 <HBox fx:id="bookingStatusCard" alignment="CENTER_LEFT" managed="false" spacing="12" styleClass="status-card" visible="false">
                     <VBox spacing="2">
                         <Label fx:id="bookingStatusTitleLabel" style="-fx-font-weight: bold; -fx-text-fill: #854d0e;" text="Booking Pending" />
                         <Label fx:id="bookingStatusMessageLabel" style="-fx-text-fill: #a16207;" text="Your latest request is being reviewed." />
                     </VBox>
                 </HBox>
+
+                <VBox prefHeight="220.0" prefWidth="643.0" spacing="12" styleClass="panel">
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label styleClass="panel-title" text="Notifications" />
+                        <Region HBox.hgrow="ALWAYS" />
+                    </HBox>
+                    <Separator />
+                    <VBox fx:id="tenantNotificationsContainer" spacing="8" />
+                </VBox>
 
                 <VBox fx:id="currentRentedHouseContainer" maxHeight="1000.0" prefHeight="260.0" prefWidth="643.0" spacing="12" styleClass="panel" managed="false" visible="false">
                     <HBox alignment="CENTER_LEFT" spacing="12">

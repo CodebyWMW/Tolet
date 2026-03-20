@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 
 public class TenantController {
     private static final double PROPERTY_CARD_WIDTH = 350;
+    private String lastShownDeniedNotificationKey;
 
     @FXML
     private Label welcomeLabel, totalCountLabel, listedHousesLabel, savedHomesLabel,
@@ -128,6 +129,8 @@ public class TenantController {
     private FlowPane detailsTagsContainer;
     @FXML
     private Label detailsAmenitiesLabel;
+    @FXML
+    private VBox tenantNotificationsContainer;
 
     private List<House> allHouses;
     private List<String> activeFilters = new ArrayList<>();
@@ -190,6 +193,7 @@ public class TenantController {
             refreshListedHousesCountAsync();
             refreshTenantBookingKpisAsync();
             refreshPendingRequestStatusAsync();
+            refreshTenantNotificationsAsync();
             loadCurrentRentedHouseAsync();
             startAutoRefresh();
         }
@@ -534,6 +538,7 @@ public class TenantController {
             refreshListedHousesCountAsync();
             refreshTenantBookingKpisAsync();
             refreshPendingRequestStatusAsync();
+            refreshTenantNotificationsAsync();
             loadCurrentRentedHouseAsync();
         }));
         refreshTimeline.play();
@@ -1079,6 +1084,44 @@ public class TenantController {
                     return RequestStatusInfo.none();
                 }
 
+                // Check for denied requests and include owner + denial timestamp.
+                String deniedSql = "SELECT h.location, COALESCE(o.name, 'Owner') AS owner_name, "
+                        + "COALESCE((SELECT MAX(n.created_at) FROM notifications n "
+                    + "WHERE n.user_id = u.id AND n.house_id = h.id AND lower(COALESCE(n.type, '')) = 'denial'), '') AS denied_at, "
+                    + "COALESCE((SELECT n.id FROM notifications n "
+                    + "WHERE n.user_id = u.id AND n.house_id = h.id AND lower(COALESCE(n.type, '')) = 'denial' "
+                    + "ORDER BY n.id DESC LIMIT 1), 0) AS denied_notification_id, "
+                    + "COALESCE((SELECT n.read FROM notifications n "
+                    + "WHERE n.user_id = u.id AND n.house_id = h.id AND lower(COALESCE(n.type, '')) = 'denial' "
+                    + "ORDER BY n.id DESC LIMIT 1), 0) AS denied_read "
+                        + "FROM rent_requests r "
+                        + "JOIN users u ON r.tenant_id = u.id "
+                        + "JOIN houses h ON r.house_id = h.id "
+                        + "LEFT JOIN users o ON h.owner_id = o.id "
+                        + "WHERE (lower(COALESCE(u.email, '')) = lower(?) OR lower(u.name) = lower(?)) "
+                        + "AND lower(trim(COALESCE(r.status, ''))) = 'denied' "
+                        + "ORDER BY COALESCE(denied_at, '') DESC, COALESCE(r.request_date, '') DESC, r.id DESC "
+                        + "LIMIT 1";
+
+                try (Connection conn = DatabaseConnection.connect();
+                        PreparedStatement pstmt = conn.prepareStatement(deniedSql)) {
+                    pstmt.setString(1, DataStore.currentUser.getEmail());
+                    pstmt.setString(2, DataStore.currentUser.getUsername());
+
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            String location = rs.getString("location");
+                            String ownerName = rs.getString("owner_name");
+                            String deniedAt = rs.getString("denied_at");
+                            int deniedNotificationId = rs.getInt("denied_notification_id");
+                            boolean deniedRead = rs.getInt("denied_read") == 1;
+                            return RequestStatusInfo.denied(location, ownerName, deniedAt, deniedNotificationId, deniedRead);
+                        }
+                    }
+                } catch (SQLException e) {
+                    return RequestStatusInfo.none();
+                }
+
                 return RequestStatusInfo.none();
             }
         };
@@ -1115,6 +1158,9 @@ public class TenantController {
             } else if ("PENDING".equals(info.status)) {
                 bookingStatusTitleLabel.setText("Booking Pending");
                 bookingStatusTitleLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #854d0e;");
+            } else if ("DENIED".equals(info.status)) {
+                bookingStatusTitleLabel.setText("Request Denied");
+                bookingStatusTitleLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #b91c1c;");
             }
         }
 
@@ -1125,31 +1171,173 @@ public class TenantController {
             } else if ("PENDING".equals(info.status)) {
                 bookingStatusMessageLabel.setText("Your request for " + locationText + " is being reviewed.");
                 bookingStatusMessageLabel.setStyle("-fx-text-fill: #a16207;");
+            } else if ("DENIED".equals(info.status)) {
+                String ownerName = (info.ownerName == null || info.ownerName.isBlank()) ? "The owner" : info.ownerName;
+                String deniedAtText = formatNotificationTimestamp(info.deniedAt);
+                String message = ownerName + " denied your request for " + locationText + " at " + deniedAtText + ".";
+                bookingStatusMessageLabel.setText(message);
+                bookingStatusMessageLabel.setStyle("-fx-text-fill: #b91c1c;");
+
+                String notificationKey = ownerName + "|" + locationText + "|" + deniedAtText;
+                if (!info.deniedRead && !notificationKey.equals(lastShownDeniedNotificationKey)) {
+                    lastShownDeniedNotificationKey = notificationKey;
+                    showStatusPopup("Request Denied", message, "OK");
+                    if (info.deniedNotificationId > 0) {
+                        DataStore.markNotificationAsRead(info.deniedNotificationId);
+                    }
+                }
             }
+        }
+    }
+
+    private void refreshTenantNotificationsAsync() {
+        if (tenantNotificationsContainer == null) {
+            return;
+        }
+
+        Task<List<Map<String, String>>> task = new Task<>() {
+            @Override
+            protected List<Map<String, String>> call() {
+                int tenantId = resolveCurrentTenantId();
+                if (tenantId <= 0) {
+                    return List.of();
+                }
+                return new ArrayList<>(DataStore.getTenantNotifications(tenantId));
+            }
+        };
+
+        task.setOnSucceeded(e -> applyTenantNotifications(task.getValue()));
+        task.setOnFailed(e -> applyTenantNotifications(List.of()));
+
+        Thread notificationsLoader = new Thread(task, "tenant-notifications-loader");
+        notificationsLoader.setDaemon(true);
+        notificationsLoader.start();
+    }
+
+    private void applyTenantNotifications(List<Map<String, String>> notifications) {
+        if (tenantNotificationsContainer == null) {
+            return;
+        }
+
+        tenantNotificationsContainer.getChildren().clear();
+        if (notifications == null || notifications.isEmpty()) {
+            Label empty = new Label("No notifications yet.");
+            empty.getStyleClass().add("table-text");
+            tenantNotificationsContainer.getChildren().add(empty);
+            return;
+        }
+
+        List<Integer> unreadIds = new ArrayList<>();
+        for (Map<String, String> notification : notifications) {
+            int notificationId = parseIntSafe(notification.get("id"));
+            boolean isRead = "1".equals(notification.get("is_read"));
+
+            VBox row = new VBox(4);
+            row.getStyleClass().add("table-row");
+            row.setStyle(rowStyleForReadState(isRead));
+
+            Label title = new Label(nonBlankOrFallback(notification.get("title"), "Notification"));
+            title.getStyleClass().add("table-text");
+            title.setStyle((isRead ? "-fx-text-fill: #7b8794; " : "-fx-text-fill: #d4af37; ") + "-fx-font-weight: 700;");
+
+            Label message = new Label(nonBlankOrFallback(notification.get("message"), "-"));
+            message.getStyleClass().add("table-text");
+            message.setWrapText(true);
+            message.setStyle(isRead ? "-fx-text-fill: #8f9bab;" : "-fx-text-fill: #d4af37;");
+
+            String createdAt = formatNotificationTimestamp(notification.get("created_at"));
+            Label meta = new Label((isRead ? "Read" : "Unread") + " - " + createdAt);
+            meta.getStyleClass().add("table-text");
+            meta.setStyle(isRead ? "-fx-text-fill: #8f9bab;" : "-fx-text-fill: #f59e0b;");
+
+            row.getChildren().addAll(title, message, meta);
+            tenantNotificationsContainer.getChildren().add(row);
+
+            if (!isRead && notificationId > 0) {
+                unreadIds.add(notificationId);
+            }
+        }
+
+        if (!unreadIds.isEmpty()) {
+            Thread markReadThread = new Thread(() -> {
+                for (Integer id : unreadIds) {
+                    DataStore.markNotificationAsRead(id);
+                }
+            }, "tenant-notifications-mark-read");
+            markReadThread.setDaemon(true);
+            markReadThread.start();
+        }
+    }
+
+    private String rowStyleForReadState(boolean read) {
+        if (read) {
+            return "-fx-border-color: #6b7280; -fx-background-color: rgba(127,127,127,0.12);";
+        }
+        return "-fx-border-color: #f59e0b; -fx-background-color: rgba(245,158,11,0.12);";
+    }
+
+    private int parseIntSafe(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return -1;
+        }
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (NumberFormatException ignored) {
+            return -1;
+        }
+    }
+
+    private String formatNotificationTimestamp(String rawTimestamp) {
+        if (rawTimestamp == null || rawTimestamp.isBlank()) {
+            return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+
+        String candidate = rawTimestamp.trim();
+        DateTimeFormatter dbFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        try {
+            LocalDateTime parsed = LocalDateTime.parse(candidate, dbFormat);
+            return parsed.format(dbFormat);
+        } catch (Exception ignored) {
+            return candidate;
         }
     }
 
     private static class RequestStatusInfo {
         private final boolean hasStatus;
-        private final String status; // PENDING, APPROVED, REJECTED
+        private final String status; // PENDING, APPROVED, DENIED
         private final String location;
+        private final String ownerName;
+        private final String deniedAt;
+        private final int deniedNotificationId;
+        private final boolean deniedRead;
 
-        private RequestStatusInfo(boolean hasStatus, String status, String location) {
+        private RequestStatusInfo(boolean hasStatus, String status, String location, String ownerName, String deniedAt,
+                int deniedNotificationId, boolean deniedRead) {
             this.hasStatus = hasStatus;
             this.status = status;
             this.location = location;
+            this.ownerName = ownerName;
+            this.deniedAt = deniedAt;
+            this.deniedNotificationId = deniedNotificationId;
+            this.deniedRead = deniedRead;
         }
 
         private static RequestStatusInfo none() {
-            return new RequestStatusInfo(false, null, null);
+            return new RequestStatusInfo(false, null, null, null, null, -1, true);
         }
 
         private static RequestStatusInfo pending(String location) {
-            return new RequestStatusInfo(true, "PENDING", location);
+            return new RequestStatusInfo(true, "PENDING", location, null, null, -1, true);
         }
 
         private static RequestStatusInfo approved(String location) {
-            return new RequestStatusInfo(true, "APPROVED", location);
+            return new RequestStatusInfo(true, "APPROVED", location, null, null, -1, true);
+        }
+
+        private static RequestStatusInfo denied(String location, String ownerName, String deniedAt,
+                int deniedNotificationId, boolean deniedRead) {
+            return new RequestStatusInfo(true, "DENIED", location, ownerName, deniedAt, deniedNotificationId,
+                    deniedRead);
         }
     }
 

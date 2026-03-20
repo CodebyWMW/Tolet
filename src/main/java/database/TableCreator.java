@@ -122,6 +122,7 @@ public class TableCreator {
             stmt.execute(userAuditTable);
                         ensureUserAuditSchema(stmt);
             stmt.execute(notificationsTable);
+                        ensureNotificationsSchema(stmt);
                         stmt.execute(houseImagesTable);
                                                 stmt.execute(reviewsTable);
                         stmt.execute(wishlistTable);
@@ -176,6 +177,11 @@ public class TableCreator {
         private static void ensureUserAuditSchema(Statement stmt) throws SQLException {
                 Set<String> columns = getColumns(stmt, "users_audit");
                 addColumnIfMissing(stmt, columns, "users_audit", "public_id", "public_id TEXT");
+        }
+
+        private static void ensureNotificationsSchema(Statement stmt) throws SQLException {
+                Set<String> columns = getColumns(stmt, "notifications");
+                addColumnIfMissing(stmt, columns, "notifications", "read", "read INTEGER DEFAULT 0");
         }
 
         private static void ensureHouseSchema(Statement stmt) throws SQLException {

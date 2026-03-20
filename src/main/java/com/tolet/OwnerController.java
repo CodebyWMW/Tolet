@@ -233,7 +233,7 @@ public class OwnerController {
         if (queryById) {
             query = "SELECT name, role, email, phone, verified FROM users WHERE id = ? LIMIT 1";
         } else {
-            query = "SELECT name, role, email, phone, verified FROM users WHERE name = ? COLLATE NOCASE OR lower(email) = lower(?) LIMIT 1";
+            query = "SELECT name, role, email, phone, verified FROM users WHERE name = ? COLLATE BINARY OR lower(email) = lower(?) LIMIT 1";
         }
 
         try (Connection conn = DatabaseConnection.connect();
@@ -445,7 +445,7 @@ public class OwnerController {
             return DataStore.currentUser.getId();
         }
 
-        String query = "SELECT id FROM users WHERE lower(email) = lower(?) OR name = ? COLLATE NOCASE LIMIT 1";
+        String query = "SELECT id FROM users WHERE lower(email) = lower(?) OR name = ? COLLATE BINARY LIMIT 1";
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, DataStore.currentUser.getEmail());
@@ -902,39 +902,26 @@ public class OwnerController {
         LocalDate latestDate = null;
         String latestStatus = "-";
         String latestTenant = "-";
+        int latestRequestId = -1;
+        for (BookingRequest request : DataStore.getBookingRequests()) {
+            totalRequests++;
 
-        String requestsQuery = "SELECT u.name AS tenant_name, r.request_date, r.status, h.rent "
-                + "FROM rent_requests r "
-                + "JOIN houses h ON h.id = r.house_id "
-                + "JOIN users u ON u.id = r.tenant_id "
-                + "WHERE h.owner_id = ? "
-                + "ORDER BY r.id DESC";
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(requestsQuery)) {
-            pstmt.setInt(1, ownerId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    totalRequests++;
-                    String normalized = normalizeStatus(rs.getString("status"));
-                    if ("Approved".equalsIgnoreCase(normalized)) {
-                        approvedRequests++;
-                        estimatedRevenue += rs.getDouble("rent");
-                    } else if ("Pending".equalsIgnoreCase(normalized)) {
-                        pendingRequests++;
-                    } else {
-                        deniedRequests++;
-                    }
-
-                    if (latestDate == null) {
-                        latestDate = parseDate(rs.getString("request_date"));
-                        latestStatus = normalized;
-                        latestTenant = rs.getString("tenant_name");
-                    }
-                }
+            String normalized = normalizeStatus(request.getStatus());
+            if ("Approved".equalsIgnoreCase(normalized)) {
+                approvedRequests++;
+                estimatedRevenue += request.getMonthlyRent();
+            } else if ("Pending".equalsIgnoreCase(normalized)) {
+                pendingRequests++;
+            } else {
+                deniedRequests++;
             }
-        } catch (SQLException e) {
-            setAnalyticsDefaults();
-            return;
+
+            if (request.getId() > latestRequestId) {
+                latestRequestId = request.getId();
+                latestDate = request.getRequestDate();
+                latestStatus = normalized;
+                latestTenant = request.getTenantName();
+            }
         }
 
         String topProperty = "-";
@@ -1119,6 +1106,7 @@ public class OwnerController {
     private HBox buildRequestRow(BookingRequest request) {
         HBox row = new HBox(16);
         row.getStyleClass().add("table-row");
+        row.setFillHeight(false);
 
         Label tenant = buildCellLabel(request.getTenantName());
         Label property = buildCellLabel(request.getProperty());
@@ -1129,23 +1117,20 @@ public class OwnerController {
         Label status = new Label(normalizeStatus(request.getStatus()));
         status.getStyleClass().add("status-pill");
         status.getStyleClass().add(normalizeStatus(request.getStatus()).toLowerCase(Locale.ENGLISH));
-        applyStatusPillSizing(status);
+        applyRequestStatusColumnSizing(status);
 
         Button approve = new Button("Approve");
         approve.getStyleClass().add("btn-approve");
         applyActionButtonSizing(approve);
-        Button deny = new Button("Deny");
-        deny.getStyleClass().add("btn-deny");
-        applyActionButtonSizing(deny);
         Button delete = new Button("Delete");
         delete.getStyleClass().add("btn-delete");
         applyActionButtonSizing(delete);
 
         String currentStatus = normalizeStatus(request.getStatus());
         boolean alreadyFinal = "Approved".equalsIgnoreCase(currentStatus) || "Denied".equalsIgnoreCase(currentStatus);
+        applyDecisionSelectionState(approve, currentStatus);
         if (alreadyFinal) {
             approve.setDisable(true);
-            deny.setDisable(true);
         }
 
         approve.setOnAction(event -> {
@@ -1158,27 +1143,12 @@ public class OwnerController {
             }
         });
 
-        deny.setOnAction(event -> {
-            if (deleteRequest(request.getId())) {
-                // Create notification for tenant
-                String notifyMessage = "Your rental request for " + request.getProperty() + " has been denied.";
-                int houseId = getHouseIdFromRequest(request.getId());
-                DataStore.createNotification(request.getTenantId(), houseId, request.getTenantId(), "Request Denied", notifyMessage, "denial");
-                
-                showStatusPopup("Success", "Request denied and tenant notified.", "OK");
-                populateKpis();
-                populateRequests();
-            } else {
-                showStatusPopup("Error", "Could not deny this request.\nPlease try again.", "OK");
-            }
-        });
-
         delete.setOnAction(event -> {
+            int houseId = getHouseIdFromRequest(request.getId());
             if (deleteRequest(request.getId())) {
                 // Create notification for tenant only if it was approved
                 if ("Approved".equalsIgnoreCase(currentStatus)) {
                     String notifyMessage = "Your rental agreement for " + request.getProperty() + " has been removed.";
-                    int houseId = getHouseIdFromRequest(request.getId());
                     DataStore.createNotification(request.getTenantId(), houseId, request.getTenantId(), "Rental Removed", notifyMessage, "removal");
                 }
                 
@@ -1190,7 +1160,8 @@ public class OwnerController {
             }
         });
 
-        HBox actions = new HBox(8, approve, deny, delete);
+        VBox actions = new VBox(8, approve, delete);
+        applyRequestActionsColumnSizing(actions);
 
         row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status, actions);
         return row;
@@ -1199,6 +1170,7 @@ public class OwnerController {
     private HBox buildAcceptedTenantRow(BookingRequest request) {
         HBox row = new HBox(16);
         row.getStyleClass().add("table-row");
+        row.setFillHeight(false);
 
         Label tenant = buildCellLabel(request.getTenantName());
         Label property = buildCellLabel(request.getProperty());
@@ -1209,7 +1181,7 @@ public class OwnerController {
         Label status = new Label("Approved");
         status.getStyleClass().add("status-pill");
         status.getStyleClass().add("approved");
-        applyStatusPillSizing(status);
+        applyRequestStatusColumnSizing(status);
 
         Button delete = new Button("Delete");
         delete.getStyleClass().add("btn-delete");
@@ -1226,6 +1198,7 @@ public class OwnerController {
         });
 
         HBox actions = new HBox(8, delete);
+        applyRequestActionsColumnSizing(actions);
 
         row.getChildren().addAll(tenant, property, requestDate, moveInDate, rent, status, actions);
         return row;
@@ -1297,11 +1270,43 @@ public class OwnerController {
         button.setTextOverrun(OverrunStyle.CLIP);
     }
 
+    private void applyDecisionSelectionState(Button approve, String status) {
+        if (approve == null) {
+            return;
+        }
+
+        approve.getStyleClass().remove("decision-selected");
+
+        String normalized = normalizeStatus(status);
+        if ("Approved".equalsIgnoreCase(normalized)) {
+            approve.getStyleClass().add("decision-selected");
+        }
+    }
+
     private void applyStatusPillSizing(Label statusLabel) {
         statusLabel.setMinWidth(Region.USE_PREF_SIZE);
         statusLabel.setPrefWidth(Region.USE_COMPUTED_SIZE);
         statusLabel.setMaxWidth(Region.USE_PREF_SIZE);
         statusLabel.setWrapText(false);
+    }
+
+    private void applyRequestStatusColumnSizing(Label statusLabel) {
+        if (statusLabel == null) {
+            return;
+        }
+        statusLabel.setMinWidth(120);
+        statusLabel.setPrefWidth(120);
+        statusLabel.setMaxWidth(120);
+        statusLabel.setWrapText(false);
+    }
+
+    private void applyRequestActionsColumnSizing(Region actionsContainer) {
+        if (actionsContainer == null) {
+            return;
+        }
+        actionsContainer.setMinWidth(192);
+        actionsContainer.setPrefWidth(192);
+        actionsContainer.setMaxWidth(192);
     }
 
     private Label buildWideMessageLabel(String text) {

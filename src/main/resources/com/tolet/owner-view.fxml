@@ -120,13 +120,13 @@
                     </HBox>
                     <VBox spacing="8" styleClass="table">
                         <HBox spacing="16" styleClass="table-header">
-                            <Label styleClass="table-title" text="Tenant Name" />
-                            <Label styleClass="table-title" text="Property" />
+                            <Label maxWidth="80.0" styleClass="table-title" text="Name" />
+                            <Label maxWidth="200.0" prefHeight="14.0" prefWidth="94.0" styleClass="table-title" text="     Property" />
                             <Label styleClass="table-title" text="Request Date" />
                             <Label styleClass="table-title" text="Move-in Date" />
                             <Label styleClass="table-title" text="Monthly Rent" />
                             <Label styleClass="table-title" text="Status" />
-                            <Label styleClass="table-title" text="Actions" />
+                            <Label prefWidth="192.0" styleClass="table-title" text="Actions" />
                         </HBox>
 
                         <VBox fx:id="requestsContainer" spacing="8" />

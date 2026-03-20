@@ -244,8 +244,8 @@ public class DataStore {
             return false;
         }
 
-        String byNameWithRole = "SELECT * FROM users WHERE lower(name) = lower(?) AND lower(ifnull(role, '')) = lower(?) LIMIT 1";
-        String byNameOnly = "SELECT * FROM users WHERE lower(name) = lower(?) LIMIT 1";
+        String byNameWithRole = "SELECT * FROM users WHERE name = ? COLLATE BINARY AND lower(ifnull(role, '')) = lower(?) LIMIT 1";
+        String byNameOnly = "SELECT * FROM users WHERE name = ? COLLATE BINARY LIMIT 1";
         String byEmailWithRole = "SELECT * FROM users WHERE lower(ifnull(email, '')) = lower(?) AND lower(ifnull(role, '')) = lower(?) LIMIT 1";
         String byEmailOnly = "SELECT * FROM users WHERE lower(ifnull(email, '')) = lower(?) LIMIT 1";
 
@@ -551,7 +551,7 @@ public class DataStore {
     // --- KEEP YOUR EXISTING AUTH METHODS BELOW (validateUser, registerUser, etc)
     // ---
     public static boolean validateUser(String username, String password) {
-        String query = "SELECT * FROM users WHERE name = ? COLLATE NOCASE AND password = ?";
+        String query = "SELECT * FROM users WHERE name = ? COLLATE BINARY AND password = ?";
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, username);
@@ -663,7 +663,7 @@ public class DataStore {
     }
 
     public static boolean usernameExists(String username) {
-        String query = "SELECT name FROM users WHERE name = ? COLLATE NOCASE";
+        String query = "SELECT name FROM users WHERE name = ? COLLATE BINARY";
         try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, username == null ? null : username.trim());
             return pstmt.executeQuery().next();
@@ -773,6 +773,51 @@ public class DataStore {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public static ObservableList<Map<String, String>> getTenantNotifications(int tenantId) {
+        ObservableList<Map<String, String>> list = FXCollections.observableArrayList();
+        String query = "SELECT n.id, n.title, n.message, n.type, n.created_at, COALESCE(n.read, 0) AS is_read, "
+                + "COALESCE(h.location, '') AS location "
+                + "FROM notifications n "
+                + "LEFT JOIN houses h ON n.house_id = h.id "
+                + "WHERE n.user_id = ? "
+                + "ORDER BY n.created_at DESC, n.id DESC";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, tenantId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Map<String, String> notification = new HashMap<>();
+                notification.put("id", String.valueOf(rs.getInt("id")));
+                notification.put("title", rs.getString("title"));
+                notification.put("message", rs.getString("message"));
+                notification.put("type", rs.getString("type"));
+                notification.put("created_at", rs.getString("created_at"));
+                notification.put("is_read", String.valueOf(rs.getInt("is_read")));
+                notification.put("location", rs.getString("location"));
+                list.add(notification);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public static boolean markNotificationAsRead(int notificationId) {
+        if (notificationId <= 0) {
+            return false;
+        }
+
+        String query = "UPDATE notifications SET read = 1 WHERE id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, notificationId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            return false;
+        }
     }
 
     private static Integer findUserIdByContact(String contact) {

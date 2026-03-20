@@ -79,7 +79,7 @@ public class HelloController {
         String username = emailField.getText().trim();
         String password = isPasswordVisible ? passwordVisibleField.getText().trim() : passwordField.getText().trim();
 
-        if (username.equalsIgnoreCase("admin") && password.equals("140945")) {
+        if ("admin".equals(username) && password.equals("140945")) {
             try {
                 DataStore.currentUser = new User("System Admin", "admin@tolet.com", "140945", "Admin");
                 DataStore.updateRememberedSession(rememberMe != null && rememberMe.isSelected());

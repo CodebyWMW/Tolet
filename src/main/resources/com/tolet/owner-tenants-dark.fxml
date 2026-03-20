@@ -71,7 +71,7 @@
                             <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Move-in Date" />
                             <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Monthly Rent" />
                             <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Status" />
-                            <Label style="-fx-text-fill: #faa387;" styleClass="table-title" text="Actions" />
+                            <Label prefWidth="192.0" style="-fx-text-fill: #faa387;" styleClass="table-title" text="Actions" />
                         </HBox>
                         <VBox fx:id="requestsContainer" spacing="8" />
                     </VBox>

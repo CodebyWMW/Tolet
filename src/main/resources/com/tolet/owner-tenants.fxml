@@ -64,7 +64,7 @@
                             <Label styleClass="table-title" text="Move-in Date" />
                             <Label styleClass="table-title" text="Monthly Rent" />
                             <Label styleClass="table-title" text="Status" />
-                            <Label styleClass="table-title" text="Actions" />
+                            <Label prefWidth="192.0" styleClass="table-title" text="Actions" />
                         </HBox>
                         <VBox fx:id="requestsContainer" spacing="8" />
                     </VBox>
