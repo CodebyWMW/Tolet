@@ -31,6 +31,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
@@ -49,6 +50,7 @@ import java.sql.SQLException;
 import database.DatabaseConnection;
 
 public class OwnerController {
+    private static final double SIDEBAR_AVATAR_RADIUS = 79.0;
     private static final double REQUEST_COL_TENANT = 110;
     private static final double REQUEST_COL_DATE = 110;
     private static final double REQUEST_COL_MOVE_IN = 110;
@@ -61,6 +63,8 @@ public class OwnerController {
     private ToggleButton themeToggle;
     @FXML
     private Label profileNameLabel;
+    @FXML
+    private ImageView profileAvatarImage;
     @FXML
     private Label profileInitialLabel;
     @FXML
@@ -203,6 +207,7 @@ public class OwnerController {
             profileNameLabel.setText(profileMeta.name);
         if (profileInitialLabel != null)
             profileInitialLabel.setText(profileMeta.initial);
+        applyProfileAvatar(profileMeta.imagePath);
         if (profileVerificationLabel != null)
             profileVerificationLabel.setText("Status - " + (profileMeta.verified ? "Verified" : "Unverified"));
         if (profileRoleLabel != null)
@@ -257,7 +262,7 @@ public class OwnerController {
         String fallbackPhone = "-";
 
         if (DataStore.currentUser == null) {
-            return new ProfileMeta(fallbackName, fallbackRole, fallbackEmail, fallbackPhone, false);
+            return new ProfileMeta(fallbackName, fallbackRole, fallbackEmail, fallbackPhone, "", false);
         }
 
         String currentName = DataStore.currentUser.getUsername();
@@ -267,14 +272,15 @@ public class OwnerController {
         String role = fallbackRole;
         String email = fallbackEmail;
         String phone = fallbackPhone;
+        String imagePath = "";
         boolean verified = false;
 
         String query;
         boolean queryById = currentUserId > 0;
         if (queryById) {
-            query = "SELECT name, role, email, phone, verified FROM users WHERE id = ? LIMIT 1";
+            query = "SELECT name, role, email, phone, verified, profile_image FROM users WHERE id = ? LIMIT 1";
         } else {
-            query = "SELECT name, role, email, phone, verified FROM users WHERE name = ? COLLATE BINARY OR lower(email) = lower(?) LIMIT 1";
+            query = "SELECT name, role, email, phone, verified, profile_image FROM users WHERE name = ? COLLATE BINARY OR lower(email) = lower(?) LIMIT 1";
         }
 
         try (Connection conn = DatabaseConnection.connect();
@@ -291,6 +297,7 @@ public class OwnerController {
                     String dbRole = rs.getString("role");
                     String dbEmail = rs.getString("email");
                     String dbPhone = rs.getString("phone");
+                    String dbImagePath = rs.getString("profile_image");
 
                     if (dbName != null && !dbName.isBlank())
                         name = dbName;
@@ -300,6 +307,8 @@ public class OwnerController {
                         email = dbEmail;
                     if (dbPhone != null && !dbPhone.isBlank())
                         phone = dbPhone;
+                    if (dbImagePath != null && !dbImagePath.isBlank())
+                        imagePath = dbImagePath;
 
                     verified = rs.getInt("verified") == 1;
                 }
@@ -308,7 +317,37 @@ public class OwnerController {
             verified = false;
         }
 
-        return new ProfileMeta(name, role, email, phone, verified);
+        return new ProfileMeta(name, role, email, phone, imagePath, verified);
+    }
+
+    private void applyProfileAvatar(String imagePath) {
+        if (profileAvatarImage == null) {
+            return;
+        }
+
+        double avatarDiameter = SIDEBAR_AVATAR_RADIUS * 2.0;
+        profileAvatarImage.setFitWidth(avatarDiameter);
+        profileAvatarImage.setFitHeight(avatarDiameter);
+        profileAvatarImage.setPreserveRatio(false);
+        profileAvatarImage.setClip(new javafx.scene.shape.Circle(SIDEBAR_AVATAR_RADIUS, SIDEBAR_AVATAR_RADIUS,
+                SIDEBAR_AVATAR_RADIUS));
+
+        if (imagePath == null || imagePath.isBlank()) {
+            profileAvatarImage.setImage(null);
+            return;
+        }
+
+        File file = new File(imagePath);
+        if (!file.exists()) {
+            profileAvatarImage.setImage(null);
+            return;
+        }
+
+        try {
+            profileAvatarImage.setImage(new Image(file.toURI().toString(), false));
+        } catch (Exception e) {
+            profileAvatarImage.setImage(null);
+        }
     }
 
     private String sanitizeRole(String role) {
@@ -324,14 +363,16 @@ public class OwnerController {
         private final String role;
         private final String email;
         private final String phone;
+        private final String imagePath;
         private final boolean verified;
         private final String initial;
 
-        private ProfileMeta(String name, String role, String email, String phone, boolean verified) {
+        private ProfileMeta(String name, String role, String email, String phone, String imagePath, boolean verified) {
             this.name = name;
             this.role = role;
             this.email = email;
             this.phone = phone;
+            this.imagePath = imagePath;
             this.verified = verified;
             this.initial = (name != null && !name.isBlank()) ? String.valueOf(Character.toUpperCase(name.charAt(0))) : "O";
         }
@@ -1728,6 +1769,27 @@ public class OwnerController {
             loadScene(stage, "owner-view.fxml");
         } catch (IOException e) {
             showNavigationError("Failed to open Dashboard page: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onOpenProfile(ActionEvent event) {
+        Stage stage = null;
+        if (event != null && event.getSource() instanceof Node) {
+            stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        } else if (themeToggle != null && themeToggle.getScene() != null) {
+            stage = (Stage) themeToggle.getScene().getWindow();
+        }
+
+        if (stage == null) {
+            showNavigationError("Unable to locate the current window for navigation.");
+            return;
+        }
+
+        try {
+            loadScene(stage, "user-profile.fxml");
+        } catch (IOException e) {
+            showNavigationError("Failed to open Profile page: " + e.getMessage());
         }
     }
 

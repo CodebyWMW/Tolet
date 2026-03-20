@@ -21,6 +21,7 @@ public class TableCreator {
                                 + "password TEXT,"
                                 + "role TEXT,"
                                 + "birthdate TEXT,"
+                                + "profile_image TEXT,"
                                 + "verified INTEGER DEFAULT 0,"
                                 + "public_id TEXT UNIQUE)";
 
@@ -162,6 +163,7 @@ public class TableCreator {
                 addColumnIfMissing(stmt, columns, "users", "email", "email TEXT");
                 addColumnIfMissing(stmt, columns, "users", "phone", "phone TEXT");
                 addColumnIfMissing(stmt, columns, "users", "birthdate", "birthdate TEXT");
+                addColumnIfMissing(stmt, columns, "users", "profile_image", "profile_image TEXT");
                 addColumnIfMissing(stmt, columns, "users", "verified", "verified INTEGER DEFAULT 0");
                 addColumnIfMissing(stmt, columns, "users", "public_id", "public_id TEXT");
 

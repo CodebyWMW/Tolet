@@ -448,4 +448,10 @@ public class OwnerListHouseController {
         stage.setFullScreen(wasFullScreen);
         stage.show();
     }
+
+    @FXML
+    private void onAddLocationFromMap() {
+        // TODO: Implement Google Maps integration to get house location
+        // This method will be implemented in the future
+    }
 }

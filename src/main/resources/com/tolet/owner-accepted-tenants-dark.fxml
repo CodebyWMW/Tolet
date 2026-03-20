@@ -2,7 +2,9 @@
 
 <?import java.net.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
 
 <BorderPane prefHeight="600" prefWidth="900" style="-fx-background-color: #262627;" styleClass="owner-root" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.OwnerController">
     <stylesheets>
@@ -29,11 +31,16 @@
 
             <Region style="-fx-background-color: #474743;" VBox.vgrow="ALWAYS" />
 
-            <VBox maxWidth="215.0" prefHeight="182.0" prefWidth="215.0" spacing="6" style="-fx-background-color: #262624;" styleClass="profile-card">
+            <VBox maxWidth="215.0" prefHeight="300.0" prefWidth="215.0" spacing="6" style="-fx-background-color: #262624;" styleClass="profile-card">
+                <StackPane alignment="CENTER">
+                    <Circle fill="#3a3a37" radius="79.0" stroke="#ff7547" strokeWidth="1.5" />
+                    <ImageView fx:id="profileAvatarImage" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="false" />
+                </StackPane>
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <Label fx:id="profileNameLabel" prefHeight="27.0" prefWidth="198.0" style="-fx-text-fill: #ff7547;" styleClass="profile-name" text="Owner" />
-                </HBox>
-                <Label fx:id="profileVerificationLabel" prefHeight="20.0" prefWidth="214.0" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Status - Unverified" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button onAction="#onOpenProfile" style="-fx-background-color: #262624; -fx-text-fill: #ff7547; -fx-border-color: #ff7547; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 2 8;" text="&#9998;" />
+                </HBox>                <Label fx:id="profileVerificationLabel" prefHeight="20.0" prefWidth="214.0" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Status - Unverified" />
                 <Label fx:id="profileRoleLabel" prefHeight="20.0" prefWidth="214.0" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Role - Owner" />
                 <Label fx:id="profileEmailLabel" prefHeight="20.0" prefWidth="205.0" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Email: -" />
                 <Label fx:id="profilePhoneLabel" prefHeight="20.0" prefWidth="232.0" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Phone: -" />
@@ -79,3 +86,7 @@
         </ScrollPane>
     </center>
 </BorderPane>
+
+
+
+

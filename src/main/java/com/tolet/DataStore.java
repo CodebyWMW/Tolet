@@ -262,7 +262,7 @@ public class DataStore {
                     ResultSet rs = pstmt.executeQuery();
                     if (rs.next()) {
                         currentUser = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"),
-                                rs.getString("role"));
+                                rs.getString("role"), rs.getInt("id"));
                         return true;
                     }
                 }
@@ -279,7 +279,7 @@ public class DataStore {
                     ResultSet rs = pstmt.executeQuery();
                     if (rs.next()) {
                         currentUser = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"),
-                                rs.getString("role"));
+                                rs.getString("role"), rs.getInt("id"));
                         return true;
                     }
                 }
@@ -568,7 +568,7 @@ public class DataStore {
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 currentUser = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"),
-                        rs.getString("role"));
+                        rs.getString("role"), rs.getInt("id"));
                 return true;
             }
         } catch (SQLException e) {

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     password TEXT NOT NULL,
     role TEXT NOT NULL,
     birthdate TEXT,
+    profile_image TEXT,
     verified INTEGER DEFAULT 0,
     public_id TEXT UNIQUE
 );

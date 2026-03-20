@@ -3,7 +3,9 @@
 <?import java.net.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
 
 <BorderPane fx:id="pageRoot" prefHeight="600" prefWidth="900" style="-fx-background-color: #262627;" styleClass="owner-root" userData="tenant-view.fxml" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.TenantController">
     <stylesheets>
@@ -33,10 +35,15 @@
             <Region style="-fx-background-color: #474743;" VBox.vgrow="ALWAYS" />
 
             <VBox maxWidth="215.0" prefWidth="215.0" spacing="10" style="-fx-background-color: #262624;" styleClass="profile-card">
+                <StackPane alignment="CENTER">
+                    <Circle fill="#3a3a37" radius="79.0" stroke="#ff7547" strokeWidth="1.5" />
+                    <ImageView fx:id="profileAvatarImage" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="false" />
+                </StackPane>
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <Label fx:id="profileNameLabel" style="-fx-text-fill: #ff7547;" styleClass="profile-name" text="Tenant" />
-                </HBox>
-                <Label fx:id="profileVerificationLabel" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Status - Active" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button onAction="#onOpenProfile" style="-fx-background-color: #262624; -fx-text-fill: #ff7547; -fx-border-color: #ff7547; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 2 8;" text="&#x1F58A;" />
+                </HBox>                <Label fx:id="profileVerificationLabel" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Status - Active" />
                 <Label fx:id="profileRoleLabel" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Role - Tenant" />
                 <Label fx:id="profileEmailLabel" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Email: -" />
                 <Label fx:id="profilePhoneLabel" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Phone: -" />
@@ -63,18 +70,6 @@
                     </VBox>
                     <Region HBox.hgrow="ALWAYS" />
                 </HBox>
-
-                <VBox spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
-                    <HBox alignment="CENTER_LEFT" spacing="12">
-                        <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Search Filters" />
-                        <Region HBox.hgrow="ALWAYS" />
-                        <ComboBox fx:id="sortByCombo" prefWidth="220.0" promptText="Sort" style="-fx-background-color: #474743; -fx-text-fill: #e8fff5; -fx-border-color: #e8fff5;" />
-                    </HBox>
-                    <HBox alignment="CENTER_LEFT" style="-fx-background-color: #39ac4d; -fx-background-radius: 12; -fx-border-color: #2e933f; -fx-border-radius: 12; -fx-padding: 12;">
-                        <TextField fx:id="searchField" promptText="Search by location, property type, or features..." style="-fx-background-color: transparent; -fx-text-fill: #000000; -fx-prompt-text-fill: #000000;" HBox.hgrow="ALWAYS" />
-                    </HBox>
-                    <FlowPane fx:id="filterContainer" hgap="8" vgap="8" />
-                </VBox>
 
                 <VBox prefHeight="220.0" prefWidth="643.0" spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
                     <HBox alignment="CENTER_LEFT" spacing="12">
@@ -108,4 +103,8 @@
         </ScrollPane>
     </center>
 </BorderPane>
+
+
+
+
 

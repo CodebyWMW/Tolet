@@ -28,6 +28,7 @@ import javafx.concurrent.Task;
 import database.DatabaseConnection;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -51,6 +52,7 @@ import java.util.stream.Collectors;
 
 public class TenantController {
     private static final double PROPERTY_CARD_WIDTH = 350;
+    private static final double SIDEBAR_AVATAR_RADIUS = 79.0;
 
     @FXML
     private Label welcomeLabel, totalCountLabel, listedHousesLabel, savedHomesLabel,
@@ -77,6 +79,8 @@ public class TenantController {
     private ToggleButton themeToggle;
     @FXML
     private Label profileNameLabel;
+    @FXML
+    private ImageView profileAvatarImage;
     @FXML
     private Label profileVerificationLabel;
     @FXML
@@ -181,65 +185,69 @@ public class TenantController {
 
     @FXML
     public void initialize() {
-        allHouses = new ArrayList<>();
+        try {
+            allHouses = new ArrayList<>();
 
-        if (themeToggle != null) {
-            themeToggle.setSelected(DataStore.darkMode);
-        }
-
-        if (DataStore.currentUser != null && welcomeLabel != null) {
-            welcomeLabel.setText("Welcome Back, " + DataStore.currentUser.getUsername() + "!");
-        }
-
-        populateProfile();
-
-        if (detailsTitleLabel != null) {
-            initializeHouseDetailsView();
-        }
-
-        // Initialize Filters
-        if (filterContainer != null) {
-            for (String filter : FILTERS) {
-                ToggleButton chip = new ToggleButton(filter);
-                chip.getStyleClass().add("filter-chip");
-                chip.setOnAction(e -> toggleFilter(filter, chip.isSelected()));
-                filterContainer.getChildren().add(chip);
+            if (themeToggle != null) {
+                themeToggle.setSelected(DataStore.darkMode);
             }
-        }
 
-        if (sortByCombo != null) {
-            sortByCombo.setItems(FXCollections.observableArrayList(
-                    "Default",
-                    "Review: High to Low",
-                    "Price: Low to High",
-                    "Price: High to Low"));
-            sortByCombo.getSelectionModel().selectFirst();
-            sortByCombo.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
-        }
+            if (DataStore.currentUser != null && welcomeLabel != null) {
+                welcomeLabel.setText("Welcome Back, " + DataStore.currentUser.getUsername() + "!");
+            }
 
-        // Load data off the UI thread to keep scene switch responsive.
-        if (propertiesGrid != null) {
-            loadHousesAsync();
-            refreshWishlistIdsAsync();
-            refreshListedHousesCountAsync();
-            refreshTenantBookingKpisAsync();
-            refreshTenantNotificationsAsync();
-            loadCurrentRentedHouseAsync();
-            startAutoRefresh();
-        }
+            populateProfile();
 
-        // Search listener with debounce to avoid rerendering on every keystroke.
-        if (searchField != null) {
-            searchDebounce.setOnFinished(e -> applyFilters());
-            searchField.textProperty().addListener((obs, old, val) -> searchDebounce.playFromStart());
-        }
+            if (detailsTitleLabel != null) {
+                initializeHouseDetailsView();
+            }
 
-        if (reviewHouseSelector != null) {
-            loadReviewHouseOptions();
-            loadRecentReviews();
-        }
+            // Initialize Filters
+            if (filterContainer != null) {
+                for (String filter : FILTERS) {
+                    ToggleButton chip = new ToggleButton(filter);
+                    chip.getStyleClass().add("filter-chip");
+                    chip.setOnAction(e -> toggleFilter(filter, chip.isSelected()));
+                    filterContainer.getChildren().add(chip);
+                }
+            }
 
-        applyActiveNav(getCurrentBaseFxml());
+            if (sortByCombo != null) {
+                sortByCombo.setItems(FXCollections.observableArrayList(
+                        "Default",
+                        "Review: High to Low",
+                        "Price: Low to High",
+                        "Price: High to Low"));
+                sortByCombo.getSelectionModel().selectFirst();
+                sortByCombo.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+            }
+
+            // Load data off the UI thread to keep scene switch responsive.
+            if (propertiesGrid != null) {
+                loadHousesAsync();
+                refreshWishlistIdsAsync();
+                refreshListedHousesCountAsync();
+                refreshTenantBookingKpisAsync();
+                refreshTenantNotificationsAsync();
+                loadCurrentRentedHouseAsync();
+                startAutoRefresh();
+            }
+
+            // Search listener with debounce to avoid rerendering on every keystroke.
+            if (searchField != null) {
+                searchDebounce.setOnFinished(e -> applyFilters());
+                searchField.textProperty().addListener((obs, old, val) -> searchDebounce.playFromStart());
+            }
+
+            if (reviewHouseSelector != null) {
+                loadReviewHouseOptions();
+                loadRecentReviews();
+            }
+
+            applyActiveNav(getCurrentBaseFxml());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void populateProfile() {
@@ -247,6 +255,7 @@ public class TenantController {
         if (profileNameLabel != null) {
             profileNameLabel.setText(profileMeta.name);
         }
+        applyProfileAvatar(profileMeta.imagePath);
         if (profileVerificationLabel != null) {
             profileVerificationLabel.setText("Status - " + (profileMeta.verified ? "Verified" : "Unverified"));
         }
@@ -299,7 +308,7 @@ public class TenantController {
         String fallbackPhone = "-";
 
         if (DataStore.currentUser == null) {
-            return new TenantProfileMeta(fallbackName, fallbackRole, fallbackEmail, fallbackPhone, false);
+            return new TenantProfileMeta(fallbackName, fallbackRole, fallbackEmail, fallbackPhone, "", false);
         }
 
         String currentName = DataStore.currentUser.getUsername();
@@ -310,14 +319,15 @@ public class TenantController {
         String role = fallbackRole;
         String email = fallbackEmail;
         String phone = fallbackPhone;
+        String imagePath = "";
         boolean verified = false;
 
         String query;
         boolean queryById = currentUserId > 0;
         if (queryById) {
-            query = "SELECT name, role, email, phone, verified FROM users WHERE id = ? LIMIT 1";
+            query = "SELECT name, role, email, phone, verified, profile_image FROM users WHERE id = ? LIMIT 1";
         } else {
-            query = "SELECT name, role, email, phone, verified FROM users WHERE name = ? COLLATE NOCASE OR lower(email) = lower(?) LIMIT 1";
+            query = "SELECT name, role, email, phone, verified, profile_image FROM users WHERE name = ? COLLATE NOCASE OR lower(email) = lower(?) LIMIT 1";
         }
 
         try (Connection conn = DatabaseConnection.connect();
@@ -335,6 +345,7 @@ public class TenantController {
                     String dbRole = rs.getString("role");
                     String dbEmail = rs.getString("email");
                     String dbPhone = rs.getString("phone");
+                    String dbImagePath = rs.getString("profile_image");
 
                     if (dbName != null && !dbName.isBlank()) {
                         name = dbName;
@@ -348,6 +359,9 @@ public class TenantController {
                     if (dbPhone != null && !dbPhone.isBlank()) {
                         phone = dbPhone;
                     }
+                    if (dbImagePath != null && !dbImagePath.isBlank()) {
+                        imagePath = dbImagePath;
+                    }
 
                     verified = rs.getInt("verified") == 1;
                 }
@@ -356,7 +370,37 @@ public class TenantController {
             verified = false;
         }
 
-        return new TenantProfileMeta(name, role, email, phone, verified);
+        return new TenantProfileMeta(name, role, email, phone, imagePath, verified);
+    }
+
+    private void applyProfileAvatar(String imagePath) {
+        if (profileAvatarImage == null) {
+            return;
+        }
+
+        double avatarDiameter = SIDEBAR_AVATAR_RADIUS * 2.0;
+        profileAvatarImage.setFitWidth(avatarDiameter);
+        profileAvatarImage.setFitHeight(avatarDiameter);
+        profileAvatarImage.setPreserveRatio(false);
+        profileAvatarImage.setClip(new javafx.scene.shape.Circle(SIDEBAR_AVATAR_RADIUS, SIDEBAR_AVATAR_RADIUS,
+                SIDEBAR_AVATAR_RADIUS));
+
+        if (imagePath == null || imagePath.isBlank()) {
+            profileAvatarImage.setImage(null);
+            return;
+        }
+
+        File file = new File(imagePath);
+        if (!file.exists()) {
+            profileAvatarImage.setImage(null);
+            return;
+        }
+
+        try {
+            profileAvatarImage.setImage(new Image(file.toURI().toString(), false));
+        } catch (Exception e) {
+            profileAvatarImage.setImage(null);
+        }
     }
 
     private String sanitizeRole(String role) {
@@ -372,13 +416,16 @@ public class TenantController {
         private final String role;
         private final String email;
         private final String phone;
+        private final String imagePath;
         private final boolean verified;
 
-        private TenantProfileMeta(String name, String role, String email, String phone, boolean verified) {
+        private TenantProfileMeta(String name, String role, String email, String phone, String imagePath,
+                boolean verified) {
             this.name = name;
             this.role = role;
             this.email = email;
             this.phone = phone;
+            this.imagePath = imagePath;
             this.verified = verified;
         }
     }
@@ -2043,6 +2090,11 @@ public class TenantController {
     @FXML
     private void onOpenReview(javafx.event.ActionEvent event) throws IOException {
         loadFromEvent(event, "tenant-review.fxml");
+    }
+
+    @FXML
+    private void onOpenProfile(javafx.event.ActionEvent event) throws IOException {
+        loadFromEvent(event, "user-profile.fxml");
     }
 
     @FXML

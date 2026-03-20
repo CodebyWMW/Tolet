@@ -61,7 +61,10 @@
                         </GridPane>
 
                         <Label style="-fx-text-fill: #ffffff;" styleClass="field-label" text="Location" />
-                        <TextField fx:id="locationField" promptText="Area, Road, City" style="-fx-background-color: #1e2731; -fx-text-fill: #d4af37;" styleClass="list-text-field" />
+                        <HBox spacing="8">
+                            <TextField fx:id="locationField" promptText="Area, Road, City" style="-fx-background-color: #1e2731; -fx-text-fill: #d4af37;" styleClass="list-text-field" HBox.hgrow="ALWAYS" />
+                            <Button fx:id="addLocationMapButton" onAction="#onAddLocationFromMap" style="-fx-background-color: #209eff; -fx-text-fill: #ffffff; -fx-padding: 8 12;" text="📍 Map" />
+                        </HBox>
 
                         <Label style="-fx-text-fill: #ffffff;" styleClass="field-label" text="Details About the House" />
                         <TextArea fx:id="detailsArea" prefRowCount="5" promptText="Lift, Generator, Balcony, Tiles, Nearby Market ..." style="-fx-background-color: #1e2731; -fx-text-fill: #d4af37;" styleClass="list-text-area" wrapText="true" />

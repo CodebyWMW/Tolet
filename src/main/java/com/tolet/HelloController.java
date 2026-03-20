@@ -88,7 +88,7 @@ public class HelloController {
                 loadDashboardForCurrentUser(stage);
                 return;
             } catch (Exception e) {
-                showStatus("Error loading Admin Panel: " + e.getMessage(), true);
+                showStatus("Error loading Admin Panel: " + getRootCauseMessage(e), true);
                 e.printStackTrace();
                 return;
             }
@@ -102,7 +102,7 @@ public class HelloController {
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                 loadDashboardForCurrentUser(stage);
             } catch (Exception e) {
-                showStatus("Error: " + e.getMessage(), true);
+                showStatus("Error: " + getRootCauseMessage(e), true);
                 e.printStackTrace();
             }
         } else {
@@ -226,6 +226,23 @@ public class HelloController {
             scene.setRoot(root);
         }
         stage.show();
+    }
+
+    private String getRootCauseMessage(Throwable throwable) {
+        if (throwable == null) {
+            return "Unknown error";
+        }
+
+        Throwable current = throwable;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+
+        String message = current.getMessage();
+        if (message == null || message.isBlank()) {
+            return current.getClass().getSimpleName();
+        }
+        return message;
     }
 
     private void showStatus(String message, boolean error) {

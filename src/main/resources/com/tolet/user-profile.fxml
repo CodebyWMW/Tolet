@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<BorderPane prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: linear-gradient(to bottom right, #aab4c7, #96a3bb);" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.UserProfileController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #1F2933; -fx-padding: 14 18;">
+            <Button onAction="#onBackToDashboard" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37; -fx-border-radius: 10; -fx-background-radius: 10;" text="← Back" />
+            <Label style="-fx-text-fill: #D4AF37; -fx-font-size: 20; -fx-font-weight: 700;" text="My Profile" />
+            <Region HBox.hgrow="ALWAYS" />
+            <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
+                <graphic>
+                    <Region styleClass="switch-knob" />
+                </graphic>
+            </ToggleButton>
+        </HBox>
+    </top>
+
+    <center>
+        <StackPane>
+            <VBox maxWidth="840.0" spacing="18" style="-fx-padding: 24;">
+                <HBox spacing="24" style="-fx-background-color: #1F2933; -fx-background-radius: 16; -fx-padding: 22;">
+                    <VBox alignment="TOP_CENTER" spacing="12">
+                        <StackPane>
+                            <Circle fill="#2a3a47" radius="58.0" stroke="#D4AF37" strokeWidth="2" />
+                            <ImageView fx:id="avatarImageView" fitHeight="106.0" fitWidth="106.0" preserveRatio="false" />
+                        </StackPane>
+                        <Button onAction="#onChoosePhoto" style="-fx-background-color: #D4AF37; -fx-text-fill: #1F2933; -fx-font-weight: 700; -fx-background-radius: 10;" text="Upload Photo" />
+                        <Label fx:id="photoPathLabel" style="-fx-text-fill: #d7dfeb; -fx-font-size: 11;" text="No photo selected" wrapText="true" />
+                    </VBox>
+
+                    <VBox spacing="12" HBox.hgrow="ALWAYS">
+                        <Label style="-fx-text-fill: #D4AF37; -fx-font-size: 16; -fx-font-weight: 700;" text="Profile Information" />
+
+                        <Label style="-fx-text-fill: #ffffff;" text="Full Name" />
+                        <TextField fx:id="nameField" promptText="Your full name" style="-fx-background-color: #2f3f4d; -fx-text-fill: #ffffff;" />
+
+                        <Label style="-fx-text-fill: #ffffff;" text="Email" />
+                        <TextField fx:id="emailField" promptText="you@example.com" style="-fx-background-color: #2f3f4d; -fx-text-fill: #ffffff;" />
+
+                        <Label style="-fx-text-fill: #ffffff;" text="Phone" />
+                        <TextField fx:id="phoneField" promptText="01XXXXXXXXX" style="-fx-background-color: #2f3f4d; -fx-text-fill: #ffffff;" />
+
+                        <Label style="-fx-text-fill: #ffffff;" text="Birthdate" />
+                        <TextField fx:id="birthdateField" promptText="YYYY-MM-DD" style="-fx-background-color: #2f3f4d; -fx-text-fill: #ffffff;" />
+
+                        <HBox spacing="14">
+                            <Label fx:id="roleLabel" style="-fx-text-fill: #D4AF37;" text="Role: -" />
+                            <Label fx:id="statusLabel" style="-fx-text-fill: #D4AF37;" text="Status: -" />
+                        </HBox>
+
+                        <Label fx:id="messageLabel" style="-fx-text-fill: #D4AF37;" text="" wrapText="true" />
+
+                        <HBox alignment="CENTER_RIGHT" spacing="10">
+                            <Button onAction="#onSaveProfile" style="-fx-background-color: #D4AF37; -fx-text-fill: #1F2933; -fx-font-weight: 700; -fx-background-radius: 10;" text="Save Changes" />
+                        </HBox>
+                    </VBox>
+                </HBox>
+            </VBox>
+        </StackPane>
+    </center>
+</BorderPane>
