@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -24,7 +25,6 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import models.User;
 import services.UserService;
 
 public class OverviewController {
@@ -75,8 +75,8 @@ public class OverviewController {
         // If a tenant is logged in, load houses from DB; otherwise show sample data
         if (DataStore.currentUser != null && DataStore.currentUser.getRole() != null
                 && DataStore.currentUser.getRole().toLowerCase().contains("tenant")) {
-            var houses = DataStore.getHouses();
-            for (var h : houses) {
+            ObservableList<House> houses = DataStore.getHouses();
+            for (House h : houses) {
                 String price = "৳ " + (int) h.getRent() + "/month";
                 String details = h.getBedrooms() + " Bed • " + h.getBathrooms() + " Bath • " + (int) h.getArea()
                         + " sqft";

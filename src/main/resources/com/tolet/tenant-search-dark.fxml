@@ -67,6 +67,8 @@
                 <VBox spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
                     <HBox alignment="CENTER_LEFT" spacing="12">
                         <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="Search Filters" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="sortByCombo" prefWidth="220.0" promptText="Sort" style="-fx-background-color: #474743; -fx-text-fill: #e8fff5; -fx-border-color: #e8fff5;" />
                     </HBox>
                     <HBox alignment="CENTER_LEFT" style="-fx-background-color: #39ac4d; -fx-background-radius: 12; -fx-border-color: #2e933f; -fx-border-radius: 12; -fx-padding: 12;">
                         <TextField fx:id="searchField" promptText="Search by location, property type, or features..." style="-fx-background-color: transparent; -fx-text-fill: #000000; -fx-prompt-text-fill: #000000;" HBox.hgrow="ALWAYS" />

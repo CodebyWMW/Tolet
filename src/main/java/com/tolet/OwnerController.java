@@ -1,5 +1,7 @@
 package com.tolet;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -27,6 +29,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -151,6 +154,7 @@ public class OwnerController {
             Locale.ENGLISH);
     private static final DateTimeFormatter REQUEST_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy",
             Locale.ENGLISH);
+    private Timeline ownerRefreshTimeline;
 
     @FXML
     public void initialize() {
@@ -163,6 +167,34 @@ public class OwnerController {
         populateListedHouses();
         populatePropertiesPage();
         populateAnalyticsPage();
+        startAutoRefresh();
+    }
+
+    private void startAutoRefresh() {
+        if (ownerRefreshTimeline != null) {
+            ownerRefreshTimeline.stop();
+        }
+
+        ownerRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(10), e -> {
+            populateKpis();
+            populateRequests();
+            populateListedHouses();
+            populatePropertiesPage();
+            populateAnalyticsPage();
+        }));
+        ownerRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+        ownerRefreshTimeline.play();
+
+        Node anchor = themeToggle != null ? themeToggle
+                : (requestsContainer != null ? requestsContainer
+                        : (listedHousesContainer != null ? listedHousesContainer : propertiesCardsContainer));
+        if (anchor != null) {
+            anchor.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (newScene == null && ownerRefreshTimeline != null) {
+                    ownerRefreshTimeline.stop();
+                }
+            });
+        }
     }
 
     private void populateProfile() {
@@ -874,6 +906,14 @@ public class OwnerController {
         try {
             return LocalDate.parse(value);
         } catch (Exception ex) {
+            try {
+                String normalized = value.trim();
+                if (normalized.length() >= 10) {
+                    return LocalDate.parse(normalized.substring(0, 10));
+                }
+            } catch (Exception ignored) {
+                return null;
+            }
             return null;
         }
     }
@@ -1154,7 +1194,21 @@ public class OwnerController {
 
         approve.setOnAction(event -> {
             if (updateRequestStatus(request.getId(), "Approved")) {
-                showStatusPopup("Success", "Request approved for\n" + request.getTenantName() + ".", "OK");
+                int houseId = getHouseIdFromRequest(request.getId());
+                int tenantId = getTenantIdFromRequest(request.getId());
+                if (tenantId <= 0) {
+                    tenantId = request.getTenantId();
+                }
+                String notifyMessage = "Your rental request for " + request.getProperty()
+                        + " has been approved by the owner.";
+                boolean notified = DataStore.createNotification(tenantId, houseId, tenantId,
+                        "Request Approved", notifyMessage, "approval");
+
+                if (notified) {
+                    showStatusPopup("Success", "Request approved for\n" + request.getTenantName() + ".", "OK");
+                } else {
+                    showStatusPopup("Success", "Request approved, but notification could not be sent.", "OK");
+                }
                 populateKpis();
                 populateRequests();
             } else {
@@ -1165,11 +1219,21 @@ public class OwnerController {
         delete.setOnAction(event -> {
             int houseId = getHouseIdFromRequest(request.getId());
             if (deleteRequest(request.getId())) {
-                // Create notification for tenant only if it was approved
+                String title;
+                String notifyMessage;
+                String type;
                 if ("Approved".equalsIgnoreCase(currentStatus)) {
-                    String notifyMessage = "Your rental agreement for " + request.getProperty() + " has been removed.";
-                    DataStore.createNotification(request.getTenantId(), houseId, request.getTenantId(), "Rental Removed", notifyMessage, "removal");
+                    title = "Rental Removed";
+                    notifyMessage = "Your rental agreement for " + request.getProperty() + " has been removed.";
+                    type = "removal";
+                } else {
+                    title = "Request Removed";
+                    notifyMessage = "Your rental request for " + request.getProperty() + " has been removed by the owner.";
+                    type = "request-removal";
                 }
+
+                DataStore.createNotification(request.getTenantId(), houseId, request.getTenantId(), title,
+                        notifyMessage, type);
                 
                 showStatusPopup("Success", "Request deleted.", "OK");
                 populateKpis();
@@ -1285,7 +1349,12 @@ public class OwnerController {
         applyActionButtonSizing(delete);
 
         delete.setOnAction(event -> {
+            int houseId = getHouseIdFromRequest(request.getId());
             if (deleteRequest(request.getId())) {
+                String notifyMessage = "Your rental agreement for " + request.getProperty() + " has been removed.";
+                DataStore.createNotification(request.getTenantId(), houseId, request.getTenantId(),
+                        "Rental Removed", notifyMessage, "removal");
+
                 showStatusPopup("Success", "Rental agreement removed.", "OK");
                 populateKpis();
                 populateRequests();
@@ -1380,6 +1449,26 @@ public class OwnerController {
         if ("Approved".equalsIgnoreCase(normalized)) {
             approve.getStyleClass().add("decision-selected");
         }
+    }
+
+    private int getTenantIdFromRequest(int requestId) {
+        if (requestId <= 0) {
+            return -1;
+        }
+
+        String query = "SELECT tenant_id FROM rent_requests WHERE id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, requestId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("tenant_id");
+            }
+        } catch (SQLException e) {
+            return -1;
+        }
+
+        return -1;
     }
 
     private void applyStatusPillSizing(Label statusLabel) {

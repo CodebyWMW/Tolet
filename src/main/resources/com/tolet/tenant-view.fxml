@@ -57,12 +57,17 @@
                     <Region HBox.hgrow="ALWAYS" />
                 </HBox>
 
-                <HBox fx:id="bookingStatusCard" alignment="CENTER_LEFT" managed="false" spacing="12" styleClass="status-card" visible="false">
-                    <VBox spacing="2">
-                        <Label fx:id="bookingStatusTitleLabel" style="-fx-font-weight: bold; -fx-text-fill: #854d0e;" text="Booking Pending" />
-                        <Label fx:id="bookingStatusMessageLabel" style="-fx-text-fill: #a16207;" text="Your latest request is being reviewed." />
-                    </VBox>
-                </HBox>
+                <VBox spacing="12" styleClass="panel">
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label styleClass="panel-title" text="Search Filters" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="sortByCombo" prefWidth="200.0" promptText="Sort" />
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" style="-fx-background-color: #99a3b9; -fx-background-radius: 12; -fx-border-color: #7d879a; -fx-border-radius: 12; -fx-padding: 12;">
+                        <TextField fx:id="searchField" promptText="Search by location, property type, or features..." style="-fx-background-color: transparent; -fx-text-fill: #000000; -fx-prompt-text-fill: #000000;" HBox.hgrow="ALWAYS" />
+                    </HBox>
+                    <FlowPane fx:id="filterContainer" hgap="8" vgap="8" />
+                </VBox>
 
                 <VBox prefHeight="220.0" prefWidth="643.0" spacing="12" styleClass="panel">
                     <HBox alignment="CENTER_LEFT" spacing="12">
@@ -86,6 +91,7 @@
                     <HBox alignment="CENTER_LEFT" spacing="12">
                         <Label styleClass="panel-title" text="Available Properties" />
                         <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="totalCountLabel" styleClass="table-title" text="0 properties" />
                         <Button onAction="#onOpenSearch" styleClass="ghost-button" text="See More" />
                     </HBox>
                     <Separator />

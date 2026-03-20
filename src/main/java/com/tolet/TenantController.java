@@ -35,6 +35,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,12 +45,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class TenantController {
     private static final double PROPERTY_CARD_WIDTH = 350;
-    private String lastShownDeniedNotificationKey;
 
     @FXML
     private Label welcomeLabel, totalCountLabel, listedHousesLabel, savedHomesLabel,
@@ -57,6 +59,8 @@ public class TenantController {
     private TextField searchField;
     @FXML
     private FlowPane filterContainer;
+    @FXML
+    private ComboBox<String> sortByCombo;
     @FXML
     private FlowPane propertiesGrid;
     @FXML
@@ -71,12 +75,6 @@ public class TenantController {
     private FlowPane reviewsContainer;
     @FXML
     private ToggleButton themeToggle;
-    @FXML
-    private HBox bookingStatusCard;
-    @FXML
-    private Label bookingStatusTitleLabel;
-    @FXML
-    private Label bookingStatusMessageLabel;
     @FXML
     private Label profileNameLabel;
     @FXML
@@ -134,7 +132,11 @@ public class TenantController {
 
     private List<House> allHouses;
     private List<String> activeFilters = new ArrayList<>();
-    private final String[] FILTERS = { "Family", "Bachelor", "Gas Available", "Parking", "Furnished" };
+        private final String[] FILTERS = {
+            "Office", "Bachelor", "Family", "Water", "Gas", "Electricity",
+            "Prepaid Meter", "Postpaid Meter", "Generator", "Lift"
+        };
+        private final Map<Integer, HouseSearchMeta> houseSearchMetaById = new HashMap<>();
     private final PauseTransition searchDebounce = new PauseTransition(Duration.millis(300));
     private static final Map<String, Image> IMAGE_CACHE = new HashMap<>();
     private Timeline refreshTimeline;
@@ -155,6 +157,25 @@ public class TenantController {
         @Override
         public String toString() {
             return label;
+        }
+    }
+
+    private static class HouseSearchMeta {
+        private final boolean familyAllowed;
+        private final boolean bachelorAllowed;
+        private final boolean waterAvailable;
+        private final boolean gasAvailable;
+        private final String searchableText;
+        private final int reviewCount;
+
+        private HouseSearchMeta(boolean familyAllowed, boolean bachelorAllowed, boolean waterAvailable,
+                boolean gasAvailable, String searchableText, int reviewCount) {
+            this.familyAllowed = familyAllowed;
+            this.bachelorAllowed = bachelorAllowed;
+            this.waterAvailable = waterAvailable;
+            this.gasAvailable = gasAvailable;
+            this.searchableText = searchableText == null ? "" : searchableText;
+            this.reviewCount = Math.max(0, reviewCount);
         }
     }
 
@@ -186,13 +207,22 @@ public class TenantController {
             }
         }
 
+        if (sortByCombo != null) {
+            sortByCombo.setItems(FXCollections.observableArrayList(
+                    "Default",
+                    "Review: High to Low",
+                    "Price: Low to High",
+                    "Price: High to Low"));
+            sortByCombo.getSelectionModel().selectFirst();
+            sortByCombo.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+        }
+
         // Load data off the UI thread to keep scene switch responsive.
         if (propertiesGrid != null) {
             loadHousesAsync();
             refreshWishlistIdsAsync();
             refreshListedHousesCountAsync();
             refreshTenantBookingKpisAsync();
-            refreshPendingRequestStatusAsync();
             refreshTenantNotificationsAsync();
             loadCurrentRentedHouseAsync();
             startAutoRefresh();
@@ -396,11 +426,17 @@ public class TenantController {
         if (DataStore.currentUser == null) {
             return -1;
         }
-        if (DataStore.currentUser.getId() > 0) {
+        String currentRole = DataStore.currentUser.getRole();
+        if (DataStore.currentUser.getId() > 0
+                && currentRole != null
+                && currentRole.toLowerCase().contains("tenant")) {
             return DataStore.currentUser.getId();
         }
 
-        String sql = "SELECT id FROM users WHERE lower(email) = lower(?) OR name = ? COLLATE NOCASE LIMIT 1";
+        String sql = "SELECT id FROM users "
+                + "WHERE lower(trim(COALESCE(role, ''))) LIKE '%tenant%' "
+                + "AND (lower(COALESCE(email, '')) = lower(?) OR name = ? COLLATE NOCASE) "
+                + "LIMIT 1";
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, DataStore.currentUser.getEmail());
@@ -426,6 +462,7 @@ public class TenantController {
 
         task.setOnSucceeded(e -> {
             allHouses = task.getValue() != null ? task.getValue() : new ArrayList<>();
+            refreshHouseSearchMeta();
             updateListedHousesKpi(allHouses.size());
             renderCurrentViewProperties();
         });
@@ -510,7 +547,16 @@ public class TenantController {
         if (DataStore.currentUser == null) {
             return null;
         }
-        String query = "SELECT id FROM users WHERE email = ? OR name = ? LIMIT 1";
+        String currentRole = DataStore.currentUser.getRole();
+        if (DataStore.currentUser.getId() > 0
+                && currentRole != null
+                && currentRole.toLowerCase().contains("tenant")) {
+            return DataStore.currentUser.getId();
+        }
+        String query = "SELECT id FROM users "
+                + "WHERE lower(trim(COALESCE(role, ''))) LIKE '%tenant%' "
+                + "AND (lower(COALESCE(email, '')) = lower(?) OR name = ? COLLATE NOCASE) "
+                + "LIMIT 1";
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, DataStore.currentUser.getEmail());
@@ -537,7 +583,6 @@ public class TenantController {
             refreshWishlistIdsAsync();
             refreshListedHousesCountAsync();
             refreshTenantBookingKpisAsync();
-            refreshPendingRequestStatusAsync();
             refreshTenantNotificationsAsync();
             loadCurrentRentedHouseAsync();
         }));
@@ -569,17 +614,123 @@ public class TenantController {
         List<House> filtered = allHouses.stream()
                 .filter(h -> {
                     // Search Match
-                    boolean matchSearch = h.getLocation().toLowerCase().contains(search) ||
-                            h.getType().toLowerCase().contains(search);
+                    HouseSearchMeta meta = houseSearchMetaById.get(h.getId());
+                    String combinedSearch = ((h.getLocation() == null ? "" : h.getLocation()) + " "
+                            + (h.getType() == null ? "" : h.getType()) + " "
+                            + (h.getTitle() == null ? "" : h.getTitle()) + " "
+                            + (meta == null ? "" : meta.searchableText)).toLowerCase();
+                    boolean matchSearch = combinedSearch.contains(search);
 
-                    // Filter Match (Simple logic: if "Family" is active, show only Family)
-                    boolean matchFilter = activeFilters.isEmpty() || activeFilters.contains(h.getType());
+                    // All selected chips must match.
+                    boolean matchFilter = activeFilters.isEmpty() || activeFilters.stream().allMatch(f -> matchesFilter(h, meta, f));
 
                     return matchSearch && matchFilter;
                 })
                 .collect(Collectors.toList());
 
+        sortHouses(filtered);
+
         renderProperties(filtered);
+    }
+
+    private boolean matchesFilter(House house, HouseSearchMeta meta, String filter) {
+        String normalizedFilter = filter == null ? "" : filter.trim().toLowerCase();
+        String houseType = house.getType() == null ? "" : house.getType().toLowerCase();
+        String searchable = meta == null ? "" : meta.searchableText.toLowerCase();
+
+        if ("office".equals(normalizedFilter)) {
+            return houseType.contains("office") || searchable.contains("office");
+        }
+        if ("bachelor".equals(normalizedFilter)) {
+            return houseType.contains("bachelor") || (meta != null && meta.bachelorAllowed) || searchable.contains("bachelor");
+        }
+        if ("family".equals(normalizedFilter)) {
+            return houseType.contains("family") || (meta != null && meta.familyAllowed) || searchable.contains("family");
+        }
+        if ("water".equals(normalizedFilter)) {
+            return (meta != null && meta.waterAvailable) || searchable.contains("water");
+        }
+        if ("gas".equals(normalizedFilter)) {
+            return (meta != null && meta.gasAvailable) || searchable.contains("gas");
+        }
+        if ("electricity".equals(normalizedFilter)) {
+            return searchable.contains("electricity") || searchable.contains("electric");
+        }
+        if ("prepaid meter".equals(normalizedFilter)) {
+            return searchable.contains("prepaid");
+        }
+        if ("postpaid meter".equals(normalizedFilter)) {
+            return searchable.contains("postpaid");
+        }
+        if ("generator".equals(normalizedFilter)) {
+            return searchable.contains("generator");
+        }
+        if ("lift".equals(normalizedFilter)) {
+            return searchable.contains("lift") || searchable.contains("elevator");
+        }
+
+        return false;
+    }
+
+    private void sortHouses(List<House> houses) {
+        if (houses == null || houses.isEmpty() || sortByCombo == null) {
+            return;
+        }
+
+        String mode = sortByCombo.getValue() == null ? "Default" : sortByCombo.getValue();
+        if ("Price: Low to High".equalsIgnoreCase(mode)) {
+            houses.sort(Comparator.comparingDouble(House::getRent));
+            return;
+        }
+        if ("Price: High to Low".equalsIgnoreCase(mode)) {
+            houses.sort(Comparator.comparingDouble(House::getRent).reversed());
+            return;
+        }
+        if ("Review: High to Low".equalsIgnoreCase(mode)) {
+            houses.sort((left, right) -> Integer.compare(getReviewCount(right.getId()), getReviewCount(left.getId())));
+        }
+    }
+
+    private int getReviewCount(int houseId) {
+        HouseSearchMeta meta = houseSearchMetaById.get(houseId);
+        return meta == null ? 0 : meta.reviewCount;
+    }
+
+    private void refreshHouseSearchMeta() {
+        Map<Integer, HouseSearchMeta> loadedMeta = new HashMap<>();
+        String sql = "SELECT h.id, "
+                + "COALESCE(h.family_allowed, 0) AS family_allowed, "
+                + "COALESCE(h.bachelor_allowed, 0) AS bachelor_allowed, "
+                + "COALESCE(h.water_available, 0) AS water_available, "
+                + "COALESCE(h.gas_available, 0) AS gas_available, "
+                + "(COALESCE(h.title, '') || ' ' || COALESCE(h.type, '') || ' ' || COALESCE(h.short_detail, '') || ' ' "
+                + " || COALESCE(h.details, '') || ' ' || COALESCE(h.tags, '') || ' ' || COALESCE(h.availability, '')) AS searchable_text, "
+                + "COALESCE((SELECT COUNT(*) FROM house_reviews hr "
+                + "WHERE hr.house_id = h.id AND lower(trim(COALESCE(hr.status, 'submitted'))) IN ('submitted', 'approved')), 0) AS review_count "
+                + "FROM houses h "
+                + "WHERE lower(trim(COALESCE(h.approval_status, 'pending'))) = 'approved'";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                int houseId = rs.getInt("id");
+                HouseSearchMeta meta = new HouseSearchMeta(
+                        rs.getInt("family_allowed") == 1,
+                        rs.getInt("bachelor_allowed") == 1,
+                        rs.getInt("water_available") == 1,
+                        rs.getInt("gas_available") == 1,
+                        rs.getString("searchable_text"),
+                        rs.getInt("review_count"));
+                loadedMeta.put(houseId, meta);
+            }
+        } catch (SQLException e) {
+            // Keep previous metadata on failure.
+            return;
+        }
+
+        houseSearchMetaById.clear();
+        houseSearchMetaById.putAll(loadedMeta);
     }
 
     private void refreshWishlistIdsAsync() {
@@ -1022,174 +1173,6 @@ public class TenantController {
         return null;
     }
 
-    private void refreshPendingRequestStatusAsync() {
-        if (bookingStatusCard == null) {
-            return;
-        }
-
-        Task<RequestStatusInfo> task = new Task<>() {
-            @Override
-            protected RequestStatusInfo call() {
-                if (DataStore.currentUser == null) {
-                    return RequestStatusInfo.none();
-                }
-
-                // Check for approved requests first
-                String approvedSql = "SELECT h.location "
-                        + "FROM rent_requests r "
-                        + "JOIN users u ON r.tenant_id = u.id "
-                        + "JOIN houses h ON r.house_id = h.id "
-                        + "WHERE (lower(COALESCE(u.email, '')) = lower(?) OR lower(u.name) = lower(?)) "
-                        + "AND lower(trim(COALESCE(r.status, ''))) = 'approved' "
-                        + "ORDER BY COALESCE(r.request_date, '') DESC, r.id DESC "
-                        + "LIMIT 1";
-
-                try (Connection conn = DatabaseConnection.connect();
-                        PreparedStatement pstmt = conn.prepareStatement(approvedSql)) {
-                    pstmt.setString(1, DataStore.currentUser.getEmail());
-                    pstmt.setString(2, DataStore.currentUser.getUsername());
-
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        if (rs.next()) {
-                            String location = rs.getString("location");
-                            return RequestStatusInfo.approved(location);
-                        }
-                    }
-                } catch (SQLException e) {
-                    // fall through to pending check
-                }
-
-                // Check for pending requests
-                String pendingSql = "SELECT h.location "
-                        + "FROM rent_requests r "
-                        + "JOIN users u ON r.tenant_id = u.id "
-                        + "JOIN houses h ON r.house_id = h.id "
-                        + "WHERE (lower(COALESCE(u.email, '')) = lower(?) OR lower(u.name) = lower(?)) "
-                        + "AND lower(trim(COALESCE(r.status, ''))) = 'pending' "
-                        + "ORDER BY COALESCE(r.request_date, '') DESC, r.id DESC "
-                        + "LIMIT 1";
-
-                try (Connection conn = DatabaseConnection.connect();
-                        PreparedStatement pstmt = conn.prepareStatement(pendingSql)) {
-                    pstmt.setString(1, DataStore.currentUser.getEmail());
-                    pstmt.setString(2, DataStore.currentUser.getUsername());
-
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        if (rs.next()) {
-                            String location = rs.getString("location");
-                            return RequestStatusInfo.pending(location);
-                        }
-                    }
-                } catch (SQLException e) {
-                    return RequestStatusInfo.none();
-                }
-
-                // Check for denied requests and include owner + denial timestamp.
-                String deniedSql = "SELECT h.location, COALESCE(o.name, 'Owner') AS owner_name, "
-                        + "COALESCE((SELECT MAX(n.created_at) FROM notifications n "
-                    + "WHERE n.user_id = u.id AND n.house_id = h.id AND lower(COALESCE(n.type, '')) = 'denial'), '') AS denied_at, "
-                    + "COALESCE((SELECT n.id FROM notifications n "
-                    + "WHERE n.user_id = u.id AND n.house_id = h.id AND lower(COALESCE(n.type, '')) = 'denial' "
-                    + "ORDER BY n.id DESC LIMIT 1), 0) AS denied_notification_id, "
-                    + "COALESCE((SELECT n.read FROM notifications n "
-                    + "WHERE n.user_id = u.id AND n.house_id = h.id AND lower(COALESCE(n.type, '')) = 'denial' "
-                    + "ORDER BY n.id DESC LIMIT 1), 0) AS denied_read "
-                        + "FROM rent_requests r "
-                        + "JOIN users u ON r.tenant_id = u.id "
-                        + "JOIN houses h ON r.house_id = h.id "
-                        + "LEFT JOIN users o ON h.owner_id = o.id "
-                        + "WHERE (lower(COALESCE(u.email, '')) = lower(?) OR lower(u.name) = lower(?)) "
-                        + "AND lower(trim(COALESCE(r.status, ''))) = 'denied' "
-                        + "ORDER BY COALESCE(denied_at, '') DESC, COALESCE(r.request_date, '') DESC, r.id DESC "
-                        + "LIMIT 1";
-
-                try (Connection conn = DatabaseConnection.connect();
-                        PreparedStatement pstmt = conn.prepareStatement(deniedSql)) {
-                    pstmt.setString(1, DataStore.currentUser.getEmail());
-                    pstmt.setString(2, DataStore.currentUser.getUsername());
-
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        if (rs.next()) {
-                            String location = rs.getString("location");
-                            String ownerName = rs.getString("owner_name");
-                            String deniedAt = rs.getString("denied_at");
-                            int deniedNotificationId = rs.getInt("denied_notification_id");
-                            boolean deniedRead = rs.getInt("denied_read") == 1;
-                            return RequestStatusInfo.denied(location, ownerName, deniedAt, deniedNotificationId, deniedRead);
-                        }
-                    }
-                } catch (SQLException e) {
-                    return RequestStatusInfo.none();
-                }
-
-                return RequestStatusInfo.none();
-            }
-        };
-
-        task.setOnSucceeded(e -> applyRequestStatus(task.getValue()));
-        task.setOnFailed(e -> applyRequestStatus(RequestStatusInfo.none()));
-
-        Thread statusLoader = new Thread(task, "tenant-request-status-loader");
-        statusLoader.setDaemon(true);
-        statusLoader.start();
-    }
-
-    private void applyRequestStatus(RequestStatusInfo info) {
-        if (bookingStatusCard == null) {
-            return;
-        }
-
-        boolean hasStatus = info != null && info.hasStatus;
-        bookingStatusCard.setManaged(hasStatus);
-        bookingStatusCard.setVisible(hasStatus);
-
-        if (!hasStatus) {
-            return;
-        }
-
-        String locationText = (info.location == null || info.location.isBlank())
-                ? "your selected property"
-                : info.location;
-
-        if (bookingStatusTitleLabel != null) {
-            if ("APPROVED".equals(info.status)) {
-                bookingStatusTitleLabel.setText("Booking Confirmed ✓");
-                bookingStatusTitleLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #0f9548;");
-            } else if ("PENDING".equals(info.status)) {
-                bookingStatusTitleLabel.setText("Booking Pending");
-                bookingStatusTitleLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #854d0e;");
-            } else if ("DENIED".equals(info.status)) {
-                bookingStatusTitleLabel.setText("Request Denied");
-                bookingStatusTitleLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #b91c1c;");
-            }
-        }
-
-        if (bookingStatusMessageLabel != null) {
-            if ("APPROVED".equals(info.status)) {
-                bookingStatusMessageLabel.setText("Your request for " + locationText + " has been approved!");
-                bookingStatusMessageLabel.setStyle("-fx-text-fill: #0f9548;");
-            } else if ("PENDING".equals(info.status)) {
-                bookingStatusMessageLabel.setText("Your request for " + locationText + " is being reviewed.");
-                bookingStatusMessageLabel.setStyle("-fx-text-fill: #a16207;");
-            } else if ("DENIED".equals(info.status)) {
-                String ownerName = (info.ownerName == null || info.ownerName.isBlank()) ? "The owner" : info.ownerName;
-                String deniedAtText = formatNotificationTimestamp(info.deniedAt);
-                String message = ownerName + " denied your request for " + locationText + " at " + deniedAtText + ".";
-                bookingStatusMessageLabel.setText(message);
-                bookingStatusMessageLabel.setStyle("-fx-text-fill: #b91c1c;");
-
-                String notificationKey = ownerName + "|" + locationText + "|" + deniedAtText;
-                if (!info.deniedRead && !notificationKey.equals(lastShownDeniedNotificationKey)) {
-                    lastShownDeniedNotificationKey = notificationKey;
-                    showStatusPopup("Request Denied", message, "OK");
-                    if (info.deniedNotificationId > 0) {
-                        DataStore.markNotificationAsRead(info.deniedNotificationId);
-                    }
-                }
-            }
-        }
-    }
-
     private void refreshTenantNotificationsAsync() {
         if (tenantNotificationsContainer == null) {
             return;
@@ -1202,7 +1185,26 @@ public class TenantController {
                 if (tenantId <= 0) {
                     return List.of();
                 }
-                return new ArrayList<>(DataStore.getTenantNotifications(tenantId));
+
+                List<Map<String, String>> notifications = new ArrayList<>();
+                List<Map<String, String>> persisted = new ArrayList<>(DataStore.getTenantNotifications(tenantId));
+                Set<String> existingKeys = new HashSet<>();
+                for (Map<String, String> item : persisted) {
+                    existingKeys.add(buildNotificationKey(item));
+                }
+
+                for (Map<String, String> pending : fetchPendingRequestNotificationItems(tenantId)) {
+                    if (existingKeys.add(buildNotificationKey(pending))) {
+                        notifications.add(pending);
+                    }
+                }
+                for (Map<String, String> approved : fetchApprovedRequestNotificationItems(tenantId)) {
+                    if (existingKeys.add(buildNotificationKey(approved))) {
+                        notifications.add(approved);
+                    }
+                }
+                notifications.addAll(persisted);
+                return notifications;
             }
         };
 
@@ -1235,22 +1237,34 @@ public class TenantController {
             VBox row = new VBox(4);
             row.getStyleClass().add("table-row");
             row.setStyle(rowStyleForReadState(isRead));
+            row.setFillWidth(true);
+            row.setMaxWidth(Double.MAX_VALUE);
+            row.prefWidthProperty().bind(tenantNotificationsContainer.widthProperty().subtract(4));
 
             Label title = new Label(nonBlankOrFallback(notification.get("title"), "Notification"));
             title.getStyleClass().add("table-text");
-            title.setStyle((isRead ? "-fx-text-fill: #7b8794; " : "-fx-text-fill: #d4af37; ") + "-fx-font-weight: 700;");
+            title.setWrapText(true);
+            title.setMaxWidth(Double.MAX_VALUE);
+            title.setStyle((isRead ? "-fx-text-fill: #7b8794; " : "-fx-text-fill: #d4af37; ")
+                + "-fx-font-weight: 700; -fx-pref-width: -1;");
 
             Label message = new Label(nonBlankOrFallback(notification.get("message"), "-"));
             message.getStyleClass().add("table-text");
             message.setWrapText(true);
-            message.setStyle(isRead ? "-fx-text-fill: #8f9bab;" : "-fx-text-fill: #d4af37;");
+            message.setMaxWidth(Double.MAX_VALUE);
+            message.setStyle((isRead ? "-fx-text-fill: #8f9bab;" : "-fx-text-fill: #d4af37;")
+                + " -fx-pref-width: -1;");
 
-            String createdAt = formatNotificationTimestamp(notification.get("created_at"));
-            Label meta = new Label((isRead ? "Read" : "Unread") + " - " + createdAt);
-            meta.getStyleClass().add("table-text");
-            meta.setStyle(isRead ? "-fx-text-fill: #8f9bab;" : "-fx-text-fill: #f59e0b;");
+                String notificationType = nonBlankOrFallback(notification.get("type"), "info");
+                String createdAt = formatNotificationTimestamp(notification.get("created_at"), notificationType);
+                Label metaTime = new Label(createdAt);
+                metaTime.getStyleClass().add("table-text");
+                metaTime.setWrapText(true);
+                metaTime.setMaxWidth(Double.MAX_VALUE);
+                metaTime.setStyle((isRead ? "-fx-text-fill: #8f9bab;" : "-fx-text-fill: #f59e0b;")
+                    + " -fx-pref-width: -1;");
 
-            row.getChildren().addAll(title, message, meta);
+                    row.getChildren().addAll(title, message, metaTime);
             tenantNotificationsContainer.getChildren().add(row);
 
             if (!isRead && notificationId > 0) {
@@ -1267,6 +1281,99 @@ public class TenantController {
             markReadThread.setDaemon(true);
             markReadThread.start();
         }
+    }
+
+    private List<Map<String, String>> fetchPendingRequestNotificationItems(int tenantId) {
+        List<Map<String, String>> pending = new ArrayList<>();
+        String sql = "SELECT h.location, COALESCE(r.request_date, '') AS request_date "
+                + "FROM rent_requests r "
+                + "JOIN houses h ON h.id = r.house_id "
+                + "WHERE r.tenant_id = ? "
+                + "AND r.id IN ("
+                + "  SELECT MAX(rr.id) FROM rent_requests rr "
+                + "  WHERE rr.tenant_id = ? "
+                + "  GROUP BY rr.house_id"
+                + ") "
+                + "AND lower(trim(COALESCE(r.status, ''))) = 'pending' "
+                + "ORDER BY COALESCE(r.request_date, '') DESC, r.id DESC";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, tenantId);
+            pstmt.setInt(2, tenantId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String location = nonBlankOrFallback(rs.getString("location"), "your selected property");
+                    String createdAt = rs.getString("request_date");
+                    if (createdAt == null || createdAt.isBlank()) {
+                        createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                    }
+
+                    Map<String, String> item = new HashMap<>();
+                    item.put("id", "");
+                    item.put("title", "Booking Pending");
+                    item.put("message", "Your request for " + location + " is being reviewed.");
+                    item.put("type", "booking_pending");
+                    item.put("created_at", createdAt);
+                    item.put("is_read", "0");
+                    item.put("location", location);
+                    pending.add(item);
+                }
+            }
+        } catch (SQLException ignored) {
+            return List.of();
+        }
+        return pending;
+    }
+
+    private List<Map<String, String>> fetchApprovedRequestNotificationItems(int tenantId) {
+        List<Map<String, String>> approved = new ArrayList<>();
+        String sql = "SELECT h.location, "
+                + "COALESCE(NULLIF(TRIM(r.accepted_at), ''), NULLIF(TRIM(r.request_date), '')) AS approved_at "
+                + "FROM rent_requests r "
+                + "JOIN houses h ON h.id = r.house_id "
+                + "WHERE r.tenant_id = ? "
+                + "AND r.id IN ("
+                + "  SELECT MAX(rr.id) FROM rent_requests rr "
+                + "  WHERE rr.tenant_id = ? "
+                + "  GROUP BY rr.house_id"
+                + ") "
+                + "AND lower(trim(COALESCE(r.status, ''))) = 'approved' "
+                + "ORDER BY COALESCE(r.accepted_at, r.request_date, '') DESC, r.id DESC";
+
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, tenantId);
+            pstmt.setInt(2, tenantId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String location = nonBlankOrFallback(rs.getString("location"), "your selected property");
+                    String createdAt = rs.getString("approved_at");
+                    if (createdAt == null || createdAt.isBlank()) {
+                        createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                    }
+
+                    Map<String, String> item = new HashMap<>();
+                    item.put("id", "");
+                    item.put("title", "Request Approved");
+                    item.put("message", "Your rental request for " + location + " has been approved by the owner.");
+                    item.put("type", "approval");
+                    item.put("created_at", createdAt);
+                    item.put("is_read", "0");
+                    item.put("location", location);
+                    approved.add(item);
+                }
+            }
+        } catch (SQLException ignored) {
+            return List.of();
+        }
+        return approved;
+    }
+
+    private String buildNotificationKey(Map<String, String> notification) {
+        String type = nonBlankOrFallback(notification.get("type"), "info").trim().toLowerCase();
+        String location = nonBlankOrFallback(notification.get("location"), "-").trim().toLowerCase();
+        return type + "|" + location;
     }
 
     private String rowStyleForReadState(boolean read) {
@@ -1287,59 +1394,37 @@ public class TenantController {
         }
     }
 
-    private String formatNotificationTimestamp(String rawTimestamp) {
+    private String formatNotificationTimestamp(String rawTimestamp, String type) {
         if (rawTimestamp == null || rawTimestamp.isBlank()) {
             return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
 
         String candidate = rawTimestamp.trim();
         DateTimeFormatter dbFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        if (candidate.length() == 10) {
+            try {
+                LocalDate dateOnly = LocalDate.parse(candidate, DateTimeFormatter.ISO_LOCAL_DATE);
+                return dateOnly.format(DateTimeFormatter.ISO_LOCAL_DATE);
+            } catch (Exception ignored) {
+                return candidate;
+            }
+        }
+
         try {
             LocalDateTime parsed = LocalDateTime.parse(candidate, dbFormat);
-            return parsed.format(dbFormat);
+            if ("booking_pending".equalsIgnoreCase(type)) {
+                return parsed.format(dbFormat);
+            }
+            LocalDateTime localTime = parsed.atOffset(ZoneOffset.UTC)
+                    .atZoneSameInstant(ZoneId.systemDefault())
+                    .toLocalDateTime();
+            return localTime.format(dbFormat);
         } catch (Exception ignored) {
             return candidate;
         }
     }
 
-    private static class RequestStatusInfo {
-        private final boolean hasStatus;
-        private final String status; // PENDING, APPROVED, DENIED
-        private final String location;
-        private final String ownerName;
-        private final String deniedAt;
-        private final int deniedNotificationId;
-        private final boolean deniedRead;
-
-        private RequestStatusInfo(boolean hasStatus, String status, String location, String ownerName, String deniedAt,
-                int deniedNotificationId, boolean deniedRead) {
-            this.hasStatus = hasStatus;
-            this.status = status;
-            this.location = location;
-            this.ownerName = ownerName;
-            this.deniedAt = deniedAt;
-            this.deniedNotificationId = deniedNotificationId;
-            this.deniedRead = deniedRead;
-        }
-
-        private static RequestStatusInfo none() {
-            return new RequestStatusInfo(false, null, null, null, null, -1, true);
-        }
-
-        private static RequestStatusInfo pending(String location) {
-            return new RequestStatusInfo(true, "PENDING", location, null, null, -1, true);
-        }
-
-        private static RequestStatusInfo approved(String location) {
-            return new RequestStatusInfo(true, "APPROVED", location, null, null, -1, true);
-        }
-
-        private static RequestStatusInfo denied(String location, String ownerName, String deniedAt,
-                int deniedNotificationId, boolean deniedRead) {
-            return new RequestStatusInfo(true, "DENIED", location, ownerName, deniedAt, deniedNotificationId,
-                    deniedRead);
-        }
-    }
 
     private static class HouseDetailsViewData {
         private int id;
@@ -1738,7 +1823,7 @@ public class TenantController {
                         + "AND lower(trim(COALESCE(status, ''))) IN ('pending', 'approved')";
                 String insertSql = "INSERT INTO rent_requests (house_id, tenant_id, request_date, move_in_date, status) "
                         + "VALUES (?, ?, ?, ?, 'pending')";
-                String today = LocalDate.now().toString();
+                String submittedAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                 String moveIn = LocalDate.now().plusDays(14).toString();
 
                 try (Connection conn = DatabaseConnection.connect()) {
@@ -1754,7 +1839,7 @@ public class TenantController {
                     try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
                         insertStmt.setInt(1, houseId);
                         insertStmt.setInt(2, tenantId);
-                        insertStmt.setString(3, today);
+                        insertStmt.setString(3, submittedAt);
                         insertStmt.setString(4, moveIn);
                         return insertStmt.executeUpdate() > 0 ? 2 : 0;
                     }
@@ -1777,7 +1862,7 @@ public class TenantController {
             }
 
             showStatusPopup("Success", "Rent request sent for\n" + locationLabel + ".", "OK");
-            refreshPendingRequestStatusAsync();
+            refreshTenantNotificationsAsync();
             refreshTenantBookingKpisAsync();
         });
 

@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -540,6 +541,14 @@ public class DataStore {
         try {
             return LocalDate.parse(value);
         } catch (Exception e) {
+            try {
+                String normalized = value.trim();
+                if (normalized.length() >= 10) {
+                    return LocalDate.parse(normalized.substring(0, 10));
+                }
+            } catch (Exception ignored) {
+                return null;
+            }
             return null;
         }
     }
@@ -722,19 +731,44 @@ public class DataStore {
     }
 
     public static boolean createNotification(int userId, int houseId, int tenantId, String title, String message, String type) {
+        if (userId <= 0) {
+            return false;
+        }
+
+        String safeTitle = (title == null || title.isBlank()) ? "Notification" : title.trim();
+        String safeMessage = (message == null || message.isBlank()) ? "You have a new update." : message.trim();
+        String safeType = (type == null || type.isBlank()) ? "info" : type.trim();
+
         String query = "INSERT INTO notifications (user_id, house_id, tenant_id, title, message, type, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, userId);
-            pstmt.setInt(2, houseId > 0 ? houseId : 0);
-            pstmt.setInt(3, tenantId > 0 ? tenantId : 0);
-            pstmt.setString(4, title);
-            pstmt.setString(5, message);
-            pstmt.setString(6, type);
+            if (houseId > 0) {
+                pstmt.setInt(2, houseId);
+            } else {
+                pstmt.setNull(2, Types.INTEGER);
+            }
+            if (tenantId > 0) {
+                pstmt.setInt(3, tenantId);
+            } else {
+                pstmt.setNull(3, Types.INTEGER);
+            }
+            pstmt.setString(4, safeTitle);
+            pstmt.setString(5, safeMessage);
+            pstmt.setString(6, safeType);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            String fallbackQuery = "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)";
+            try (Connection conn = DatabaseConnection.connect();
+                    PreparedStatement fallback = conn.prepareStatement(fallbackQuery)) {
+                fallback.setInt(1, userId);
+                fallback.setString(2, safeTitle);
+                fallback.setString(3, safeMessage);
+                fallback.setString(4, safeType);
+                return fallback.executeUpdate() > 0;
+            } catch (SQLException ignored) {
+                return false;
+            }
         }
     }
 
@@ -777,13 +811,35 @@ public class DataStore {
 
     public static ObservableList<Map<String, String>> getTenantNotifications(int tenantId) {
         ObservableList<Map<String, String>> list = FXCollections.observableArrayList();
-        String query = "SELECT n.id, n.title, n.message, n.type, n.created_at, COALESCE(n.read, 0) AS is_read, "
+        String queryWithRead = "SELECT n.id, n.title, n.message, n.type, n.created_at, COALESCE(n.read, 0) AS is_read, "
                 + "COALESCE(h.location, '') AS location "
                 + "FROM notifications n "
                 + "LEFT JOIN houses h ON n.house_id = h.id "
                 + "WHERE n.user_id = ? "
                 + "ORDER BY n.created_at DESC, n.id DESC";
 
+        String queryWithoutRead = "SELECT n.id, n.title, n.message, n.type, n.created_at, 0 AS is_read, "
+                + "COALESCE(h.location, '') AS location "
+                + "FROM notifications n "
+                + "LEFT JOIN houses h ON n.house_id = h.id "
+                + "WHERE n.user_id = ? "
+                + "ORDER BY n.created_at DESC, n.id DESC";
+
+        try {
+            loadTenantNotificationsWithQuery(tenantId, queryWithRead, list);
+        } catch (SQLException primaryEx) {
+            try {
+                loadTenantNotificationsWithQuery(tenantId, queryWithoutRead, list);
+            } catch (SQLException ignored) {
+                return list;
+            }
+        }
+
+        return list;
+    }
+
+    private static void loadTenantNotificationsWithQuery(int tenantId, String query,
+            ObservableList<Map<String, String>> list) throws SQLException {
         try (Connection conn = DatabaseConnection.connect();
                 PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, tenantId);
@@ -799,10 +855,7 @@ public class DataStore {
                 notification.put("location", rs.getString("location"));
                 list.add(notification);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-        return list;
     }
 
     public static boolean markNotificationAsRead(int notificationId) {
