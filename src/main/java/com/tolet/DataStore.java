@@ -1,5 +1,6 @@
 package com.tolet;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,17 +9,21 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
 
+import dao.HouseDAO;
+import dao.UserDAO;
 import database.DatabaseConnection;
 import database.TableCreator;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Scene;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import network.ClientConnection;
 
 public class DataStore {
     public static User currentUser;
@@ -306,34 +311,41 @@ public class DataStore {
 
     public static ObservableList<House> getHouses() {
         ObservableList<House> list = FXCollections.observableArrayList();
-        String query = "SELECT h.id, h.title, h.location, h.type, h.rent, h.image, h.bedrooms, h.bathrooms, h.area, u.name " +
-                "FROM houses h JOIN users u ON h.owner_id = u.id " +
-                "WHERE COALESCE(h.approval_status, 'pending') = 'approved'";
+        try {
+            List<String> rows = ClientConnection.sendCommandForLines("GET_APPROVED_HOUSES", "END");
+            for (String row : rows) {
+                if ("NO_HOUSES".equals(row)) {
+                    continue;
+                }
 
-        try (Connection conn = DatabaseConnection.connect();
-                Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(query)) {
+                String[] parts = row.split("\\|", 4);
+                if (parts.length < 4) {
+                    continue;
+                }
 
-            System.out.println("DEBUG: Executing getHouses query: " + query);
-            int rowCount = 0;
-            while (rs.next()) {
+                int id;
+                double rent;
+                try {
+                    id = Integer.parseInt(parts[0]);
+                    rent = Double.parseDouble(parts[3]);
+                } catch (NumberFormatException ex) {
+                    continue;
+                }
+
                 list.add(new House(
-                        rs.getInt("id"),
-                    rs.getString("title"),
-                        rs.getString("location"),
-                        rs.getString("type"),
-                        rs.getDouble("rent"),
-                        rs.getString("name"),
-                        rs.getString("image"),
-                        rs.getInt("bedrooms"),
-                        rs.getInt("bathrooms"),
-                        rs.getDouble("area")));
-                rowCount++;
+                        id,
+                        parts[1],
+                        parts[2],
+                        "",
+                        rent,
+                        "",
+                        "",
+                        0,
+                        0,
+                        0.0));
             }
-            System.out.println("DEBUG: getHouses fetched rows=" + rowCount);
-        } catch (SQLException e) {
-            System.out.println("ERROR: getHouses SQLException");
-            e.printStackTrace();
+        } catch (IOException e) {
+            return list;
         }
         return list;
     }
@@ -560,16 +572,39 @@ public class DataStore {
     // --- KEEP YOUR EXISTING AUTH METHODS BELOW (validateUser, registerUser, etc)
     // ---
     public static boolean validateUser(String username, String password) {
-        String query = "SELECT * FROM users WHERE name = ? COLLATE BINARY AND password = ?";
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                currentUser = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"),
-                        rs.getString("role"), rs.getInt("id"));
-                return true;
+        String loginInput = username == null ? "" : username.trim();
+        String query = "SELECT * FROM users WHERE (name = ? COLLATE BINARY OR lower(ifnull(email, '')) = lower(?)) AND password = ? LIMIT 1";
+
+        try (Connection conn = DatabaseConnection.connect()) {
+            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setString(1, loginInput);
+                pstmt.setString(2, loginInput);
+                pstmt.setString(3, password);
+
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    currentUser = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"),
+                            rs.getString("role"), rs.getInt("id"));
+                    return true;
+                }
+            }
+
+            // Fallback for phone-based accounts with normalized formatting.
+            String normalizedInputPhone = normalizePhone(loginInput);
+            if (!normalizedInputPhone.isBlank()) {
+                String phoneQuery = "SELECT * FROM users WHERE phone IS NOT NULL AND password = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(phoneQuery)) {
+                    pstmt.setString(1, password);
+                    ResultSet rs = pstmt.executeQuery();
+                    while (rs.next()) {
+                        String storedPhone = rs.getString("phone");
+                        if (normalizedInputPhone.equals(normalizePhone(storedPhone))) {
+                            currentUser = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"),
+                                    rs.getString("role"), rs.getInt("id"));
+                            return true;
+                        }
+                    }
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -582,32 +617,26 @@ public class DataStore {
     }
 
     public static boolean registerUser(String name, String email, String password, String role, String birthdate) {
-        String query = "INSERT INTO users (name, email, password, role, phone, birthdate, public_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(query)) {
-            String trimmedName = name == null ? "" : name.trim();
-            String trimmedEmail = email == null ? "" : email.trim();
-            String publicId = generateNextPublicId(conn, role);
-            pstmt.setString(1, trimmedName);
-            pstmt.setString(3, password);
-            pstmt.setString(4, role);
-            if (!trimmedEmail.isBlank() && trimmedEmail.contains("@")) {
-                pstmt.setString(2, trimmedEmail.toLowerCase());
-                pstmt.setString(5, null);
-                pstmt.setString(6, birthdate);
-            } else if (!trimmedEmail.isBlank()) {
-                pstmt.setString(2, null);
-                pstmt.setString(5, normalizePhone(trimmedEmail));
-                pstmt.setString(6, birthdate);
-            } else {
-                pstmt.setString(2, null);
-                pstmt.setString(5, null);
-                pstmt.setString(6, birthdate);
-            }
-            pstmt.setString(7, publicId);
-            pstmt.executeUpdate();
-            return true;
-        } catch (SQLException e) {
+        String trimmedName = name == null ? "" : name.trim();
+        String trimmedEmailOrPhone = email == null ? "" : email.trim();
+        String safeRole = role == null ? "" : role.trim();
+        String safeBirthdate = birthdate == null ? "" : birthdate.trim();
+
+        String signupEmail = trimmedEmailOrPhone.contains("@") ? trimmedEmailOrPhone.toLowerCase() : "";
+        String signupPhone = trimmedEmailOrPhone.contains("@") ? "" : normalizePhone(trimmedEmailOrPhone);
+
+        String command = "SIGNUP|"
+                + sanitizeForCommand(trimmedName) + "|"
+                + sanitizeForCommand(signupEmail) + "|"
+                + sanitizeForCommand(password) + "|"
+                + sanitizeForCommand(safeRole) + "|"
+                + sanitizeForCommand(signupPhone) + "|"
+                + sanitizeForCommand(safeBirthdate);
+
+        try {
+            String response = ClientConnection.sendCommand(command);
+            return "SUCCESS".equals(response);
+        } catch (IOException e) {
             return false;
         }
     }
@@ -662,35 +691,42 @@ public class DataStore {
     }
 
     public static boolean emailExists(String email) {
-        String query = "SELECT 1 FROM users WHERE lower(email) = lower(?)";
-        try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, email == null ? null : email.trim());
-            return pstmt.executeQuery().next();
-        } catch (SQLException e) {
+        try {
+            String response = ClientConnection.sendCommand("CHECK_EMAIL_EXISTS|" + sanitizeForCommand(email));
+            return "EXISTS".equals(response);
+        } catch (IOException e) {
             return false;
         }
     }
 
     public static boolean usernameExists(String username) {
-        String query = "SELECT name FROM users WHERE name = ? COLLATE BINARY";
-        try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, username == null ? null : username.trim());
-            return pstmt.executeQuery().next();
-        } catch (SQLException e) {
+        try {
+            String response = ClientConnection.sendCommand("CHECK_USERNAME_EXISTS|" + sanitizeForCommand(username));
+            return "EXISTS".equals(response);
+        } catch (IOException e) {
             return false;
         }
     }
 
     public static boolean phoneExists(String phone) {
-        return findUserIdByPhone(phone) != null;
+        try {
+            String response = ClientConnection.sendCommand("CHECK_PHONE_EXISTS|" + sanitizeForCommand(normalizePhone(phone)));
+            return "EXISTS".equals(response);
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public static boolean contactExists(String contact) {
-        String trimmedContact = contact == null ? "" : contact.trim();
-        if (trimmedContact.isBlank()) {
+        if (contact == null || contact.trim().isBlank()) {
             return false;
         }
-        return findUserIdByContact(trimmedContact) != null;
+        try {
+            String response = ClientConnection.sendCommand("CHECK_CONTACT_EXISTS|" + sanitizeForCommand(contact));
+            return "EXISTS".equals(response);
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public static void updatePassword(String email, String newPass) {
@@ -705,25 +741,27 @@ public class DataStore {
     }
 
     public static boolean updatePasswordByContact(String contact, String newPass) {
-        String trimmedContact = contact == null ? "" : contact.trim();
-        if (trimmedContact.isBlank()) {
+        if (contact == null || contact.trim().isBlank()) {
             return false;
         }
 
-        Integer userId = findUserIdByContact(trimmedContact);
-        if (userId == null) {
-            return false;
-        }
+        String command = "UPDATE_PASSWORD_BY_CONTACT|"
+                + sanitizeForCommand(contact) + "|"
+                + sanitizeForCommand(newPass);
 
-        String query = "UPDATE users SET password = ? WHERE id = ?";
-        try (Connection conn = DatabaseConnection.connect(); PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, newPass);
-            pstmt.setInt(2, userId);
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
+        try {
+            String response = ClientConnection.sendCommand(command);
+            return "SUCCESS".equals(response);
+        } catch (IOException e) {
             return false;
         }
+    }
+
+    private static String sanitizeForCommand(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("|", " ").trim();
     }
 
     public static boolean createNotification(int userId, String title, String message, String type) {
@@ -955,5 +993,41 @@ public class DataStore {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void normalizeAdminPublicIds() {
+        new UserDAO().normalizeExistingOwnerAndTenantPublicIds();
+    }
+
+    public static List<models.User> adminGetAllUsers() {
+        return new UserDAO().getAllUsers();
+    }
+
+    public static List<models.User> adminGetUsersByRole(String role) {
+        return new UserDAO().getUsersByRole(role);
+    }
+
+    public static List<models.UserAudit> adminGetAuditLog() {
+        return new UserDAO().getAuditLog();
+    }
+
+    public static boolean adminUpdateUserVerification(int userId, boolean verified) {
+        return new UserDAO().updateUserVerification(userId, verified);
+    }
+
+    public static boolean adminDeleteUserWithAudit(int userId, String deletedBy) {
+        return new UserDAO().deleteUserWithAudit(userId, deletedBy);
+    }
+
+    public static List<models.House> adminGetAllListingsForAdmin() {
+        return new HouseDAO().getAllListingsForAdmin();
+    }
+
+    public static List<models.House> adminGetHousesByStatus(String status) {
+        return new HouseDAO().getHousesByStatus(status);
+    }
+
+    public static boolean adminUpdateHouseStatus(int houseId, String status) {
+        return new HouseDAO().updateHouseStatus(houseId, status);
     }
 }

@@ -3,15 +3,10 @@ package com.tolet;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
-import database.DatabaseConnection;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -25,6 +20,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import network.ClientConnection;
 
 public class OwnerListHouseController {
     private static final int MAX_IMAGES = 3;
@@ -204,12 +200,12 @@ public class OwnerListHouseController {
         double areaSqft;
         double price;
         try {
-            beds = Integer.parseInt(text(bedsField));
-            baths = Integer.parseInt(text(bathsField));
-            areaSqft = Double.parseDouble(text(areaField));
-            price = Double.parseDouble(text(askingPriceField));
+            beds = parseWholeNumber(text(bedsField), "Beds");
+            baths = parseWholeNumber(text(bathsField), "Baths");
+            areaSqft = parseDecimalNumber(text(areaField), "Square feet");
+            price = parseDecimalNumber(text(askingPriceField), "Asking price");
         } catch (NumberFormatException e) {
-            setStatus("Beds, baths, square feet and asking price must be valid numbers.", true);
+            setStatus(e.getMessage(), true);
             return;
         }
 
@@ -227,75 +223,61 @@ public class OwnerListHouseController {
         String tags = buildTags();
         String type = resolvePrimaryType();
 
-        String insertHouse = "INSERT INTO houses (title, short_detail, location, details, tags, availability, type, bedrooms, bathrooms, area, gas_available, water_available, current_available, rent, contact_info, owner_id, image, approval_status, family_allowed, bachelor_allowed) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String insertImage = "INSERT INTO house_images (house_id, image_name, image_data, sort_order) VALUES (?, ?, ?, ?)";
+        String createCommand = "CREATE_OWNER_HOUSE|"
+                + ownerId + "|"
+                + encode(shortDetail) + "|"
+                + encode(location) + "|"
+                + encode(details) + "|"
+                + encode(tags) + "|"
+                + encode(availability) + "|"
+                + encode(type) + "|"
+                + beds + "|"
+                + baths + "|"
+                + areaSqft + "|"
+                + (gasCheck.isSelected() ? 1 : 0) + "|"
+                + (waterCheck.isSelected() ? 1 : 0) + "|"
+                + (currentCheck.isSelected() ? 1 : 0) + "|"
+                + price + "|"
+                + encode(contact) + "|"
+                + (tagFamilyButton.isSelected() ? 1 : 0) + "|"
+                + (tagSingleButton.isSelected() ? 1 : 0) + "|"
+                + encode(shortDetail);
 
-        try (Connection conn = DatabaseConnection.connect()) {
-            conn.setAutoCommit(false);
-            try {
-                int houseId;
-                try (PreparedStatement pstmt = conn.prepareStatement(insertHouse, Statement.RETURN_GENERATED_KEYS)) {
-                    pstmt.setString(1, shortDetail);
-                    pstmt.setString(2, shortDetail);
-                    pstmt.setString(3, location);
-                    pstmt.setString(4, details);
-                    pstmt.setString(5, tags);
-                    pstmt.setString(6, availability);
-                    pstmt.setString(7, type);
-                    pstmt.setInt(8, beds);
-                    pstmt.setInt(9, baths);
-                    pstmt.setDouble(10, areaSqft);
-                    pstmt.setInt(11, gasCheck.isSelected() ? 1 : 0);
-                    pstmt.setInt(12, waterCheck.isSelected() ? 1 : 0);
-                    pstmt.setInt(13, currentCheck.isSelected() ? 1 : 0);
-                    pstmt.setDouble(14, price);
-                    pstmt.setString(15, contact);
-                    pstmt.setInt(16, ownerId);
-                    pstmt.setString(17, null);
-                    pstmt.setString(18, "pending");
-                    pstmt.setInt(19, tagFamilyButton.isSelected() ? 1 : 0);
-                    pstmt.setInt(20, tagSingleButton.isSelected() ? 1 : 0);
-                    pstmt.executeUpdate();
-
-                    try (ResultSet keys = pstmt.getGeneratedKeys()) {
-                        if (!keys.next()) {
-                            throw new SQLException("Failed to retrieve house id.");
-                        }
-                        houseId = keys.getInt(1);
-                    }
-                }
-
-                try (PreparedStatement imageStmt = conn.prepareStatement(insertImage)) {
-                    int order = 1;
-                    for (File file : selectedImages) {
-                        imageStmt.setInt(1, houseId);
-                        imageStmt.setString(2, file.getName());
-                        imageStmt.setBytes(3, Files.readAllBytes(file.toPath()));
-                        imageStmt.setInt(4, order++);
-                        imageStmt.addBatch();
-                    }
-                    imageStmt.executeBatch();
-                }
-
-                try (PreparedStatement updateCover = conn
-                        .prepareStatement("UPDATE houses SET image = ? WHERE id = ?")) {
-                    updateCover.setString(1, "db-image://house/" + houseId + "/1");
-                    updateCover.setInt(2, houseId);
-                    updateCover.executeUpdate();
-                }
-
-                conn.commit();
-                clearForm();
-                setStatus("House listed successfully. It is now pending admin approval.", false);
-            } catch (Exception e) {
-                conn.rollback();
-                setStatus("Failed to save listing: " + e.getMessage(), true);
-            } finally {
-                conn.setAutoCommit(true);
+        try {
+            String createResponse = ClientConnection.sendCommand(createCommand);
+            if (createResponse == null || !createResponse.startsWith("SUCCESS|")) {
+                setStatus("Failed to save listing.", true);
+                return;
             }
-        } catch (SQLException e) {
-            setStatus("Database error: " + e.getMessage(), true);
+
+            int houseId = Integer.parseInt(createResponse.split("\\|", 2)[1]);
+            int order = 1;
+            for (File file : selectedImages) {
+                String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));
+                String imageCommand = "ADD_HOUSE_IMAGE|"
+                        + houseId + "|"
+                        + encode(file.getName()) + "|"
+                        + order + "|"
+                        + base64;
+                String imageResponse = ClientConnection.sendCommand(imageCommand);
+                if (!"SUCCESS".equals(imageResponse)) {
+                    setStatus("Listing saved but image upload failed.", true);
+                    return;
+                }
+                order++;
+            }
+
+            String coverResponse = ClientConnection.sendCommand(
+                    "SET_HOUSE_COVER|" + houseId + "|" + encode("db-image://house/" + houseId + "/1"));
+            if (!"SUCCESS".equals(coverResponse)) {
+                setStatus("Listing saved but cover image failed.", true);
+                return;
+            }
+
+            clearForm();
+            setStatus("House listed successfully. It is now pending admin approval.", false);
+        } catch (IOException | NumberFormatException e) {
+            setStatus("Failed to save listing: " + e.getMessage(), true);
         }
     }
 
@@ -304,17 +286,18 @@ public class OwnerListHouseController {
             return -1;
         }
 
-        String query = "SELECT id FROM users WHERE lower(email) = lower(?) OR name = ? COLLATE NOCASE LIMIT 1";
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, DataStore.currentUser.getEmail());
-            pstmt.setString(2, DataStore.currentUser.getUsername());
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("id");
+        String command = "RESOLVE_USER_ID|"
+                + encode(DataStore.currentUser.getEmail()) + "|"
+                + encode(DataStore.currentUser.getUsername());
+        try {
+            String response = ClientConnection.sendCommand(command);
+            if (response != null && response.startsWith("FOUND|")) {
+                String[] parts = response.split("\\|", 2);
+                if (parts.length == 2) {
+                    return Integer.parseInt(parts[1]);
                 }
             }
-        } catch (SQLException e) {
+        } catch (IOException | NumberFormatException e) {
             return -1;
         }
 
@@ -354,6 +337,58 @@ public class OwnerListHouseController {
 
     private String text(TextArea area) {
         return area == null || area.getText() == null ? "" : area.getText().trim();
+    }
+
+    private int parseWholeNumber(String rawValue, String fieldName) {
+        String normalized = normalizeNumericInput(rawValue);
+        if (normalized.isBlank()) {
+            throw new NumberFormatException(fieldName + " is required.");
+        }
+        if (!normalized.matches("-?\\d+")) {
+            throw new NumberFormatException(fieldName + " must be a whole number.");
+        }
+        return Integer.parseInt(normalized);
+    }
+
+    private double parseDecimalNumber(String rawValue, String fieldName) {
+        String normalized = normalizeNumericInput(rawValue);
+        if (normalized.isBlank()) {
+            throw new NumberFormatException(fieldName + " is required.");
+        }
+        if (!normalized.matches("-?\\d+(\\.\\d+)?")) {
+            throw new NumberFormatException(fieldName + " must be a valid number.");
+        }
+        return Double.parseDouble(normalized);
+    }
+
+    private String normalizeNumericInput(String rawValue) {
+        if (rawValue == null) {
+            return "";
+        }
+
+        String compact = rawValue.trim()
+                .replace(",", "")
+                .replace(" ", "")
+                .replace("\u00A0", "")
+                .replace("৳", "")
+                .replace("$", "")
+                .replaceAll("(?i)(bdt|tk)", "");
+
+        StringBuilder converted = new StringBuilder(compact.length());
+        for (int i = 0; i < compact.length(); i++) {
+            char c = compact.charAt(i);
+            if (c >= '\u09E6' && c <= '\u09EF') {
+                converted.append((char) ('0' + (c - '\u09E6')));
+            } else if (c >= '\u0660' && c <= '\u0669') {
+                converted.append((char) ('0' + (c - '\u0660')));
+            } else if (c >= '\u06F0' && c <= '\u06F9') {
+                converted.append((char) ('0' + (c - '\u06F0')));
+            } else {
+                converted.append(c);
+            }
+        }
+
+        return converted.toString();
     }
 
     private void clear(TextField field) {
@@ -447,6 +482,13 @@ public class OwnerListHouseController {
         stage.setMaximized(wasMaximized);
         stage.setFullScreen(wasFullScreen);
         stage.show();
+    }
+
+    private String encode(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("|", " ").replace("\r", "").replace("\n", "<NL>").trim();
     }
 
     @FXML

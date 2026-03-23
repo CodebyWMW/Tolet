@@ -2,15 +2,10 @@ package com.tolet;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
 
-import database.DatabaseConnection;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -23,6 +18,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import network.ClientConnection;
 
 public class UserProfileController {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
@@ -78,57 +74,46 @@ public class UserProfileController {
         String currentName = safe(DataStore.currentUser.getUsername());
         String currentEmail = safe(DataStore.currentUser.getEmail());
 
-        String query;
-        boolean queryById = userId > 0;
-        if (queryById) {
-            query = "SELECT id, name, email, phone, role, birthdate, verified, profile_image FROM users WHERE id = ? LIMIT 1";
-        } else {
-            query = "SELECT id, name, email, phone, role, birthdate, verified, profile_image FROM users "
-                    + "WHERE name = ? COLLATE NOCASE OR lower(ifnull(email, '')) = lower(?) LIMIT 1";
-        }
+        String command = "GET_USER_PROFILE|"
+                + userId + "|"
+                + encode(currentName) + "|"
+                + encode(currentEmail);
 
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(query)) {
-            if (queryById) {
-                pstmt.setInt(1, userId);
-            } else {
-                pstmt.setString(1, currentName);
-                pstmt.setString(2, currentEmail);
+        try {
+            String response = ClientConnection.sendCommand(command);
+            if (response == null || response.isBlank() || response.startsWith("NOT_FOUND")) {
+                setMessage("Could not load profile from server.", true);
+                return;
             }
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (!rs.next()) {
-                    setMessage("Could not load profile from database.", true);
-                    return;
-                }
-
-                int resolvedUserId = rs.getInt("id");
-                String name = safe(rs.getString("name"));
-                String email = safe(rs.getString("email"));
-                String phone = safe(rs.getString("phone"));
-                String role = safe(rs.getString("role"));
-                String birthdate = safe(rs.getString("birthdate"));
-                boolean verified = rs.getInt("verified") == 1;
-                selectedPhotoPath = safe(rs.getString("profile_image"));
-
-                DataStore.currentUser = new User(
-                        name,
-                        email,
-                        DataStore.currentUser.getPassword(),
-                        role,
-                        resolvedUserId);
-
-                nameField.setText(name);
-                emailField.setText(email);
-                phoneField.setText(phone);
-                birthdateField.setText(birthdate);
-                roleLabel.setText("Role: " + (role.isBlank() ? "-" : role));
-                statusLabel.setText("Status: " + (verified ? "Verified" : "Unverified"));
-                photoPathLabel.setText(selectedPhotoPath.isBlank() ? "No photo selected" : selectedPhotoPath);
-                applyAvatar(selectedPhotoPath);
+            String[] parts = response.split("\\|", 10);
+            if (parts.length < 10 || !"FOUND".equals(parts[0])) {
+                setMessage("Invalid profile response from server.", true);
+                return;
             }
-        } catch (SQLException e) {
-            setMessage("Database error while loading profile.", true);
+
+            int resolvedUserId = Integer.parseInt(parts[1]);
+            String name = decode(parts[2]);
+            String email = decode(parts[3]);
+            String phone = decode(parts[4]);
+            String role = decode(parts[5]);
+            String birthdate = decode(parts[6]);
+            boolean verified = "1".equals(parts[7]);
+            selectedPhotoPath = decode(parts[8]);
+            String password = decode(parts[9]);
+
+            DataStore.currentUser = new User(name, email, password, role, resolvedUserId);
+
+            nameField.setText(name);
+            emailField.setText(email);
+            phoneField.setText(phone);
+            birthdateField.setText(birthdate);
+            roleLabel.setText("Role: " + (role.isBlank() ? "-" : role));
+            statusLabel.setText("Status: " + (verified ? "Verified" : "Unverified"));
+            photoPathLabel.setText(selectedPhotoPath.isBlank() ? "No photo selected" : selectedPhotoPath);
+            applyAvatar(selectedPhotoPath);
+        } catch (IOException | NumberFormatException e) {
+            setMessage("Server error while loading profile.", true);
         }
     }
 
@@ -195,96 +180,37 @@ public class UserProfileController {
             return;
         }
 
-        String conflictMessage = findDuplicateFieldMessage(userId, name, normalizedEmail, normalizedPhone);
-        if (conflictMessage != null) {
-            setMessage(conflictMessage, true);
-            return;
-        }
+        String command = "UPDATE_USER_PROFILE|"
+                + userId + "|"
+                + encode(name) + "|"
+                + encode(normalizedEmail) + "|"
+                + encode(normalizedPhone) + "|"
+                + encode(birthdate) + "|"
+                + encode(selectedPhotoPath) + "|"
+                + encode(DataStore.currentUser.getPassword());
 
-        String update = "UPDATE users SET name = ?, email = ?, phone = ?, birthdate = ?, profile_image = ? WHERE id = ?";
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(update)) {
-            pstmt.setString(1, name);
-            pstmt.setString(2, normalizedEmail.isBlank() ? null : normalizedEmail);
-            pstmt.setString(3, normalizedPhone.isBlank() ? null : normalizedPhone);
-            pstmt.setString(4, birthdate.isBlank() ? null : birthdate);
-            pstmt.setString(5, selectedPhotoPath == null || selectedPhotoPath.isBlank() ? null : selectedPhotoPath);
-            pstmt.setInt(6, userId);
-
-            int updated = pstmt.executeUpdate();
-            if (updated <= 0) {
-                setMessage("No profile changes were saved.", true);
+        try {
+            String response = ClientConnection.sendCommand(command);
+            if ("SUCCESS".equals(response)) {
+                DataStore.currentUser = new User(
+                        name,
+                        normalizedEmail,
+                        DataStore.currentUser.getPassword(),
+                        DataStore.currentUser.getRole(),
+                        userId);
+                DataStore.updateRememberedSession(DataStore.isKeepSignedInEnabled());
+                setMessage("Profile updated successfully.", false);
                 return;
             }
 
-            DataStore.currentUser = new User(
-                    name,
-                    normalizedEmail,
-                    DataStore.currentUser.getPassword(),
-                    DataStore.currentUser.getRole(),
-                    userId);
-
-                // Keep remembered-session identity in sync when username/email changes.
-                DataStore.updateRememberedSession(DataStore.isKeepSignedInEnabled());
-
-            setMessage("Profile updated successfully.", false);
-        } catch (SQLException e) {
-            String message = e.getMessage() == null ? "Database update failed." : e.getMessage();
-            if (message.toLowerCase().contains("unique")) {
-                setMessage("Name, email, or phone already exists. Use a different value.", true);
-            } else {
-                setMessage("Database update failed.", true);
+            switch (response) {
+                case "ERROR:DUPLICATE_NAME" -> setMessage("This full name is already used by another account.", true);
+                case "ERROR:DUPLICATE_EMAIL" -> setMessage("This email is already used by another account.", true);
+                case "ERROR:DUPLICATE_PHONE" -> setMessage("This phone number is already used by another account.", true);
+                default -> setMessage("Profile update failed.", true);
             }
-        }
-    }
-
-    private String findDuplicateFieldMessage(int userId, String name, String email, String phone) {
-        try (Connection conn = DatabaseConnection.connect()) {
-            if (existsByName(conn, userId, name)) {
-                return "This full name is already used by another account.";
-            }
-            if (!email.isBlank() && existsByEmail(conn, userId, email)) {
-                return "This email is already used by another account.";
-            }
-            if (!phone.isBlank() && existsByPhone(conn, userId, phone)) {
-                return "This phone number is already used by another account.";
-            }
-        } catch (SQLException e) {
-            return "Database check failed. Please try again.";
-        }
-        return null;
-    }
-
-    private boolean existsByName(Connection conn, int userId, String name) throws SQLException {
-        String query = "SELECT 1 FROM users WHERE id <> ? AND name = ? COLLATE NOCASE LIMIT 1";
-        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, userId);
-            pstmt.setString(2, name);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
-            }
-        }
-    }
-
-    private boolean existsByEmail(Connection conn, int userId, String email) throws SQLException {
-        String query = "SELECT 1 FROM users WHERE id <> ? AND lower(ifnull(email, '')) = lower(?) LIMIT 1";
-        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, userId);
-            pstmt.setString(2, email);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
-            }
-        }
-    }
-
-    private boolean existsByPhone(Connection conn, int userId, String phone) throws SQLException {
-        String query = "SELECT 1 FROM users WHERE id <> ? AND ifnull(phone, '') = ? LIMIT 1";
-        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, userId);
-            pstmt.setString(2, phone);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
-            }
+        } catch (IOException e) {
+            setMessage("Server error while updating profile.", true);
         }
     }
 
@@ -405,20 +331,33 @@ public class UserProfileController {
         String name = safe(DataStore.currentUser.getUsername());
         String email = safe(DataStore.currentUser.getEmail());
 
-        String query = "SELECT id FROM users WHERE name = ? COLLATE NOCASE OR lower(ifnull(email, '')) = lower(?) LIMIT 1";
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, name);
-            pstmt.setString(2, email);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("id");
+        String command = "RESOLVE_USER_ID|" + encode(email) + "|" + encode(name);
+        try {
+            String response = ClientConnection.sendCommand(command);
+            if (response != null && response.startsWith("FOUND|")) {
+                String[] parts = response.split("\\|", 2);
+                if (parts.length == 2) {
+                    return Integer.parseInt(parts[1]);
                 }
             }
-        } catch (SQLException e) {
+        } catch (IOException | NumberFormatException e) {
             return -1;
         }
 
         return -1;
+    }
+
+    private String encode(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("|", " ").replace("\r", "").replace("\n", "<NL>").trim();
+    }
+
+    private String decode(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("<NL>", "\n").trim();
     }
 }

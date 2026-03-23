@@ -1,11 +1,10 @@
 package controller;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.TextField;
-import javafx.scene.control.PasswordField;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import models.User;
 import services.UserService;
 
@@ -38,11 +37,16 @@ public class SignupController {
         String phone = phoneField.getText();
         String role = roleComboBox.getValue();
 
-        // Simple validation
-        if (name.isEmpty() || email.isEmpty() || password.isEmpty()
-                || phone.isEmpty() || role == null) {
+        // Validation: name, password, role are required
+        // Email OR phone is required (at least one)
+        if (name.isEmpty() || password.isEmpty() || role == null) {
+            messageLabel.setText("Please fill name, password, and role!");
+            return;
+        }
 
-            messageLabel.setText("Please fill all fields!");
+        // At least one of email or phone must be provided
+        if ((email == null || email.isEmpty()) && (phone == null || phone.isEmpty())) {
+            messageLabel.setText("Please provide email or phone number!");
             return;
         }
 

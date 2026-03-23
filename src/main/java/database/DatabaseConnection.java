@@ -1,15 +1,20 @@
 package database;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DatabaseConnection {
 
-    private static final Path DB_FILE = Paths.get("Data", "rental.db");
+    private static final Path FIXED_DB_FILE = Paths
+            .get("C:/Users/User/OneDrive/Desktop/HOmerental/Tolet/Data/rental.db")
+            .toAbsolutePath()
+            .normalize();
+
+    private static final Path DB_FILE = resolveDbFile();
     private static final String URL = "jdbc:sqlite:" + DB_FILE.toString();
 
     static {
@@ -21,6 +26,9 @@ public class DatabaseConnection {
             if (parent != null) {
                 Files.createDirectories(parent);
             }
+
+            // Print exact DB file used to avoid confusion when multiple Data folders exist.
+            System.out.println("[DatabaseConnection] Using SQLite DB: " + DB_FILE);
         } catch (ClassNotFoundException e) {
             System.err.println("SQLite JDBC Driver not found!");
             e.printStackTrace();
@@ -32,5 +40,9 @@ public class DatabaseConnection {
 
     public static Connection connect() throws SQLException {
         return DriverManager.getConnection(URL);
+    }
+
+    private static Path resolveDbFile() {
+        return FIXED_DB_FILE;
     }
 }

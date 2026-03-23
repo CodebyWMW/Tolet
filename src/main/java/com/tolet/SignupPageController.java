@@ -3,6 +3,7 @@ package com.tolet;
 import java.io.IOException;
 import java.time.Year;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,8 +16,8 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.application.Platform;
 import javafx.stage.Stage;
+import network.ClientConnection;
 
 public class SignupPageController {
     private static final double SIGNUP_WINDOW_WIDTH = 400;
@@ -148,8 +149,28 @@ public class SignupPageController {
                 e.printStackTrace();
             }
         } else {
-            setStatus("Registration failed. Try another email/username.", false);
+            setStatus(buildRegistrationFailureMessage(username, email), false);
         }
+    }
+
+    private String buildRegistrationFailureMessage(String username, String contact) {
+        if (!ClientConnection.isConnected()) {
+            return "Could not connect to server. Please make sure the server is running.";
+        }
+
+        if (DataStore.usernameExists(username)) {
+            return "Username already taken.";
+        }
+
+        if (contact != null && contact.contains("@") && DataStore.emailExists(contact)) {
+            return "Email already registered.";
+        }
+
+        if (contact != null && !contact.contains("@") && DataStore.phoneExists(contact)) {
+            return "Phone already registered.";
+        }
+
+        return "Registration failed. Please try again.";
     }
 
     @FXML

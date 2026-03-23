@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import dao.HouseDAO;
-import dao.UserDAO;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -191,8 +189,6 @@ public class AdminController {
     @FXML
     private Label statsUnverifiedLabel;
 
-    private UserDAO userDAO;
-    private HouseDAO houseDAO;
     private ObservableList<User> allUsers;
     private ObservableList<House> allHouses;
 
@@ -206,9 +202,7 @@ public class AdminController {
             adminNameLabel.setText(DataStore.currentUser.getUsername());
         }
 
-        userDAO = new UserDAO();
-        houseDAO = new HouseDAO();
-        userDAO.normalizeExistingOwnerAndTenantPublicIds();
+        DataStore.normalizeAdminPublicIds();
 
         // Populate combo boxes
         roleFilterCombo.getItems().addAll("All", "owner", "tenant");
@@ -459,13 +453,13 @@ public class AdminController {
     }
 
     private void loadAllData() {
-        userDAO.normalizeExistingOwnerAndTenantPublicIds();
-        List<User> users = userDAO.getAllUsers();
+        DataStore.normalizeAdminPublicIds();
+        List<User> users = DataStore.adminGetAllUsers();
         allUsers = FXCollections.observableArrayList(users);
         usersTable.setItems(allUsers);
         userCountLabel.setText("Total Users: " + users.size());
 
-        List<House> houses = houseDAO.getAllListingsForAdmin();
+        List<House> houses = DataStore.adminGetAllListingsForAdmin();
         allHouses = FXCollections.observableArrayList(houses);
         filterHouses();
 
@@ -474,12 +468,12 @@ public class AdminController {
     }
 
     private void loadAuditLog() {
-        List<UserAudit> auditEntries = userDAO.getAuditLog();
+        List<UserAudit> auditEntries = DataStore.adminGetAuditLog();
         auditTable.setItems(FXCollections.observableArrayList(auditEntries));
     }
 
     private void loadTenants() {
-        List<User> users = userDAO.getAllUsers();
+        List<User> users = DataStore.adminGetAllUsers();
         List<User> tenants = users.stream()
             .filter(u -> "tenant".equals(normalizeRoleFilter(u.getRole())))
             .toList();
@@ -544,7 +538,7 @@ public class AdminController {
     }
 
     private void handleUserVerification(User user, boolean verify) {
-        boolean success = userDAO.updateUserVerification(user.getId(), verify);
+        boolean success = DataStore.adminUpdateUserVerification(user.getId(), verify);
         if (success) {
             showStatusMessage(verify ? "User verified successfully!" : "User unverified!", false);
             loadAllData();
@@ -565,7 +559,7 @@ public class AdminController {
         }
 
         String deletedBy = DataStore.currentUser != null ? DataStore.currentUser.getUsername() : "System";
-        boolean success = userDAO.deleteUserWithAudit(user.getId(), deletedBy);
+        boolean success = DataStore.adminDeleteUserWithAudit(user.getId(), deletedBy);
         if (success) {
             showStatusMessage("User deleted permanently.", false);
             loadAllData();
@@ -576,7 +570,7 @@ public class AdminController {
     }
 
     private void handleHouseApproval(House house, String status) {
-        boolean success = houseDAO.updateHouseStatus(house.getId(), status);
+        boolean success = DataStore.adminUpdateHouseStatus(house.getId(), status);
         if (success) {
             String message = status.equals("approved") ? "House listing approved!" : "House listing rejected!";
             showStatusMessage(message, false);
@@ -589,11 +583,11 @@ public class AdminController {
 
     @FXML
     private void loadStatistics() {
-        List<User> allUsersList = userDAO.getAllUsers();
-        List<User> owners = userDAO.getUsersByRole("owner");
-        List<User> tenants = userDAO.getUsersByRole("tenant");
-        List<House> allHousesList = houseDAO.getAllListingsForAdmin();
-        List<House> pending = houseDAO.getHousesByStatus("pending");
+        List<User> allUsersList = DataStore.adminGetAllUsers();
+        List<User> owners = DataStore.adminGetUsersByRole("owner");
+        List<User> tenants = DataStore.adminGetUsersByRole("tenant");
+        List<House> allHousesList = DataStore.adminGetAllListingsForAdmin();
+        List<House> pending = DataStore.adminGetHousesByStatus("pending");
 
         statsTotalUsersLabel.setText(String.valueOf(allUsersList.size()));
         statsTotalHousesLabel.setText(String.valueOf(allHousesList.size()));
