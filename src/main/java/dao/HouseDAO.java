@@ -313,4 +313,9 @@ public class HouseDAO {
 
         return false;
     }
+
+    public void addHouse(String currentUser, String location, int rent) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'addHouse'");
+    }
 }

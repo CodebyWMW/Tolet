@@ -1,13 +1,17 @@
 package controller;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.cell.PropertyValueFactory;
-import com.tolet.House;
-import network.ClientConnection;
-import com.tolet.DataStore;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+
+import com.tolet.DataStore;
+import com.tolet.House;
+
+import javafx.fxml.FXML;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
+import network.ClientConnection;
 
 public class PropertiesController {
 
@@ -35,18 +39,51 @@ public class PropertiesController {
     private void loadOwnerProperties() {
 
         try {
+            if (DataStore.currentUser == null) {
+                propertyTable.getItems().clear();
+                return;
+            }
 
-            // send request to server
-            ClientConnection.getOut().writeObject("GET_OWNER_HOUSES");
-            ClientConnection.getOut().writeObject(DataStore.currentUser.getId());
+            String command = "GET_OWNER_HOUSES|" + DataStore.currentUser.getId();
+            List<String> rows = ClientConnection.sendCommandForLines(command, "END");
 
-            List<House> houses =
-                    (List<House>) ClientConnection.getIn().readObject();
+            List<House> houses = new ArrayList<>();
+            for (String row : rows) {
+                if ("NO_HOUSES".equals(row)) {
+                    continue;
+                }
+
+                String[] parts = row.split("\\|", 3);
+                if (parts.length < 3) {
+                    continue;
+                }
+
+                int houseId;
+                try {
+                    houseId = Integer.parseInt(parts[0]);
+                } catch (NumberFormatException ex) {
+                    continue;
+                }
+
+                House house = new House(
+                        houseId,
+                        "",
+                        parts[1],
+                        "",
+                        0.0,
+                        "",
+                        "",
+                        0,
+                        0,
+                        0.0);
+                house.setApprovalStatus(parts[2]);
+                houses.add(house);
+            }
 
             propertyTable.getItems().setAll(houses);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            propertyTable.getItems().clear();
         }
 
     }

@@ -1,12 +1,9 @@
 package services;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.io.IOException;
 
-import database.DatabaseConnection;
 import models.User;
+import network.ClientConnection;
 
 public class UserService {
 
@@ -25,57 +22,61 @@ public class UserService {
             return false;
         }
 
-        if (email.isBlank()) {
-            lastErrorMessage = "Email is required.";
+        // Either email OR phone is required, not both
+        if (email.isBlank() && phone.isBlank()) {
+            lastErrorMessage = "Email or phone number is required.";
             return false;
         }
 
-        if (phone.isBlank()) {
-            lastErrorMessage = "Phone is required.";
+        String role = user.getRole() == null ? "" : user.getRole().trim();
+        String password = user.getPassword() == null ? "" : user.getPassword().trim();
+        String birthdate = user.getBirthdate() == null ? "" : user.getBirthdate().trim();
+
+        // Validate password
+        if (password.isBlank()) {
+            lastErrorMessage = "Password is required.";
             return false;
         }
 
-        if (valueExists("SELECT 1 FROM users WHERE name = ? COLLATE BINARY", username)) {
-            lastErrorMessage = "Username already exists.";
+        // Validate role
+        if (role.isBlank()) {
+            lastErrorMessage = "Role is required.";
             return false;
         }
 
-        if (valueExists("SELECT 1 FROM users WHERE lower(email) = lower(?)", email)) {
-            lastErrorMessage = "Email already exists.";
-            return false;
-        }
+        String command = "SIGNUP|"
+                + sanitize(username) + "|"
+                + sanitize(email) + "|"
+                + sanitize(password) + "|"
+                + sanitize(role) + "|"
+                + sanitize(phone) + "|"
+                + sanitize(birthdate);
 
-        if (valueExists("SELECT 1 FROM users WHERE phone = ?", phone)) {
-            lastErrorMessage = "Phone already exists.";
-            return false;
-        }
+        System.out.println("[UserService] Sending SIGNUP command: SIGNUP|" + username + "|" + email + "|***|" + role + "|" + phone + "|" + birthdate);
+        System.out.println("[UserService] Raw command parts: " + command.split("\\|").length);
 
-        String sql = "INSERT INTO users (name, email, password, role, phone, birthdate, public_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try {
+            System.out.println("[UserService] Sending to server...");
+            String response = ClientConnection.sendCommand(command);
+            System.out.println("[UserService] Server response: " + response);
+            
+            if ("SUCCESS".equals(response)) {
+                System.out.println("[UserService] Registration SUCCESS!");
+                return true;
+            }
 
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            String role = user.getRole() == null ? "" : user.getRole().trim().toLowerCase();
-            String publicId = generateNextPublicId(conn, role);
-
-            ps.setString(1, username);
-            ps.setString(2, email);
-            ps.setString(3, user.getPassword()); // later you can hash it
-            ps.setString(4, role);
-            ps.setString(5, phone);
-            ps.setString(6, user.getBirthdate());
-            ps.setString(7, publicId);
-
-            int rowsInserted = ps.executeUpdate();
-
-            return rowsInserted > 0;
-
-        } catch (SQLException e) {
-            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("unique")) {
-                lastErrorMessage = "Username, email, or phone already exists.";
+            if (response != null && response.startsWith("ERROR:")) {
+                lastErrorMessage = response.substring("ERROR:".length()).replace('_', ' ');
+                System.out.println("[UserService] Server error: " + lastErrorMessage);
             } else {
                 lastErrorMessage = "Registration failed.";
+                System.out.println("[UserService] Unexpected response: " + response);
             }
+            return false;
+        } catch (IOException e) {
+            lastErrorMessage = "Could not connect to server.";
+            System.err.println("[UserService] Connection error: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -84,64 +85,10 @@ public class UserService {
         return lastErrorMessage;
     }
 
-    private boolean valueExists(String sql, String value) {
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, value);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            return false;
+    private String sanitize(String value) {
+        if (value == null) {
+            return "";
         }
-    }
-
-    private String generateNextPublicId(Connection conn, String role) throws SQLException {
-        String prefix = mapRolePrefix(role);
-
-        String likePattern = prefix + "%";
-        String sql = "SELECT public_id FROM users WHERE public_id LIKE ?";
-        int maxSequence = 0;
-
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, likePattern);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String existing = rs.getString("public_id");
-                    if (existing == null || !existing.startsWith(prefix) || existing.length() <= prefix.length()) {
-                        continue;
-                    }
-                    String suffix = existing.substring(prefix.length());
-                    try {
-                        int seq = Integer.parseInt(suffix);
-                        if (seq > maxSequence) {
-                            maxSequence = seq;
-                        }
-                    } catch (NumberFormatException ignored) {
-                        // Ignore malformed historical values and keep scanning.
-                    }
-                }
-            }
-        }
-
-        return prefix + String.format("%03d", maxSequence + 1);
-    }
-
-    private String mapRolePrefix(String role) {
-        if (role == null) {
-            return "user";
-        }
-
-        String normalized = role.trim().toLowerCase();
-        if (normalized.equals("tenant") || normalized.equals("varatia")) {
-            return "Varatia";
-        }
-        if (normalized.equals("owner")
-                || normalized.equals("house owner")
-                || normalized.equals("bariwala")
-                || normalized.equals("landlord")) {
-            return "Bariwala";
-        }
-        return "user";
+        return value.replace("|", " ").trim();
     }
 }

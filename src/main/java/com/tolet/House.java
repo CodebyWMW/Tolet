@@ -7,6 +7,7 @@ public class House {
     private String type;
     private double rent;
     private String ownerName;
+    private String approvalStatus;
 
     // New fields for the card view
     private String image;
@@ -23,6 +24,7 @@ public class House {
         this.type = type;
         this.rent = rent;
         this.ownerName = ownerName;
+        this.approvalStatus = "";
         this.image = image;
         this.bedrooms = bedrooms;
         this.bathrooms = bathrooms;
@@ -62,6 +64,10 @@ public class House {
         return image;
     }
 
+    public String getApprovalStatus() {
+        return approvalStatus;
+    }
+
     public int getBedrooms() {
         return bedrooms;
     }
@@ -72,5 +78,9 @@ public class House {
 
     public double getArea() {
         return area;
+    }
+
+    public void setApprovalStatus(String approvalStatus) {
+        this.approvalStatus = approvalStatus;
     }
 }

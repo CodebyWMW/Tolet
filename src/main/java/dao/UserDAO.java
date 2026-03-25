@@ -14,30 +14,75 @@ import models.UserAudit;
 public class UserDAO {
 
     // ================= REGISTER USER =================
-    public boolean registerUser(User user) {
+    public boolean registerUser(User user) throws SQLException {
 
         String sql = "INSERT INTO users (name, email, password, role, phone, birthdate, public_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        // Prepare email - use NULL if empty/blank
+        String email = user.getEmail();
+        String emailValue = (email == null || email.trim().isEmpty()) ? null : email.trim().toLowerCase();
+        
+        // Prepare phone - use NULL if empty/blank
+        String phone = user.getPhone();
+        String phoneValue = (phone == null || phone.trim().isEmpty()) ? null : phone.trim();
 
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             String role = user.getRole() == null ? "" : user.getRole().trim().toLowerCase();
-            String publicId = generateNextPublicId(conn, role);
+            String publicId;
+            
+            try {
+                publicId = generateNextPublicId(conn, role);
+                System.out.println("Generated public_id: " + publicId + " for role: " + role);
+            } catch (SQLException e) {
+                System.err.println("Error generating public ID: " + e.getMessage());
+                e.printStackTrace();
+                throw e;
+            }
+
+            System.out.println("Registering user - Name: " + user.getName() + ", Email: " + emailValue + 
+                             ", Password: " + (user.getPassword() != null ? "***" : "NULL") + 
+                             ", Role: " + role + ", Phone: " + phoneValue);
 
             pstmt.setString(1, user.getName());
-            pstmt.setString(2, user.getEmail());
+            pstmt.setString(2, emailValue);  // Will be NULL if empty
             pstmt.setString(3, user.getPassword());
             pstmt.setString(4, role);
-            pstmt.setString(5, user.getPhone());
+            pstmt.setString(5, phoneValue);  // Will be NULL if empty
             pstmt.setString(6, user.getBirthdate());
             pstmt.setString(7, publicId);
 
             int rows = pstmt.executeUpdate();
-            return rows > 0;
+            if (rows > 0) {
+                System.out.println("User registered successfully: " + (emailValue != null ? emailValue : phoneValue));
+                return true;
+            }
+            System.err.println("No rows inserted for user: " + user.getName());
+            return false;
 
         } catch (SQLException e) {
+            String errorMessage = e.getMessage();
+            System.err.println("Registration SQL error: " + errorMessage);
+            
+            // Log specific constraint violations
+            if (errorMessage != null) {
+                if (errorMessage.toLowerCase().contains("unique constraint failed: users.name")) {
+                    System.err.println("ERROR: Username constraint violation - " + user.getName());
+                } else if (errorMessage.toLowerCase().contains("unique constraint failed: users.email")) {
+                    System.err.println("ERROR: Email constraint violation - " + (emailValue != null ? emailValue : "NULL"));
+                } else if (errorMessage.toLowerCase().contains("unique constraint failed: users.phone")) {
+                    System.err.println("ERROR: Phone constraint violation - " + (phoneValue != null ? phoneValue : "NULL"));
+                } else if (errorMessage.toLowerCase().contains("unique constraint failed: users.public_id")) {
+                    System.err.println("ERROR: Public ID constraint violation");
+                } else if (errorMessage.toLowerCase().contains("not null constraint failed")) {
+                    System.err.println("ERROR: NULL constraint violation - " + errorMessage);
+                } else {
+                    System.err.println("ERROR: General SQL error - " + errorMessage);
+                }
+            }
             e.printStackTrace();
-            return false;
+            throw e;
         }
     }
   
@@ -477,5 +522,118 @@ public boolean updateUserVerification(int userId, boolean verified) {
             return "Bariwala";
         }
         return "murgi";
+    }
+
+    public boolean usernameExists(String username) {
+        String sql = "SELECT 1 FROM users WHERE name = ? COLLATE NOCASE LIMIT 1";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username == null ? "" : username.trim());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public boolean emailExists(String email) {
+        String sql = "SELECT 1 FROM users WHERE lower(email) = lower(?) LIMIT 1";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, email == null ? "" : email.trim());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public boolean phoneExists(String phone) {
+        String normalizedTarget = normalizePhone(phone);
+        if (normalizedTarget.isBlank()) {
+            return false;
+        }
+
+        String sql = "SELECT phone FROM users WHERE phone IS NOT NULL";
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String storedPhone = rs.getString("phone");
+                if (normalizedTarget.equals(normalizePhone(storedPhone))) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+
+        return false;
+    }
+
+    public boolean contactExists(String contact) {
+        String trimmed = contact == null ? "" : contact.trim();
+        if (trimmed.isBlank()) {
+            return false;
+        }
+
+        if (trimmed.contains("@")) {
+            return emailExists(trimmed) || phoneExists(trimmed);
+        }
+        return phoneExists(trimmed) || emailExists(trimmed);
+    }
+
+    public boolean updatePasswordByContact(String contact, String newPassword) {
+        String trimmed = contact == null ? "" : contact.trim();
+        if (trimmed.isBlank()) {
+            return false;
+        }
+
+        String sqlByEmail = "UPDATE users SET password = ? WHERE lower(email) = lower(?)";
+        String sqlByPhone = "UPDATE users SET password = ? WHERE phone = ?";
+
+        if (trimmed.contains("@")) {
+            if (updatePassword(sqlByEmail, newPassword, trimmed)) {
+                return true;
+            }
+
+            String normalized = normalizePhone(trimmed);
+            return !normalized.isBlank() && updatePassword(sqlByPhone, newPassword, normalized);
+        }
+
+        String normalized = normalizePhone(trimmed);
+        if (!normalized.isBlank() && updatePassword(sqlByPhone, newPassword, normalized)) {
+            return true;
+        }
+
+        return updatePassword(sqlByEmail, newPassword, trimmed);
+    }
+
+    private boolean updatePassword(String sql, String newPassword, String contactValue) {
+        try (Connection conn = DatabaseConnection.connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newPassword == null ? "" : newPassword);
+            pstmt.setString(2, contactValue);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null) {
+            return "";
+        }
+
+        String digitsOnly = phone.replaceAll("\\D", "");
+        if (digitsOnly.startsWith("880") && digitsOnly.length() >= 13) {
+            return digitsOnly.substring(2);
+        }
+        if (digitsOnly.startsWith("88") && digitsOnly.length() == 13) {
+            return digitsOnly.substring(2);
+        }
+        return digitsOnly;
     }
 }

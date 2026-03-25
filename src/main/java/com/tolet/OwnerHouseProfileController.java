@@ -4,16 +4,11 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 
-import dao.HouseDAO;
-import database.DatabaseConnection;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -30,6 +25,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import network.ClientConnection;
 
 public class OwnerHouseProfileController {
     private static final int MAX_IMAGES = 3;
@@ -189,12 +185,12 @@ public class OwnerHouseProfileController {
         double areaSqft;
         double price;
         try {
-            beds = Integer.parseInt(text(bedsField));
-            baths = Integer.parseInt(text(bathsField));
-            areaSqft = Double.parseDouble(text(areaField));
-            price = Double.parseDouble(text(askingPriceField));
+            beds = parseWholeNumber(text(bedsField), "Beds");
+            baths = parseWholeNumber(text(bathsField), "Baths");
+            areaSqft = parseDecimalNumber(text(areaField), "Square feet");
+            price = parseDecimalNumber(text(askingPriceField), "Asking price");
         } catch (NumberFormatException e) {
-            setStatus("Beds, baths, square feet and asking price must be valid numbers.", true);
+            setStatus(e.getMessage(), true);
             return;
         }
 
@@ -206,44 +202,48 @@ public class OwnerHouseProfileController {
         String tags = buildTags();
         String type = resolvePrimaryType();
 
-        HouseDAO dao = new HouseDAO();
-        boolean updated = dao.updateHouseDetails(
-                houseId,
-                ownerId,
-                shortDetail,
-                shortDetail,
-                location,
-                details,
-                tags,
-                availability,
-                type,
-                beds,
-                baths,
-                areaSqft,
-                gasCheck.isSelected(),
-                waterCheck.isSelected(),
-                currentCheck.isSelected(),
-                price,
-                contact,
-                tagFamilyButton.isSelected(),
-                tagSingleButton.isSelected());
+        String updateCommand = "UPDATE_OWNER_HOUSE|"
+                + houseId + "|"
+                + ownerId + "|"
+                + encode(shortDetail) + "|"
+                + encode(shortDetail) + "|"
+                + encode(location) + "|"
+                + encode(details) + "|"
+                + encode(tags) + "|"
+                + encode(availability) + "|"
+                + encode(type) + "|"
+                + beds + "|"
+                + baths + "|"
+                + areaSqft + "|"
+                + (gasCheck.isSelected() ? 1 : 0) + "|"
+                + (waterCheck.isSelected() ? 1 : 0) + "|"
+                + (currentCheck.isSelected() ? 1 : 0) + "|"
+                + price + "|"
+                + encode(contact) + "|"
+                + (tagFamilyButton.isSelected() ? 1 : 0) + "|"
+                + (tagSingleButton.isSelected() ? 1 : 0);
 
-        if (!updated) {
-            setStatus("Failed to update listing. Please try again.", true);
-            return;
-        }
-
-        if (!selectedImages.isEmpty()) {
-            if (!replaceHouseImages()) {
-                setStatus("Listing updated, but images could not be updated.", true);
-                loadHouseDetails();
+        try {
+            boolean updated = "SUCCESS".equals(ClientConnection.sendCommand(updateCommand));
+            if (!updated) {
+                setStatus("Failed to update listing. Please try again.", true);
                 return;
             }
-        }
 
-        selectedImages.clear();
-        loadHouseDetails();
-        setStatus("Listing updated successfully.", false);
+            if (!selectedImages.isEmpty()) {
+                if (!replaceHouseImages()) {
+                    setStatus("Listing updated, but images could not be updated.", true);
+                    loadHouseDetails();
+                    return;
+                }
+            }
+
+            selectedImages.clear();
+            loadHouseDetails();
+            setStatus("Listing updated successfully.", false);
+        } catch (IOException e) {
+            setStatus("Failed to update listing. Please try again.", true);
+        }
     }
 
     @FXML
@@ -270,12 +270,16 @@ public class OwnerHouseProfileController {
             return;
         }
 
-        HouseDAO dao = new HouseDAO();
-        if (dao.deleteHouseById(houseId, ownerId)) {
-            DataStore.selectedHouseId = -1;
-            setStatus("Listing deleted.", false);
-            onBackToProperties();
-        } else {
+        try {
+            String response = ClientConnection.sendCommand("DELETE_OWNER_HOUSE|" + houseId + "|" + ownerId);
+            if ("SUCCESS".equals(response)) {
+                DataStore.selectedHouseId = -1;
+                setStatus("Listing deleted.", false);
+                onBackToProperties();
+            } else {
+                setStatus("Could not delete listing.", true);
+            }
+        } catch (IOException e) {
             setStatus("Could not delete listing.", true);
         }
     }
@@ -286,178 +290,151 @@ public class OwnerHouseProfileController {
             return;
         }
 
-        String query = "SELECT id, owner_id, title, short_detail, location, details, tags, availability, type, "
-                + "bedrooms, bathrooms, area, gas_available, water_available, current_available, rent, "
-                + "contact_info, approval_status, family_allowed, bachelor_allowed "
-                + "FROM houses WHERE id = ? AND owner_id = ? LIMIT 1";
-
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, houseId);
-            pstmt.setInt(2, ownerId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (!rs.next()) {
-                    setStatus("Listing not found.", true);
-                    return;
-                }
-
-                String title = safeString(rs.getString("title"));
-                String shortDetail = safeString(rs.getString("short_detail"));
-                String location = safeString(rs.getString("location"));
-                String details = safeString(rs.getString("details"));
-                String tags = safeString(rs.getString("tags"));
-                String availability = safeString(rs.getString("availability"));
-                String type = safeString(rs.getString("type"));
-                String contact = safeString(rs.getString("contact_info"));
-                String approvalStatus = safeString(rs.getString("approval_status"));
-
-                int bedrooms = rs.getInt("bedrooms");
-                int bathrooms = rs.getInt("bathrooms");
-                double area = rs.getDouble("area");
-                double rent = rs.getDouble("rent");
-
-                boolean gas = rs.getInt("gas_available") == 1;
-                boolean water = rs.getInt("water_available") == 1;
-                boolean current = rs.getInt("current_available") == 1;
-
-                boolean familyAllowed = rs.getInt("family_allowed") == 1;
-                boolean bachelorAllowed = rs.getInt("bachelor_allowed") == 1;
-
-                shortDetailField.setText(!shortDetail.isBlank() ? shortDetail : title);
-                locationField.setText(location);
-                detailsArea.setText(details);
-                bedsField.setText(String.valueOf(bedrooms));
-                bathsField.setText(String.valueOf(bathrooms));
-                areaField.setText(String.format(Locale.ENGLISH, "%.0f", area));
-                askingPriceField.setText(String.format(Locale.ENGLISH, "%.0f", rent));
-                contactField.setText(contact);
-
-                setSelected(gasCheck, gas);
-                setSelected(waterCheck, water);
-                setSelected(currentCheck, current);
-
-                boolean tagFamily = familyAllowed || tags.toLowerCase(Locale.ENGLISH).contains("family");
-                boolean tagSingle = bachelorAllowed || tags.toLowerCase(Locale.ENGLISH).contains("single");
-                boolean tagWorkspace = tags.toLowerCase(Locale.ENGLISH).contains("workspace");
-
-                setSelected(tagFamilyButton, tagFamily);
-                setSelected(tagSingleButton, tagSingle);
-                setSelected(tagWorkspaceButton, tagWorkspace);
-
-                if (availabilityChoice != null) {
-                    if (availability != null && !availability.isBlank()
-                            && availabilityChoice.getItems().contains(availability)) {
-                        availabilityChoice.setValue(availability);
-                    } else {
-                        availabilityChoice.getSelectionModel().selectFirst();
-                    }
-                }
-
-                if (listingStatusLabel != null) {
-                    listingStatusLabel.setText("Status: " + normalizeStatus(approvalStatus));
-                }
-
-                loadHouseImages();
-                loadExistingImageNames();
-                refreshImageLabels();
+        try {
+            String response = ClientConnection.sendCommand("GET_OWNER_HOUSE_DETAILS|" + houseId + "|" + ownerId);
+            if (response == null || !response.startsWith("FOUND|")) {
+                setStatus("Listing not found.", true);
+                return;
             }
-        } catch (SQLException e) {
+
+            String[] parts = response.split("\\|", 20);
+            if (parts.length < 20) {
+                setStatus("Listing details are incomplete.", true);
+                return;
+            }
+
+            String title = decode(parts[1]);
+            String shortDetail = decode(parts[2]);
+            String location = decode(parts[3]);
+            String details = decode(parts[4]);
+            String tags = decode(parts[5]);
+            String availability = decode(parts[6]);
+            String contact = decode(parts[17]);
+            String approvalStatus = decode(parts[18]);
+
+            int bedrooms = Integer.parseInt(parts[8]);
+            int bathrooms = Integer.parseInt(parts[9]);
+            double area = Double.parseDouble(parts[10]);
+            double rent = Double.parseDouble(parts[11]);
+
+            boolean gas = "1".equals(parts[12]);
+            boolean water = "1".equals(parts[13]);
+            boolean current = "1".equals(parts[14]);
+            boolean familyAllowed = "1".equals(parts[15]);
+            boolean bachelorAllowed = "1".equals(parts[16]);
+
+            shortDetailField.setText(!shortDetail.isBlank() ? shortDetail : title);
+            locationField.setText(location);
+            detailsArea.setText(details);
+            bedsField.setText(String.valueOf(bedrooms));
+            bathsField.setText(String.valueOf(bathrooms));
+            areaField.setText(String.format(Locale.ENGLISH, "%.0f", area));
+            askingPriceField.setText(String.format(Locale.ENGLISH, "%.0f", rent));
+            contactField.setText(contact);
+
+            setSelected(gasCheck, gas);
+            setSelected(waterCheck, water);
+            setSelected(currentCheck, current);
+
+            boolean tagFamily = familyAllowed || tags.toLowerCase(Locale.ENGLISH).contains("family");
+            boolean tagSingle = bachelorAllowed || tags.toLowerCase(Locale.ENGLISH).contains("single");
+            boolean tagWorkspace = tags.toLowerCase(Locale.ENGLISH).contains("workspace");
+
+            setSelected(tagFamilyButton, tagFamily);
+            setSelected(tagSingleButton, tagSingle);
+            setSelected(tagWorkspaceButton, tagWorkspace);
+
+            if (availabilityChoice != null) {
+                if (availability != null && !availability.isBlank() && availabilityChoice.getItems().contains(availability)) {
+                    availabilityChoice.setValue(availability);
+                } else {
+                    availabilityChoice.getSelectionModel().selectFirst();
+                }
+            }
+
+            if (listingStatusLabel != null) {
+                listingStatusLabel.setText("Status: " + normalizeStatus(approvalStatus));
+            }
+
+            loadHouseImages();
+            refreshImageLabels();
+        } catch (IOException | NumberFormatException e) {
             setStatus("Could not load listing details.", true);
         }
     }
 
     private void loadHouseImages() {
         List<ImageView> slots = new ArrayList<>();
-        if (profileImage1 != null)
+        if (profileImage1 != null) {
             slots.add(profileImage1);
-        if (profileImage2 != null)
+        }
+        if (profileImage2 != null) {
             slots.add(profileImage2);
-        if (profileImage3 != null)
+        }
+        if (profileImage3 != null) {
             slots.add(profileImage3);
+        }
 
         for (ImageView slot : slots) {
             slot.setImage(null);
             updateImageSlotStyle(slot, false);
         }
 
-        String sql = "SELECT image_data FROM house_images WHERE house_id = ? ORDER BY sort_order ASC, id ASC LIMIT 3";
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, houseId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                int index = 0;
-                while (rs.next() && index < slots.size()) {
-                    byte[] bytes = rs.getBytes("image_data");
-                    if (bytes != null && bytes.length > 0) {
-                        Image image = new Image(new ByteArrayInputStream(bytes), 170, 130, true, true);
-                        ImageView slot = slots.get(index);
-                        slot.setImage(image);
-                        updateImageSlotStyle(slot, true);
-                    }
-                    index++;
-                }
-            }
-        } catch (SQLException e) {
-            // Keep placeholders empty if images cannot be loaded.
-        }
-    }
-
-    private void loadExistingImageNames() {
         existingImageNames.clear();
-        String sql = "SELECT image_name FROM house_images WHERE house_id = ? ORDER BY sort_order ASC, id ASC LIMIT 3";
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, houseId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    String name = rs.getString("image_name");
-                    if (name != null && !name.isBlank()) {
-                        existingImageNames.add(name);
-                    }
+
+        try {
+            List<String> rows = ClientConnection.sendCommandForLines("GET_HOUSE_IMAGES|" + houseId, "END");
+            int index = 0;
+            for (String row : rows) {
+                if ("NO_IMAGES".equals(row)) {
+                    break;
                 }
+
+                String[] parts = row.split("\\|", 3);
+                if (parts.length < 3) {
+                    continue;
+                }
+
+                String imageName = decode(parts[0]);
+                byte[] bytes = Base64.getDecoder().decode(parts[2]);
+                if (index < slots.size()) {
+                    Image image = new Image(new ByteArrayInputStream(bytes), 170, 130, true, true);
+                    ImageView slot = slots.get(index);
+                    slot.setImage(image);
+                    updateImageSlotStyle(slot, true);
+                }
+                if (!imageName.isBlank()) {
+                    existingImageNames.add(imageName);
+                }
+                index++;
             }
-        } catch (SQLException e) {
-            // Ignore missing image names.
+        } catch (IOException | IllegalArgumentException e) {
+            // Keep placeholders if images cannot be loaded.
         }
     }
 
     private boolean replaceHouseImages() {
-        String deleteSql = "DELETE FROM house_images WHERE house_id = ?";
-        String insertSql = "INSERT INTO house_images (house_id, image_name, image_data, sort_order) VALUES (?, ?, ?, ?)";
-
-        try (Connection conn = DatabaseConnection.connect()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql);
-                    PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
-                deleteStmt.setInt(1, houseId);
-                deleteStmt.executeUpdate();
-
-                int order = 1;
-                for (File file : selectedImages) {
-                    insertStmt.setInt(1, houseId);
-                    insertStmt.setString(2, file.getName());
-                    insertStmt.setBytes(3, Files.readAllBytes(file.toPath()));
-                    insertStmt.setInt(4, order++);
-                    insertStmt.addBatch();
-                }
-                insertStmt.executeBatch();
-
-                try (PreparedStatement updateCover = conn
-                        .prepareStatement("UPDATE houses SET image = ? WHERE id = ?")) {
-                    updateCover.setString(1, "db-image://house/" + houseId + "/1");
-                    updateCover.setInt(2, houseId);
-                    updateCover.executeUpdate();
-                }
-
-                conn.commit();
-                return true;
-            } catch (Exception e) {
-                conn.rollback();
+        try {
+            String clearResponse = ClientConnection.sendCommand("CLEAR_HOUSE_IMAGES|" + houseId);
+            if (!"SUCCESS".equals(clearResponse)) {
                 return false;
-            } finally {
-                conn.setAutoCommit(true);
             }
-        } catch (SQLException e) {
+
+            int order = 1;
+            for (File file : selectedImages) {
+                String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));
+                String response = ClientConnection.sendCommand(
+                        "ADD_HOUSE_IMAGE|" + houseId + "|" + encode(file.getName()) + "|" + order + "|" + base64);
+                if (!"SUCCESS".equals(response)) {
+                    return false;
+                }
+                order++;
+            }
+
+            String coverResponse = ClientConnection.sendCommand(
+                    "SET_HOUSE_COVER|" + houseId + "|" + encode("db-image://house/" + houseId + "/1"));
+            return "SUCCESS".equals(coverResponse);
+        } catch (IOException e) {
             return false;
         }
     }
@@ -486,19 +463,20 @@ public class OwnerHouseProfileController {
             return DataStore.currentUser.getId();
         }
 
-        String query = "SELECT id FROM users WHERE lower(email) = lower(?) OR name = ? COLLATE NOCASE LIMIT 1";
-        try (Connection conn = DatabaseConnection.connect();
-                PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, DataStore.currentUser.getEmail());
-            pstmt.setString(2, DataStore.currentUser.getUsername());
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("id");
+        try {
+            String response = ClientConnection.sendCommand("RESOLVE_USER_ID|"
+                    + encode(DataStore.currentUser.getEmail()) + "|"
+                    + encode(DataStore.currentUser.getUsername()));
+            if (response != null && response.startsWith("FOUND|")) {
+                String[] parts = response.split("\\|", 2);
+                if (parts.length == 2) {
+                    return Integer.parseInt(parts[1]);
                 }
             }
-        } catch (SQLException e) {
+        } catch (IOException | NumberFormatException e) {
             return -1;
         }
+
         return -1;
     }
 
@@ -551,8 +529,56 @@ public class OwnerHouseProfileController {
         return area == null || area.getText() == null ? "" : area.getText().trim();
     }
 
-    private String safeString(String value) {
-        return value == null ? "" : value.trim();
+    private int parseWholeNumber(String rawValue, String fieldName) {
+        String normalized = normalizeNumericInput(rawValue);
+        if (normalized.isBlank()) {
+            throw new NumberFormatException(fieldName + " is required.");
+        }
+        if (!normalized.matches("-?\\d+")) {
+            throw new NumberFormatException(fieldName + " must be a whole number.");
+        }
+        return Integer.parseInt(normalized);
+    }
+
+    private double parseDecimalNumber(String rawValue, String fieldName) {
+        String normalized = normalizeNumericInput(rawValue);
+        if (normalized.isBlank()) {
+            throw new NumberFormatException(fieldName + " is required.");
+        }
+        if (!normalized.matches("-?\\d+(\\.\\d+)?")) {
+            throw new NumberFormatException(fieldName + " must be a valid number.");
+        }
+        return Double.parseDouble(normalized);
+    }
+
+    private String normalizeNumericInput(String rawValue) {
+        if (rawValue == null) {
+            return "";
+        }
+
+        String compact = rawValue.trim()
+                .replace(",", "")
+                .replace(" ", "")
+                .replace("\u00A0", "")
+                .replace("৳", "")
+                .replace("$", "")
+                .replaceAll("(?i)(bdt|tk)", "");
+
+        StringBuilder converted = new StringBuilder(compact.length());
+        for (int i = 0; i < compact.length(); i++) {
+            char c = compact.charAt(i);
+            if (c >= '\u09E6' && c <= '\u09EF') {
+                converted.append((char) ('0' + (c - '\u09E6')));
+            } else if (c >= '\u0660' && c <= '\u0669') {
+                converted.append((char) ('0' + (c - '\u0660')));
+            } else if (c >= '\u06F0' && c <= '\u06F9') {
+                converted.append((char) ('0' + (c - '\u06F0')));
+            } else {
+                converted.append(c);
+            }
+        }
+
+        return converted.toString();
     }
 
     private void setSelected(ToggleButton button, boolean selected) {
@@ -587,9 +613,7 @@ public class OwnerHouseProfileController {
     private String buildImageNames(List<File> files) {
         StringBuilder names = new StringBuilder();
         for (int i = 0; i < files.size(); i++) {
-            names.append(i + 1)
-                    .append(". ")
-                    .append(files.get(i).getName());
+            names.append(i + 1).append(". ").append(files.get(i).getName());
             if (i < files.size() - 1) {
                 names.append("\n");
             }
@@ -600,9 +624,7 @@ public class OwnerHouseProfileController {
     private String buildExistingNames() {
         StringBuilder names = new StringBuilder();
         for (int i = 0; i < existingImageNames.size(); i++) {
-            names.append(i + 1)
-                    .append(". ")
-                    .append(existingImageNames.get(i));
+            names.append(i + 1).append(". ").append(existingImageNames.get(i));
             if (i < existingImageNames.size() - 1) {
                 names.append("\n");
             }
@@ -642,8 +664,7 @@ public class OwnerHouseProfileController {
         boolean wasMaximized = stage.isMaximized();
         boolean wasFullScreen = stage.isFullScreen();
 
-        Parent root = FXMLLoader.load(getClass().getResource(
-                DataStore.resolveFxml(baseFxml)));
+        Parent root = FXMLLoader.load(getClass().getResource(DataStore.resolveFxml(baseFxml)));
         Scene scene = stage.getScene();
         if (scene == null) {
             stage.setScene(new Scene(root));
@@ -654,5 +675,19 @@ public class OwnerHouseProfileController {
         stage.setMaximized(wasMaximized);
         stage.setFullScreen(wasFullScreen);
         stage.show();
+    }
+
+    private String encode(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("|", " ").replace("\r", "").replace("\n", "<NL>").trim();
+    }
+
+    private String decode(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("<NL>", "\n").trim();
     }
 }

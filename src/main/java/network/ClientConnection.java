@@ -1,37 +1,88 @@
 package network;
 
-
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClientConnection {
 
     private static Socket socket;
-    private static ObjectOutputStream out;
-    private static ObjectInputStream in;
+    private static PrintWriter out;
+    private static BufferedReader in;
 
-    public static void connect() {
+    public static synchronized void connect() {
+        if (isConnected()) {
+            return;
+        }
 
         try {
 
             socket = new Socket("localhost", 5000);
 
-            out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             System.out.println("Connected to server");
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to connect to server", e);
         }
     }
 
-    public static ObjectOutputStream getOut() {
-        return out;
+    public static synchronized boolean isConnected() {
+        return socket != null && socket.isConnected() && !socket.isClosed();
     }
 
-    public static ObjectInputStream getIn() {
-        return in;
+    public static synchronized String sendCommand(String command) throws IOException {
+        connect();
+        System.out.println("[ClientConnection] Sending: " + (command.contains("SIGNUP") ? 
+                          command.substring(0, Math.min(50, command.length())) + "..." : command));
+        out.println(command);
+        String response = in.readLine();
+        System.out.println("[ClientConnection] Received: " + response);
+        return response;
+    }
+
+    public static synchronized List<String> sendCommandForLines(String command, String endMarker) throws IOException {
+        connect();
+        out.println(command);
+
+        List<String> lines = new ArrayList<>();
+        String line;
+        while ((line = in.readLine()) != null) {
+            if (endMarker.equals(line)) {
+                break;
+            }
+            lines.add(line);
+        }
+        return lines;
+    }
+
+    public static synchronized void close() {
+        try {
+            if (in != null) {
+                in.close();
+            }
+        } catch (IOException ignored) {
+        }
+
+        if (out != null) {
+            out.close();
+        }
+
+        try {
+            if (socket != null) {
+                socket.close();
+            }
+        } catch (IOException ignored) {
+        }
+
+        in = null;
+        out = null;
+        socket = null;
     }
 }
