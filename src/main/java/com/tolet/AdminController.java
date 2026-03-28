@@ -17,7 +17,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
@@ -549,19 +548,20 @@ public class AdminController {
     }
 
     private void handleUserDelete(User user) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Delete User");
-        confirm.setHeaderText("Delete user permanently?");
-        confirm.setContentText("This action cannot be undone.");
-
-        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+        boolean confirmed = StatusPopupHelper.showConfirmPopup(
+                getOwnerStage(),
+                "Delete User",
+                "Delete this user permanently? This action cannot be undone.",
+                "Delete",
+                "Cancel",
+                true);
+        if (!confirmed) {
             return;
         }
 
         String deletedBy = DataStore.currentUser != null ? DataStore.currentUser.getUsername() : "System";
         boolean success = DataStore.adminDeleteUserWithAudit(user.getId(), deletedBy);
         if (success) {
-            showStatusMessage("User deleted permanently.", false);
             loadAllData();
             loadStatistics();
         } else {

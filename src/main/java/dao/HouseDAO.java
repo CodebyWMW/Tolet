@@ -30,6 +30,10 @@ public class HouseDAO {
         house.setPetFriendly(safeInt(rs, "pet_friendly", 0) == 1);
         house.setTitle(safeString(rs, "title", ""));
         house.setRent(safeDouble(rs, "rent", 0.0));
+        house.setImage(safeString(rs, "image", ""));
+        house.setBedrooms(safeInt(rs, "bedrooms", 0));
+        house.setBathrooms(safeInt(rs, "bathrooms", 0));
+        house.setArea(safeDouble(rs, "area", 0.0));
         house.setApprovalStatus(safeString(rs, "approval_status", "pending"));
 
         return house;

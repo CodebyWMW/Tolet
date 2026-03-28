@@ -119,7 +119,13 @@ public class OverviewController {
         imageView.setPreserveRatio(false);
 
         try {
-            Image image = new Image(getClass().getResourceAsStream("images/" + imageName));
+            Image image;
+            if (imageName != null && (imageName.startsWith("http://") || imageName.startsWith("https://"))) {
+                image = new Image(imageName, true);
+            } else {
+                String safeImageName = imageName == null ? "" : imageName;
+                image = new Image(getClass().getResourceAsStream("images/" + safeImageName));
+            }
             imageView.setImage(image);
             imageView.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 2);");
         } catch (Exception e) {

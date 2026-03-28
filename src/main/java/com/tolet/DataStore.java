@@ -51,8 +51,8 @@ public class DataStore {
     private static void ensureSeedData() {
         // Create owner and tenant if missing
         if (countRows("users") == 0) {
-            registerUser("System Owner", "sys@owner.com", "123", "House Owner");
-            registerUser("System Tenant", "tenant@demo.com", "123", "Tenant");
+            createSeedUser("System Owner", "sys@owner.com", "123", "House Owner");
+            createSeedUser("System Tenant", "tenant@demo.com", "123", "Tenant");
         }
 
         // Insert sample houses if none exist
@@ -86,6 +86,34 @@ public class DataStore {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private static void createSeedUser(String name, String email, String password, String role) {
+        String selectSql = "SELECT id FROM users WHERE lower(name) = lower(?) OR lower(ifnull(email, '')) = lower(?) LIMIT 1";
+        String insertSql = "INSERT INTO users (name, email, password, role, verified, public_id) VALUES (?, ?, ?, ?, 1, ?)";
+
+        try (Connection conn = DatabaseConnection.connect()) {
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+                selectStmt.setString(1, name);
+                selectStmt.setString(2, email);
+                ResultSet rs = selectStmt.executeQuery();
+                if (rs.next()) {
+                    return;
+                }
+            }
+
+            String publicId = generateNextPublicId(conn, role);
+            try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                insertStmt.setString(1, name);
+                insertStmt.setString(2, email);
+                insertStmt.setString(3, password);
+                insertStmt.setString(4, role);
+                insertStmt.setString(5, publicId);
+                insertStmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -318,16 +346,32 @@ public class DataStore {
                     continue;
                 }
 
-                String[] parts = row.split("\\|", 4);
+                String[] parts = row.split("\\|", 8);
                 if (parts.length < 4) {
                     continue;
                 }
 
                 int id;
                 double rent;
+                String image = "";
+                int bedrooms = 0;
+                int bathrooms = 0;
+                double area = 0.0;
                 try {
                     id = Integer.parseInt(parts[0]);
                     rent = Double.parseDouble(parts[3]);
+                    if (parts.length > 4) {
+                        image = parts[4];
+                    }
+                    if (parts.length > 5) {
+                        bedrooms = Integer.parseInt(parts[5]);
+                    }
+                    if (parts.length > 6) {
+                        bathrooms = Integer.parseInt(parts[6]);
+                    }
+                    if (parts.length > 7) {
+                        area = Double.parseDouble(parts[7]);
+                    }
                 } catch (NumberFormatException ex) {
                     continue;
                 }
@@ -339,10 +383,10 @@ public class DataStore {
                         "",
                         rent,
                         "",
-                        "",
-                        0,
-                        0,
-                        0.0));
+                        image,
+                        bedrooms,
+                        bathrooms,
+                        area));
             }
         } catch (IOException e) {
             return list;
@@ -573,7 +617,7 @@ public class DataStore {
     // ---
     public static boolean validateUser(String username, String password) {
         String loginInput = username == null ? "" : username.trim();
-        String query = "SELECT * FROM users WHERE (name = ? COLLATE BINARY OR lower(ifnull(email, '')) = lower(?)) AND password = ? LIMIT 1";
+        String query = "SELECT * FROM users WHERE (name = ? COLLATE NOCASE OR lower(ifnull(email, '')) = lower(?)) AND password = ? LIMIT 1";
 
         try (Connection conn = DatabaseConnection.connect()) {
             try (PreparedStatement pstmt = conn.prepareStatement(query)) {

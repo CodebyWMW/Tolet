@@ -207,7 +207,7 @@ public class HelloController {
         String fxmlFile;
         if (role != null && role.equalsIgnoreCase("Admin")) {
             fxmlFile = "admin-view-new.fxml";
-        } else if (role != null && role.equalsIgnoreCase("House Owner")) {
+        } else if (isOwnerRole(role)) {
             fxmlFile = "owner-view.fxml";
         } else {
             fxmlFile = "tenant-view.fxml";
@@ -226,6 +226,18 @@ public class HelloController {
             scene.setRoot(root);
         }
         stage.show();
+    }
+
+    private boolean isOwnerRole(String role) {
+        if (role == null) {
+            return false;
+        }
+
+        String normalized = role.trim().toLowerCase();
+        return normalized.equals("house owner")
+                || normalized.equals("owner")
+                || normalized.equals("bariwala")
+                || normalized.equals("landlord");
     }
 
     private String getRootCauseMessage(Throwable throwable) {
