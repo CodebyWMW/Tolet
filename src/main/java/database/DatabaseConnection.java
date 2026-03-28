@@ -10,7 +10,7 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     private static final Path FIXED_DB_FILE = Paths
-            .get("C:/Users/User/OneDrive/Desktop/HOmerental/Tolet/Data/rental.db")
+            .get("./Data/rental.db")
             .toAbsolutePath()
             .normalize();
 
