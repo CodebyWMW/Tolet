@@ -68,7 +68,9 @@ public class ClientHandler implements Runnable {
                             for (House h : houses) {
                                 String safeTitle = h.getTitle() == null ? "" : h.getTitle().replace("|", " ");
                                 String safeLocation = h.getLocation() == null ? "" : h.getLocation().replace("|", " ");
-                                out.println(h.getId() + "|" + safeTitle + "|" + safeLocation + "|" + h.getRent());
+                                String safeImage = h.getImage() == null ? "" : h.getImage().replace("|", " ");
+                                out.println(h.getId() + "|" + safeTitle + "|" + safeLocation + "|" + h.getRent()
+                                        + "|" + safeImage + "|" + h.getBedrooms() + "|" + h.getBathrooms() + "|" + h.getArea());
                             }
                         }
                         out.println("END");

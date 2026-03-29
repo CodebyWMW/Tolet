@@ -16,6 +16,10 @@ public class House {
 
     private String title;          // NEW
     private double rent;           // NEW
+    private String image;
+    private int bedrooms;
+    private int bathrooms;
+    private double area;
 
     private String approvalStatus; // pending, approved, rejected
 
@@ -164,5 +168,37 @@ public class House {
 
     public void setApprovalStatus(String approvalStatus) {
         this.approvalStatus = approvalStatus;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public int getBedrooms() {
+        return bedrooms;
+    }
+
+    public void setBedrooms(int bedrooms) {
+        this.bedrooms = bedrooms;
+    }
+
+    public int getBathrooms() {
+        return bathrooms;
+    }
+
+    public void setBathrooms(int bathrooms) {
+        this.bathrooms = bathrooms;
+    }
+
+    public double getArea() {
+        return area;
+    }
+
+    public void setArea(double area) {
+        this.area = area;
     }
 }

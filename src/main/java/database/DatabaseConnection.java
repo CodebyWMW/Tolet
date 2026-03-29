@@ -10,7 +10,7 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     private static final Path FIXED_DB_FILE = Paths
-            .get("./Data/rental.db")
+            .get("C:/Users/User/OneDrive/Desktop/HOmerental/Tolet/Data/rental.db")
             .toAbsolutePath()
             .normalize();
 
@@ -43,6 +43,15 @@ public class DatabaseConnection {
     }
 
     private static Path resolveDbFile() {
-        return FIXED_DB_FILE;
+        String configuredPath = System.getProperty("tolet.db.path");
+        if (configuredPath == null || configuredPath.isBlank()) {
+            configuredPath = System.getenv("TOLET_DB_PATH");
+        }
+
+        if (configuredPath != null && !configuredPath.isBlank()) {
+            return Paths.get(configuredPath).toAbsolutePath().normalize();
+        }
+
+        return Paths.get("Data", "rental.db").toAbsolutePath().normalize();
     }
 }
