@@ -103,6 +103,13 @@ public class TableCreator {
                 + "FOREIGN KEY(house_id) REFERENCES houses(id) ON DELETE CASCADE,"
                 + "FOREIGN KEY(tenant_id) REFERENCES users(id) ON DELETE CASCADE)";
 
+                String appImagesTable = "CREATE TABLE IF NOT EXISTS app_images ("
+                                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                                + "image_key TEXT NOT NULL UNIQUE,"
+                                + "image_data BLOB NOT NULL,"
+                                + "created_at TEXT DEFAULT CURRENT_TIMESTAMP," 
+                                + "updated_at TEXT DEFAULT CURRENT_TIMESTAMP)";
+
                 String houseImagesTable = "CREATE TABLE IF NOT EXISTS house_images ("
                                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                                 + "house_id INTEGER NOT NULL,"
@@ -124,6 +131,7 @@ public class TableCreator {
                         ensureUserAuditSchema(stmt);
             stmt.execute(notificationsTable);
                         ensureNotificationsSchema(stmt);
+                        stmt.execute(appImagesTable);
                         stmt.execute(houseImagesTable);
                                                 stmt.execute(reviewsTable);
                         stmt.execute(wishlistTable);
@@ -131,6 +139,7 @@ public class TableCreator {
                                                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_house_reviews_tenant_id ON house_reviews(tenant_id)");
                         stmt.execute("CREATE INDEX IF NOT EXISTS idx_tenant_wishlist_tenant_id ON tenant_wishlist(tenant_id)");
                         stmt.execute("CREATE INDEX IF NOT EXISTS idx_house_images_house_id ON house_images(house_id)");
+                                                stmt.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_app_images_key ON app_images(image_key)");
                         cleanupOrphanOwnerListings(conn);
         } catch (SQLException e) {
             e.printStackTrace();

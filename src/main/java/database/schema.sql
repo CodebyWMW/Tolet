@@ -45,3 +45,12 @@ CREATE TABLE IF NOT EXISTS users_audit (
     deleted_at TEXT,
     deleted_by TEXT
 );
+
+-- APP IMAGES TABLE
+CREATE TABLE IF NOT EXISTS app_images (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    image_key TEXT NOT NULL UNIQUE,
+    image_data BLOB NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
