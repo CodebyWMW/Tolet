@@ -26,13 +26,13 @@
 
             <VBox maxWidth="278.0" prefHeight="300.0" prefWidth="278.0" spacing="6" style="-fx-background-color: #1F2933;" styleClass="profile-card">
                 <StackPane alignment="CENTER">
-                    <Circle fill="#2b3b48" radius="79.0" stroke="#D4AF37" strokeWidth="1.5" />
-                    <ImageView fx:id="profileAvatarImage" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="false" />
+                    <Circle fill="#2b3b48" radius="50.0" stroke="#D4AF37" strokeWidth="1.5" />
+                    <ImageView fx:id="profileAvatarImage" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="false" />
                 </StackPane>
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <Label fx:id="profileNameLabel" prefHeight="27.0" prefWidth="197.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-name" text="Owner" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button onAction="#onOpenProfile" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 2 8;" text="&#9998;" />
+                    <Button onAction="#onOpenProfile" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 2 8; -fx-min-width: 34; -fx-pref-width: 34; -fx-max-width: 34;" text="&#x1F58A;" />
                 </HBox>                <Label fx:id="profileVerificationLabel" prefHeight="20.0" prefWidth="215.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Status - Unverified" />
                 <Label fx:id="profileRoleLabel" prefHeight="20.0" prefWidth="215.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Role - Owner" />
                 <Label fx:id="profileEmailLabel" prefHeight="20.0" prefWidth="189.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Email: -" />
@@ -44,7 +44,7 @@
 
     <center>
         <ScrollPane fitToWidth="true" style="-fx-background-color: #99a3b4;" styleClass="content-scroll">
-            <VBox fx:id="propertiesPageRoot" prefHeight="1080.0" prefWidth="691.0" spacing="22" style="-fx-background-color: #99a3b4;" styleClass="content-root">
+            <VBox fx:id="propertiesPageRoot" maxWidth="Infinity" prefHeight="1080.0" spacing="22" style="-fx-background-color: #99a3b4;" styleClass="content-root">
                 <HBox alignment="TOP_RIGHT">
                     <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
                         <graphic>
@@ -85,18 +85,18 @@
                         </VBox>
                         <HBox spacing="10" styleClass="property-detail-images" HBox.hgrow="ALWAYS">
                             <StackPane styleClass="property-detail-image-slot">
-                                <ImageView fx:id="propertyImage1" fitHeight="130.0" fitWidth="170.0" pickOnBounds="true" preserveRatio="true" styleClass="property-detail-image" />
+                                <ImageView fx:id="propertyImage1" fitHeight="120.0" fitWidth="130.0" pickOnBounds="true" preserveRatio="true" styleClass="property-detail-image" />
                             </StackPane>
                             <StackPane styleClass="property-detail-image-slot">
-                                <ImageView fx:id="propertyImage2" fitHeight="130.0" fitWidth="170.0" pickOnBounds="true" preserveRatio="true" styleClass="property-detail-image" />
+                                <ImageView fx:id="propertyImage2" fitHeight="120.0" fitWidth="130.0" pickOnBounds="true" preserveRatio="true" styleClass="property-detail-image" />
                             </StackPane>
                             <StackPane styleClass="property-detail-image-slot">
-                                <ImageView fx:id="propertyImage3" fitHeight="130.0" fitWidth="170.0" pickOnBounds="true" preserveRatio="true" styleClass="property-detail-image" />
+                                <ImageView fx:id="propertyImage3" fitHeight="120.0" fitWidth="130.0" pickOnBounds="true" preserveRatio="true" styleClass="property-detail-image" />
                             </StackPane>
                         </HBox>
                     </HBox>
 
-                    <Label prefHeight="18.0" prefWidth="597.0" styleClass="panel-title" text="Tenant Requests For This House" />
+                    <Label prefHeight="18.0" styleClass="panel-title" text="Tenant Requests For This House" />
                     <VBox spacing="8" styleClass="table">
                         <HBox spacing="16" styleClass="table-header">
                             <Label styleClass="table-title" text="Tenant" />
@@ -107,12 +107,12 @@
                         <VBox fx:id="propertyRequestsContainer" spacing="8" />
                     </VBox>
 
-                    <Label prefHeight="18.0" prefWidth="597.0" styleClass="panel-title" text="Notifications" />
+                    <Label prefHeight="18.0" styleClass="panel-title" text="Notifications" />
                     <VBox spacing="8" styleClass="table">
                         <VBox fx:id="propertyNotificationsContainer" spacing="8" />
                     </VBox>
 
-                    <Label prefHeight="18.0" prefWidth="597.0" styleClass="panel-title" text="Tenant Reviews For This House" />
+                    <Label prefHeight="18.0" styleClass="panel-title" text="Tenant Reviews For This House" />
                     <VBox spacing="8" styleClass="table">
                         <HBox spacing="16" styleClass="table-header">
                             <Label styleClass="table-title" text="Tenant" />

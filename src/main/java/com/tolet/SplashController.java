@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class SplashController {
-    private static final String SPLASH_IMAGE_PATH = "D:/Academic/Project/To—•Let/Tolet/pics/opening.png";
+    private static final String SPLASH_IMAGE_PATH = "D:/Academic/Project/To—•Let/Tolet/pics/openingn.png";
 
     @FXML
     private ImageView splashImage;

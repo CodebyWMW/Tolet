@@ -1024,11 +1024,14 @@ public class TenantController {
         VBox content = new VBox(8);
         content.setPadding(new Insets(16));
 
-        // Type Badge
-        Label typeBadge = new Label(h.getType());
-        typeBadge.getStyleClass().add("card-badge");
-
-        HBox header = new HBox(typeBadge);
+        // Type badge is optional; hide it completely when type is missing.
+        String houseType = nonBlankOrFallback(h.getType(), "");
+        HBox header = new HBox();
+        if (!houseType.isBlank()) {
+            Label typeBadge = new Label(houseType);
+            typeBadge.getStyleClass().add("card-badge");
+            header.getChildren().add(typeBadge);
+        }
 
         Label title = new Label(nonBlankOrFallback(h.getTitle(), h.getBedrooms() + "BR Apartment"));
         title.getStyleClass().add("card-title");

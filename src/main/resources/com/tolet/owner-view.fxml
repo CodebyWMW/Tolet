@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 
-<BorderPane prefHeight="600" prefWidth="900" style="-fx-background-color: #99a3b4;" styleClass="owner-root" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.OwnerController">
+<BorderPane prefHeight="727.0" prefWidth="700.0" style="-fx-background-color: #99a3b4;" styleClass="owner-root" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tolet.OwnerController">
     <left>
         <VBox maxWidth="250.0" prefHeight="600.0" prefWidth="163.0" spacing="18" styleClass="sidebar">
             <VBox spacing="4" styleClass="brand-block">
@@ -14,10 +14,10 @@
             </VBox>
 
             <VBox spacing="6">
-                <Button layoutX="10.0" layoutY="39.0" prefHeight="35.0" prefWidth="204.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37; -fx-border-radius: 10;" styleClass="nav-button" text="Dashboard" />
-                <Button onAction="#onOpenAcceptedTenants" prefHeight="35.0" prefWidth="189.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Tenants" />
+                <Button layoutX="10.0" layoutY="39.0" prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37; -fx-border-radius: 10;" styleClass="nav-button" text="Dashboard" />
+                <Button onAction="#onOpenAcceptedTenants" prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Tenants" />
                 <Button onAction="#onOpenProperties" prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Properties" />
-                <Button onAction="#onOpenRequests" prefHeight="35.0" prefWidth="207.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Requests" />
+                <Button onAction="#onOpenRequests" prefHeight="35.0" prefWidth="212.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Requests" />
                 <Button onAction="#onOpenAnalytics" prefHeight="35.0" prefWidth="320.0" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37;" styleClass="nav-button" text="Analytics" />
                 <Button onAction="#onOpenListHouse" prefHeight="42.0" prefWidth="320.0" styleClass="list-house-cta" text="+ List New House" />
             </VBox>
@@ -26,13 +26,13 @@
 
             <VBox maxWidth="278.0" prefHeight="300.0" prefWidth="278.0" spacing="6" style="-fx-background-color: #1F2933;" styleClass="profile-card">
                 <StackPane alignment="CENTER">
-                    <Circle fill="#2b3b48" radius="79.0" stroke="#D4AF37" strokeWidth="1.5" />
-                    <ImageView fx:id="profileAvatarImage" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="false" />
+                    <Circle fill="#2b3b48" radius="50.0" stroke="#D4AF37" strokeWidth="1.5" />
+                    <ImageView fx:id="profileAvatarImage" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="false" />
                 </StackPane>
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <Label fx:id="profileNameLabel" prefHeight="27.0" prefWidth="197.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-name" text="Owner" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button onAction="#onOpenProfile" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 2 8;" text="&#9998;" />
+                    <Button onAction="#onOpenProfile" style="-fx-background-color: #1F2933; -fx-text-fill: #D4AF37; -fx-border-color: #D4AF37; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 2 8; -fx-min-width: 34; -fx-pref-width: 34; -fx-max-width: 34;" text="&#x1F58A;" />
                 </HBox>                <Label fx:id="profileVerificationLabel" prefHeight="20.0" prefWidth="215.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Status - Unverified" />
                 <Label fx:id="profileRoleLabel" prefHeight="20.0" prefWidth="215.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Role - Owner" />
                 <Label fx:id="profileEmailLabel" prefHeight="20.0" prefWidth="189.0" style="-fx-text-fill: #D4AF37;" styleClass="profile-role" text="Email: -" />
@@ -44,7 +44,7 @@
 
     <center>
         <ScrollPane fitToWidth="true" style="-fx-background-color: #99a3b4;" styleClass="content-scroll">
-            <VBox prefHeight="1080.0" prefWidth="691.0" spacing="22" style="-fx-background-color: #99a3b4;" styleClass="content-root">
+            <VBox maxWidth="Infinity" prefHeight="1080.0" spacing="22" style="-fx-background-color: #99a3b4;" styleClass="content-root">
                 <HBox alignment="TOP_RIGHT">
                     <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" styleClass="theme-switch">
                         <graphic>
@@ -62,21 +62,21 @@
                 </HBox>
 
                 <HBox spacing="16" styleClass="kpi-row">
-                    <VBox spacing="6" style="-fx-background-color: #1F2933;" styleClass="kpi-card">
+                    <VBox spacing="6" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-background-color: #1F2933;" styleClass="kpi-card">
                         <Label style="-fx-text-fill: #D4AF37;" styleClass="kpi-title" text="Total Income" />
                         <HBox alignment="CENTER_LEFT" spacing="10">
                             <Label fx:id="kpiIncomeLabel" style="-fx-text-fill: #D4AF37;" styleClass="kpi-value" text="৳0" />
                             <Region styleClass="kpi-icon kpi-icon-green" />
                         </HBox>
                     </VBox>
-                    <VBox spacing="6" style="-fx-background-color: #1F2933;" styleClass="kpi-card">
+                    <VBox spacing="6" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-background-color: #1F2933;" styleClass="kpi-card">
                         <Label style="-fx-text-fill: #D4AF37;" styleClass="kpi-title" text="Occupancy Rate" />
                         <HBox alignment="CENTER_LEFT" spacing="10">
                             <Label fx:id="kpiOccupancyLabel" style="-fx-text-fill: #D4AF37;" styleClass="kpi-value" text="0%" />
                             <Region styleClass="kpi-icon kpi-icon-blue" />
                         </HBox>
                     </VBox>
-                    <VBox spacing="6" style="-fx-background-color: #1F2933;" styleClass="kpi-card">
+                    <VBox spacing="6" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-background-color: #1F2933;" styleClass="kpi-card">
                         <Label style="-fx-text-fill: #D4AF37;" styleClass="kpi-title" text="Pending Requests" />
                         <HBox alignment="CENTER_LEFT" spacing="10">
                             <Label fx:id="kpiPendingLabel" style="-fx-text-fill: #D4AF37;" styleClass="kpi-value" text="0" />
@@ -119,7 +119,7 @@
                 </VBox>
                 -->
 
-                <VBox maxHeight="1000.0" prefHeight="187.0" prefWidth="643.0" spacing="12" styleClass="panel">
+                <VBox maxHeight="1000.0" prefHeight="187.0" maxWidth="Infinity" spacing="12" styleClass="panel">
                     <HBox alignment="CENTER_LEFT" spacing="12">
                         <Label styleClass="panel-title" text="Tenant Booking Requests" />
                         <Region HBox.hgrow="ALWAYS" />
@@ -130,7 +130,7 @@
                     </VBox>
                 </VBox>
 
-                <VBox maxHeight="1000.0" prefHeight="187.0" prefWidth="643.0" spacing="12" styleClass="panel">
+                <VBox maxHeight="1000.0" maxWidth="Infinity" prefHeight="187.0" spacing="12" styleClass="panel">
                     <HBox alignment="CENTER_LEFT" spacing="12">
                         <Label styleClass="panel-title" text="Your Listed Houses" />
                         <Region HBox.hgrow="ALWAYS" />
@@ -151,7 +151,3 @@
         </ScrollPane>
     </center>
 </BorderPane>
-
-
-
-
