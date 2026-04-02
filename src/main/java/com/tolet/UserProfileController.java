@@ -2,10 +2,15 @@ package com.tolet;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
 
+import database.DatabaseConnection;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -80,27 +85,62 @@ public class UserProfileController {
                 + encode(currentEmail);
 
         try {
+            ClientConnection.close();
             String response = ClientConnection.sendCommand(command);
             if (response == null || response.isBlank() || response.startsWith("NOT_FOUND")) {
-                setMessage("Could not load profile from server.", true);
+                if (loadUserProfileFromLocalDatabase(userId, currentName, currentEmail)) {
+                    setMessage("", false);
+                } else {
+                    setMessage("Could not load profile from server.", true);
+                }
                 return;
             }
 
-            String[] parts = response.split("\\|", 10);
-            if (parts.length < 10 || !"FOUND".equals(parts[0])) {
-                setMessage("Invalid profile response from server.", true);
+            String[] parts = response.split("\\|", -1);
+            int offset;
+            if (parts.length > 0 && "FOUND".equals(parts[0])) {
+                offset = 1;
+            } else if (parts.length > 0 && parts[0] != null && parts[0].matches("\\d+")) {
+                // Legacy server format without FOUND prefix: id|name|email|...
+                offset = 0;
+            } else if (response.startsWith("ERROR:") || response.startsWith("NOT_FOUND")) {
+                if (loadUserProfileFromLocalDatabase(userId, currentName, currentEmail)) {
+                    setMessage("", false);
+                } else {
+                    setMessage("Could not load profile from server.", true);
+                }
+                return;
+            } else {
+                if (loadUserProfileFromLocalDatabase(userId, currentName, currentEmail)) {
+                    setMessage("", false);
+                } else {
+                    setMessage("Loaded local profile defaults.", true);
+                }
                 return;
             }
 
-            int resolvedUserId = Integer.parseInt(parts[1]);
-            String name = decode(parts[2]);
-            String email = decode(parts[3]);
-            String phone = decode(parts[4]);
-            String role = decode(parts[5]);
-            String birthdate = decode(parts[6]);
-            boolean verified = "1".equals(parts[7]);
-            selectedPhotoPath = decode(parts[8]);
-            String password = decode(parts[9]);
+            // Need at least id, name, email after applying detected prefix offset.
+            if (parts.length < offset + 3) {
+                if (loadUserProfileFromLocalDatabase(userId, currentName, currentEmail)) {
+                    setMessage("", false);
+                } else {
+                    setMessage("Could not load profile from server.", true);
+                }
+                return;
+            }
+
+            int resolvedUserId = Integer.parseInt(parts[offset]);
+            String name = decode(parts[offset + 1]);
+            String email = decode(parts[offset + 2]);
+            String phone = parts.length > offset + 3 ? decode(parts[offset + 3]) : "";
+            String role = parts.length > offset + 4 ? decode(parts[offset + 4])
+                    : (DataStore.currentUser != null ? safe(DataStore.currentUser.getRole()) : "");
+            String birthdate = parts.length > offset + 5 ? decode(parts[offset + 5]) : "";
+            boolean verified = parts.length > offset + 6 && "1".equals(parts[offset + 6]);
+            selectedPhotoPath = parts.length > offset + 7 ? decode(parts[offset + 7]) : "";
+            String password = parts.length > offset + 8
+                    ? decode(parts[offset + 8])
+                    : (DataStore.currentUser != null ? safe(DataStore.currentUser.getPassword()) : "");
 
             DataStore.currentUser = new User(name, email, password, role, resolvedUserId);
 
@@ -113,7 +153,62 @@ public class UserProfileController {
             photoPathLabel.setText(selectedPhotoPath.isBlank() ? "No photo selected" : selectedPhotoPath);
             applyAvatar(selectedPhotoPath);
         } catch (IOException | NumberFormatException e) {
-            setMessage("Server error while loading profile.", true);
+            if (loadUserProfileFromLocalDatabase(userId, currentName, currentEmail)) {
+                setMessage("", false);
+            } else {
+                setMessage("Server error while loading profile.", true);
+            }
+        }
+    }
+
+    private boolean loadUserProfileFromLocalDatabase(int userId, String fallbackName, String fallbackEmail) {
+        String byIdSql = "SELECT id, name, email, phone, role, birthdate, verified, profile_image, password FROM users WHERE id = ? LIMIT 1";
+        String byIdentitySql = "SELECT id, name, email, phone, role, birthdate, verified, profile_image, password "
+                + "FROM users WHERE name = ? COLLATE NOCASE OR lower(ifnull(email, '')) = lower(?) LIMIT 1";
+
+        try (Connection conn = DatabaseConnection.connect()) {
+            ResultSet rs;
+            PreparedStatement pstmt;
+
+            if (userId > 0) {
+                pstmt = conn.prepareStatement(byIdSql);
+                pstmt.setInt(1, userId);
+            } else {
+                pstmt = conn.prepareStatement(byIdentitySql);
+                pstmt.setString(1, fallbackName == null ? "" : fallbackName);
+                pstmt.setString(2, fallbackEmail == null ? "" : fallbackEmail);
+            }
+
+            try (PreparedStatement stmt = pstmt) {
+                rs = stmt.executeQuery();
+                if (!rs.next()) {
+                    return false;
+                }
+
+                int resolvedUserId = rs.getInt("id");
+                String name = safe(rs.getString("name"));
+                String email = safe(rs.getString("email"));
+                String phone = safe(rs.getString("phone"));
+                String role = safe(rs.getString("role"));
+                String birthdate = safe(rs.getString("birthdate"));
+                boolean verified = rs.getInt("verified") == 1;
+                selectedPhotoPath = safe(rs.getString("profile_image"));
+                String password = safe(rs.getString("password"));
+
+                DataStore.currentUser = new User(name, email, password, role, resolvedUserId);
+
+                nameField.setText(name);
+                emailField.setText(email);
+                phoneField.setText(phone);
+                birthdateField.setText(birthdate);
+                roleLabel.setText("Role: " + (role.isBlank() ? "-" : role));
+                statusLabel.setText("Status: " + (verified ? "Verified" : "Unverified"));
+                photoPathLabel.setText(selectedPhotoPath.isBlank() ? "No photo selected" : selectedPhotoPath);
+                applyAvatar(selectedPhotoPath);
+                return true;
+            }
+        } catch (SQLException e) {
+            return false;
         }
     }
 

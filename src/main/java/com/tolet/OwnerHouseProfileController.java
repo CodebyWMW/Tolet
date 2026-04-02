@@ -298,7 +298,7 @@ public class OwnerHouseProfileController {
             }
 
             String[] parts = response.split("\\|", 20);
-            if (parts.length < 20) {
+            if (parts.length < 19) {
                 setStatus("Listing details are incomplete.", true);
                 return;
             }

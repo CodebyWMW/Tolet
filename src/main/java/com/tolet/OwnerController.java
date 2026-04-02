@@ -50,7 +50,7 @@ import java.sql.SQLException;
 import database.DatabaseConnection;
 
 public class OwnerController {
-    private static final double SIDEBAR_AVATAR_RADIUS = 79.0;
+    private static final double SIDEBAR_AVATAR_RADIUS = 50.0;
     private static final double REQUEST_COL_TENANT = 110;
     private static final double REQUEST_COL_DATE = 110;
     private static final double REQUEST_COL_MOVE_IN = 110;
@@ -203,8 +203,12 @@ public class OwnerController {
 
     private void populateProfile() {
         ProfileMeta profileMeta = resolveProfileMeta();
-        if (profileNameLabel != null)
+        if (profileNameLabel != null) {
             profileNameLabel.setText(profileMeta.name);
+            profileNameLabel.setMinWidth(0);
+            profileNameLabel.setMaxWidth(100);
+            profileNameLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
+        }
         if (profileInitialLabel != null)
             profileInitialLabel.setText(profileMeta.initial);
         applyProfileAvatar(profileMeta.imagePath);
@@ -1774,6 +1778,11 @@ public class OwnerController {
 
     @FXML
     private void onOpenProfile(ActionEvent event) {
+        if (ownerRefreshTimeline != null) {
+            ownerRefreshTimeline.stop();
+            ownerRefreshTimeline = null;
+        }
+
         Stage stage = null;
         if (event != null && event.getSource() instanceof Node) {
             stage = (Stage) ((Node) event.getSource()).getScene().getWindow();

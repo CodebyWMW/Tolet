@@ -86,8 +86,8 @@
 }
 
 .property-detail-image-slot {
-  -fx-min-width: 170;
-  -fx-pref-width: 170;
+  -fx-min-width: 96;
+  -fx-pref-width: 130;
   -fx-max-width: 170;
   -fx-min-height: 130;
   -fx-pref-height: 130;
@@ -366,7 +366,8 @@
 .table-title {
   -fx-text-fill: #d4af37;
   -fx-font-size: 11px;
-  -fx-pref-width: 120;
+  -fx-pref-width: -1;
+  -fx-min-width: 0;
 }
 
 .table-row {
@@ -380,7 +381,8 @@
 .table-text {
   -fx-text-fill: #d4af37;
   -fx-font-size: 12px;
-  -fx-pref-width: 120;
+  -fx-pref-width: -1;
+  -fx-min-width: 0;
 }
 
 .request-table .table-title,

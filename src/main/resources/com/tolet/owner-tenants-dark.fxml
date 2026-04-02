@@ -33,13 +33,13 @@
 
             <VBox maxWidth="215.0" prefHeight="300.0" prefWidth="215.0" spacing="6" style="-fx-background-color: #262624;" styleClass="profile-card">
                 <StackPane alignment="CENTER">
-                    <Circle fill="#3a3a37" radius="79.0" stroke="#ff7547" strokeWidth="1.5" />
-                    <ImageView fx:id="profileAvatarImage" fitHeight="48.0" fitWidth="48.0" pickOnBounds="true" preserveRatio="false" />
+                    <Circle fill="#3a3a37" radius="50.0" stroke="#ff7547" strokeWidth="1.5" />
+                    <ImageView fx:id="profileAvatarImage" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="false" />
                 </StackPane>
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <Label fx:id="profileNameLabel" prefHeight="27.0" prefWidth="198.0" style="-fx-text-fill: #ff7547;" styleClass="profile-name" text="Owner" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button onAction="#onOpenProfile" style="-fx-background-color: #262624; -fx-text-fill: #ff7547; -fx-border-color: #ff7547; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 2 8;" text="&#9998;" />
+                    <Button onAction="#onOpenProfile" style="-fx-background-color: #262624; -fx-text-fill: #ff7547; -fx-border-color: #ff7547; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 2 8; -fx-min-width: 34; -fx-pref-width: 34; -fx-max-width: 34;" text="&#x1F58A;" />
                 </HBox>                <Label fx:id="profileVerificationLabel" prefHeight="20.0" prefWidth="214.0" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Status - Unverified" />
                 <Label fx:id="profileRoleLabel" prefHeight="20.0" prefWidth="214.0" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Role - Owner" />
                 <Label fx:id="profileEmailLabel" prefHeight="20.0" prefWidth="205.0" style="-fx-text-fill: #faa387;" styleClass="profile-role" text="Email: -" />
@@ -51,7 +51,7 @@
 
     <center>
         <ScrollPane fitToWidth="true" style="-fx-background-color: #262624;" styleClass="content-scroll">
-            <VBox fx:id="requestsPageRoot" maxHeight="2000.0" prefHeight="1080.0" prefWidth="691.0" spacing="22" style="-fx-background-color: #262624;" styleClass="content-root">
+            <VBox fx:id="requestsPageRoot" maxWidth="Infinity" maxHeight="2000.0" prefHeight="1080.0" spacing="22" style="-fx-background-color: #262624;" styleClass="content-root">
                 <HBox alignment="TOP_RIGHT">
                     <ToggleButton fx:id="themeToggle" onAction="#onThemeToggle" style="-fx-background-color: #99a3b4;" styleClass="theme-switch">
                         <graphic>
@@ -68,7 +68,7 @@
                     <Label fx:id="dateLabel" style="-fx-background-color: #474743; -fx-text-fill: #e8fff5;" styleClass="date-pill" text="" />
                 </HBox>
 
-                <VBox prefWidth="643.0" spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
+                <VBox maxWidth="Infinity" spacing="12" style="-fx-background-color: #30302e;" styleClass="panel">
                     <Label style="-fx-text-fill: #ff7547;" styleClass="panel-title" text="All Tenant Booking Requests" />
                     <VBox spacing="8" styleClass="table request-table">
                         <VBox fx:id="requestsContainer" spacing="8" />
